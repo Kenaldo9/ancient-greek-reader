@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main DTD Driver File//EN" "http://www.tei-c.org/Vault/P4/xml/schema/dtd/tei2.dtd" [
+<!ENTITY % TEI.XML "INCLUDE">
+<!ENTITY % PersDict PUBLIC "-//Perseus P4//DTD Perseus Dictionaries//EN" "http://www.perseus.tufts.edu/DTD/1.0/PersDict.dtd" >
+%PersDict;]>
+<!-- Entries in the shape of the Perseus LSJ (Beta Code Greek), for tests. -->
+<TEI.2>
+<text><body><div0 type="alphabetic letter" n="*a">
+<entryFree id="n1" key="i)/fqimos" type="main"><orth lang="greek">i)/fqi_mos</orth>, <itype lang="greek">h</itype>, <itype lang="greek">on</itype>,
+  <sense id="n1.0" n="A" level="1"><tr>stout, strong</tr>, of bodily strength, <foreign lang="greek">w)/mois i)</foreign>. <bibl n="urn:cts:greekLit:tlg0012.tlg001.perseus-grc1:18:204"><author>Il.</author>
+  <biblScope>18.204</biblScope></bibl>; of women, <tr>comely, stately</tr>; later <tr>strong, powerful</tr> &amp; more &lt;sic&gt;</sense></entryFree>
+<entryFree id="n2" key="a)nh/r" type="main"><orth lang="greek">a)nh/r</orth>, <gen lang="greek">o(</gen>,
+  <sense id="n2.0" n="A" level="1">(cf. Skt. <tr>nar-</tr>, Lat. <tr>vir</tr>):—<tr>man</tr>, opp. <tr>woman</tr>, <tr>man</tr></sense>
+  <sense id="n2.1" n="II" level="2"><tr>husband</tr></sense></entryFree>
+<entryFree id="n3" key="ei)mi/1" type="main"><orth lang="greek">ei)mi/</orth> (<sense id="n3.0" n="A" level="1"><tr>sum</tr>), Aeol. <foreign lang="greek">e)/mmi</foreign>: <tr>be</tr>, <tr>exist</tr></sense></entryFree>
+<entryFree id="n4" key="a)/ndixa" type="main"><orth lang="greek">a)/ndixa</orth>, Adv.
+  <sense id="n4.0" n="A" level="1">in two, asunder, <foreign lang="greek">a)/. kea/sqh</foreign> <bibl><author>Il.</author> <biblScope>16.412</biblScope></bibl>; of opinions, divided between two courses, doubtful, at variance with one another</sense></entryFree>
+<entryFree id="n5" key="*(/aidhs" type="main"><orth lang="greek">*(/aidhs</orth> or <orth lang="greek">a(/|dhs</orth>, <gen lang="greek">o(</gen>; Ep. <orth lang="greek">*)ai/+dhs</orth>,
+  <sense id="n5.0" n="A" level="1"><tr>Hades</tr>, lord of the nether world</sense></entryFree>
+<entryFree id="n6" key="mei/gnumi" type="main"><orth lang="greek">mei/gnumi</orth> or <orth lang="greek">mi/gnumi</orth>,
+  <sense id="n6.0" n="A" level="1"><tr>mix</tr>, <tr>mingle</tr>:—<gramGrp><gram type="voice">Pass.</gram></gramGrp> <orth lang="greek">mei/gnumai</orth>, <tr>to be mixed with</tr></sense></entryFree>
+<entryFree id="n7" key="h)e/" type="main"><orth lang="greek">h)e/</orth>, exclam. <sense id="n7.0" n="A" level="1"><tr>ah!</tr>. <orth lang="greek">h)e/lios</orth>, <gen lang="greek">o(</gen>, <xr><lbl>v.</lbl> <ref lang="greek">h(/lios</ref></xr>.</sense></entryFree>
+<entryFree id="n8" key="h(/lios" type="main"><orth lang="greek">h(/lios</orth>, <gen lang="greek">o(</gen>, <sense id="n8.0" n="A" level="1"><tr>sun</tr></sense></entryFree>
+<entryFree id="n9" key="a)rno/s" type="main"><orth lang="greek">a)rno/s</orth>, <gen lang="greek">o(</gen>, late nom., <sense id="n9.0" n="A" level="1"><xr><lbl>=</lbl> <ref lang="greek">a)rh/n</ref></xr>, <bibl><author>Hdn.Gr.</author></bibl>.</sense></entryFree>
+<entryFree id="n10" key="a)rh/n" type="main"><orth lang="greek">a)rh/n</orth>, <sense id="n10.0" n="A" level="1"><tr>lamb</tr></sense></entryFree>
+<entryFree id="n11" key="e)kei=qi" type="main"><orth lang="greek">e)kei=qi</orth>, poet. for <foreign lang="greek">e)kei=</foreign>, used in late prose and where the metre requires,
+  <sense id="n11.0" n="A" level="1"><xr><lbl>=</lbl> <ref lang="greek">e)kei=se</ref></xr></sense></entryFree>
+<entryFree id="n12" key="e)kei=se" type="main"><orth lang="greek">e)kei=se</orth>, Adv. <sense id="n12.0" n="A" level="1"><tr>thither</tr></sense></entryFree>
+<entryFree id="n13" key="du/w1" type="main"><orth lang="greek">du/w</orth>, <xr><lbl>v.</lbl> <ref lang="greek">du/o</ref></xr>.</entryFree>
+<entryFree id="n14" key="du/w2" type="main"><orth lang="greek">du/w</orth>, <sense id="n14.0" n="A" level="1"><tr>sink, plunge</tr></sense></entryFree>
+<entryFree id="n15" key="du/o" type="main"><orth lang="greek">du/o</orth>, <sense id="n15.0" n="A" level="1"><tr>two</tr></sense></entryFree>
+<entryFree id="n16" key="e(le/nh" type="main"><orth lang="greek">e(le/nh</orth>, <gen lang="greek">h(</gen>, <sense id="n16.0" n="A" level="1"><tr>torch</tr></sense></entryFree>
+<entryFree id="n17" key="ma/la" type="main"><orth lang="greek">ma/la</orth>, Adv. <sense id="n17.0" n="A" level="1"><tr>very, exceedingly</tr></sense></entryFree>
+<entryFree id="n18" key="a)mbrosi/a" type="main"><orth lang="greek">a)mbrosi/a</orth>, <gen lang="greek">h(</gen>, <sense id="n18.0" n="A" level="1"><tr>ambrosia</tr></sense></entryFree>
+<entryFree id="n19" key="a)ne/w" type="main"><orth lang="greek">a)ne/w</orth>, <sense id="n19.0" n="A" level="1"><xr><lbl>=</lbl> <ref lang="greek">pti/ssw</ref></xr></sense></entryFree>
+<entryFree id="n20" key="a)/new|" type="main"><orth lang="greek">a)/new|</orth>, Adv. <sense id="n20.0" n="A" level="1"><tr>without a word, in silence</tr></sense></entryFree>
+<entryFree id="n21" key="mh=nis" type="main"><orth lang="greek">mh=nis</orth>, <gen lang="greek">h(</gen>, <sense id="n21.0" n="A" level="1"><tr>wrath</tr>; <tr>wrath</tr> of the gods; <tr>revengeful temper</tr></sense></entryFree>
+</div0></body></text>
+</TEI.2>

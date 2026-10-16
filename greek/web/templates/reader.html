@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ text.title }}{% if lines %} {{ ref_range(lines[0].ref, lines[-1].ref) }}{% endif %} — Ancient Greek Reader{% endblock %}
+
+{% block header_tools %}
+<button type="button" class="icon-btn reader-menu" id="reader-menu" aria-label="Open navigation" aria-expanded="false" aria-controls="reader-nav">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<form class="goto" id="goto" action="/goto" method="get">
+  <label class="header-field">
+    <span class="header-field-label">Go to</span>
+    <input type="text" name="q" value="{{ text.title }} {{ refs[at_line] }}" data-title="{{ text.title }}" autocomplete="off" spellcheck="false"
+           {% if goto_error %}aria-invalid="true" aria-describedby="goto-error"{% endif %}>
+  </label>
+  <input type="hidden" name="text_id" value="{{ text.id }}">
+  <input type="hidden" name="at" value="{{ refs[at_line] }}">
+  {% if goto_error %}<span class="goto-error" id="goto-error" role="alert">{{ goto_error }}</span>{% endif %}
+</form>
+{% endblock %}
+
+{% block header_controls %}
+{# Pane links swap it with the text (out of band): a book without study data
+   has no glosses, so Interlinear is off there and says why #}
+<div class="interlinear-control{% if glossless %} is-unavailable{% endif %}" id="interlinear-control">
+  <label class="header-check">
+    {% if glossless %}
+    <input type="checkbox" id="interlinear-toggle" disabled aria-describedby="interlinear-note">
+    <span class="header-check-text">Interlinear <span class="interlinear-note" id="interlinear-note">No glosses yet</span></span>
+    {% else %}
+    <input type="checkbox" id="interlinear-toggle"{% if interlinear %} checked{% endif %}>
+    Interlinear
+    {% endif %}
+  </label>
+</div>
+{% endblock %}
+
+{% block main_class %} app-main-fixed{% endblock %}
+
+{% block main %}
+{# hx-history="false": htmx keeps no snapshot of a whole book (about a
+   million characters) in localStorage; Back loads the page again at the
+   at= that reader.js keeps in the URL. #}
+<div class="reader{% if interlinear %} interlinear-on{% endif %}" id="reader" data-text-id="{{ text.id }}" hx-history="false">
+
+  <button type="button" class="drawer-backdrop" data-action="close-nav" aria-label="Close navigation" tabindex="-1" hidden></button>
+  <aside class="reader-nav" id="reader-nav" aria-label="Navigation" tabindex="-1">
+    <div class="drawer-heading">
+      <h2 class="label">Navigation</h2>
+      <button type="button" class="icon-btn" data-action="close-nav" aria-label="Close navigation">{{ m.icon("close") }}</button>
+    </div>
+    {# iPad and phone: the slim bar leaves Go to here, and a phone's
+       Interlinear (reader.js moves them); the slots stay empty elsewhere #}
+    <div class="drawer-slot" data-slot="goto"></div>
+    <div class="nav-card drawer-slot" data-slot="interlinear"></div>
+    <section class="nav-card">
+      <h2 class="label">Texts</h2>
+      <div class="nav-list">
+        {% for t in texts %}
+        {# opens the text where this browser last read it (positions.js) #}
+        <a class="nav-item{% if t.id == text.id %} is-current{% endif %}" href="/texts/{{ t.id }}/read" data-resume="{{ t.id }}"{% if t.id == text.id %} aria-current="page"{% endif %}>
+          <span class="nav-item-title">{{ t.title }}</span>
+          <span class="nav-item-meta">{% if t.author %}{{ t.author }} · {% endif %}{{ t.line_count | count_noun(units[t.id]) }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if books %}
+    <section class="nav-card" id="book-nav">
+      <h2 class="label">{{ text.title }} · Books</h2>
+      <div class="book-grid book-grid-nav">
+        {% for b in books %}
+        {% set current = page.book and b.number == page.book.number %}
+        <a {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ b.ref_start) }}
+           class="{% if current %}is-current{% endif %}" aria-label="Book {{ b.number }}"{% if current %} aria-current="true"{% endif %}>{{ b.number }}</a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <nav class="nav-card drawer-only" aria-labelledby="drawer-pages-title">
+      <h2 class="label" id="drawer-pages-title">Ancient Greek Reader</h2>
+      <div class="drawer-pages">
+        {% for href, label in [("/library", "Library"), ("/about", "About")] %}
+        <a class="nav-item" href="{{ href }}">{{ label }}</a>
+        {% endfor %}
+      </div>
+      {{ m.version_line() }}
+    </nav>
+  </aside>
+
+  {% include "_text_pane.html" %}
+
+  <div class="reader-side" id="reader-side" aria-label="Study panel">
+    {# Phone: the study panel is a sheet, open while a word or lines are
+       tapped; its handle (or a swipe down, or Escape) closes it #}
+    <div class="sheet-grip">
+      <button type="button" class="sheet-handle" data-action="close-sheet" aria-label="Close the study panel" title="Close"></button>
+    </div>
+    <div class="reader-tabs" role="tablist" aria-label="Study">
+      <button type="button" class="pb-tab" role="tab" id="reader-tab-word" data-reader-tab="word" aria-controls="panel-word" aria-selected="false" tabindex="-1">Word</button>
+      <button type="button" class="pb-tab" role="tab" id="reader-tab-dictionary" data-reader-tab="dictionary" aria-controls="panel-word" aria-selected="false" tabindex="-1" disabled>Dictionary</button>
+      <button type="button" class="pb-tab" role="tab" id="reader-tab-fluent" data-reader-tab="fluent" aria-controls="passage-box" aria-selected="true">Fluent</button>
+      <button type="button" class="pb-tab" role="tab" id="reader-tab-literal" data-reader-tab="literal" aria-controls="panel-literal" aria-selected="false" tabindex="-1"{% if not passage or not passage.literal_tab %} disabled{% endif %}>Literal</button>
+      <button type="button" class="pb-tab" role="tab" id="reader-tab-words" data-reader-tab="words" aria-controls="panel-words" aria-selected="false" tabindex="-1"{% if not passage or not passage.tabbed %} disabled{% endif %}>Grammar{% if passage and passage.tabbed %} ({{ passage.word_total }}){% endif %}</button>
+    </div>
+    <div class="reader-word" id="panel-word">
+      {% include "_word_strip.html" %}
+      {# Laptop: while the passage box fills the study column, the word is
+         folded into a line or two above it #}
+      <button type="button" class="btn btn-small word-unfold" data-action="show-word">{{ m.icon("chevron") }}Show word</button>
+    </div>
+    {% include "_passage_box.html" %}
+    {# Laptop: while the full LSJ entry fills the study column, the passage
+       box is folded into this bar #}
+    <div class="panel passage-bar" id="passage-bar">
+      <h2 class="pb-title">Passage <span class="ref" id="passage-bar-refs"></span></h2>
+      <button type="button" class="btn btn-small" data-action="close-dict">{{ m.icon("chevron") }}Show passage</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{{ static_url('reader.js') }}"></script>{% endblock %}

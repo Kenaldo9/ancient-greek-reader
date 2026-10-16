@@ -1,0 +1,2232 @@
+/* Ancient Greek Reader — one stylesheet. Fonts are declared in fonts/fonts.css. */
+
+/* ------------------------------------------------------------------ tokens */
+
+:root {
+  --page: #F3F4F6;
+  --panel: #FFFFFF;
+  --border: #DDE1E6;
+  --border-strong: #C9CFD6;
+  --divider: #ECEEF1;
+  --code-bg: #E6E9ED;
+
+  --text: #1A1D22;
+  --text-2: #343A43;
+  --muted: #5A6270;
+  --ref: #6B7380;
+
+  --accent: #0F6E78;
+  --accent-dark: #0A4F57;
+  --accent-tint: #E3F1F2;
+  --selected: #EEF6F7;
+  --focus: #CDE8EA;
+  --gloss: #B4530F;
+  --highlight: #FBE3C2;
+
+  --error: #A3291A;
+  --error-dark: #7A1E12;
+  --error-text: #5C2219;
+  --error-bg: #FDF1EF;
+  --error-border: #E8C3BC;
+  --warn: #6E4A0E;
+  --warn-bg: #FDF4E4;
+
+  --table-head: #FAFBFC;
+  --row-group: #F7F9FA;
+  --row-divider: #F0F2F4;
+
+  /* Aegean teal deepening the accent, with gold from the owl coin for focus */
+  --header: linear-gradient(90deg, #07363C 0%, #0C5761 55%, #11707B 100%);
+  --header-control: rgba(255, 255, 255, 0.12);
+  --header-text: #F1F7F7;
+  --header-muted: #A9D0D4;
+  --header-accent: #F2CF7A;
+  --header-error: #FFB4A8;
+
+  --font-greek: 'Gentium Book Plus', 'Gentium Plus', 'GFS Didot', Georgia, serif;
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+/* -------------------------------------------------------------------- base */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+a { color: var(--accent); }
+a:hover { color: var(--accent-dark); }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.greek { font-family: var(--font-greek); }
+.ref { font-family: var(--font-mono); }
+
+/* 12px uppercase section label used across the app */
+.label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------------- app shell */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.app-header {
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px;
+  background: var(--header);
+  color: var(--header-text);
+}
+
+.app-header :focus-visible { outline-color: var(--header-accent); }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-greek);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--header-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand:hover { color: #FFFFFF; }
+
+/* Athenian owl coin */
+.brand-logo { flex: 0 0 auto; display: block; }
+
+.header-spacer { flex: 1 1 0; }
+
+.main-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.main-nav a {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  color: var(--header-text);
+  text-decoration: none;
+}
+
+.main-nav a:hover { background: var(--header-control); color: #FFFFFF; }
+
+.main-nav a[aria-current="page"] {
+  background: var(--header-control);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ------------------------------------------------------------------- pages */
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 40px 64px;
+}
+
+.page-wide { max-width: 1760px; }
+
+.page-title {
+  margin: 0;
+  font-family: var(--font-greek);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.page-lede {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+/* the code's commit and the database's version: Library, the iPad drawer */
+.version-line {
+  margin: 32px 0 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
+.nav-card .version-line { margin: 10px 4px 0; }
+.version-warn { color: var(--error); }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.empty-state {
+  margin-top: 32px;
+  padding: 32px;
+  color: var(--text-2);
+}
+
+.empty-state p { margin: 0; }
+.empty-state p:first-child { font-weight: 600; color: var(--text); }
+.empty-state p + p { margin-top: 8px; }
+
+/* ----------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--muted); color: var(--text); }
+
+.btn-primary {
+  padding: 0 18px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  border-color: var(--accent-dark);
+  background: var(--accent-dark);
+  color: #FFFFFF;
+}
+
+/* ----------------------------------------------------------------- library */
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+
+/* Each card spans five rows of the library grid (heading, first line, what it
+   has, books, actions) so those rows line up across the cards in a row. */
+.text-card {
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.text-card-title {
+  margin: 6px 0 0;
+  font-family: var(--font-greek);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.text-card-stats {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.text-card-first {
+  align-self: start;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--font-greek);
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.text-card-first .ref {
+  margin-right: 0.5em;
+  font-size: 13px;
+  color: var(--ref);
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.book-grid a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.book-grid a:hover { background: var(--accent-tint); color: var(--accent-dark); }
+
+/* What a text has (TextStudy): a label, and each book chip by its study
+   data: translated books tinted and underlined, partly translated ones half
+   underlined, the others plain. The key names the kinds a card has. */
+.text-status {
+  align-self: start;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 4px 12px 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+.text-status::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.text-status.is-none { background: var(--page); color: var(--text-2); font-weight: 500; }
+.text-status.is-none::before { background: var(--border-strong); }
+
+.book-grid a.is-translated,
+.book-key-chip.is-translated {
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+.book-grid a.is-translated:hover { background: var(--focus); }
+.book-grid a.is-partly,
+.book-key-chip.is-partly {
+  background: linear-gradient(var(--accent), var(--accent)) left bottom / 50% 3px no-repeat, var(--page);
+}
+
+.book-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--muted);
+}
+.book-key li { display: flex; align-items: center; gap: 6px; }
+.book-key-chip {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--page);
+}
+
+.text-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------------- shared bits */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* A scroll box holds what is positioned inside it. Otherwise a hidden label
+   below the fold takes the page as its containing block and the page itself
+   scrolls: with Interlinear on, each line's gloss mark made a book's page
+   tens of thousands of pixels tall. */
+.app-main, .reader-nav, .text-scroll, .reader-word, .pb-panel, .pb-body { position: relative; }
+
+.btn-small {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.link-btn:hover { color: var(--accent-dark); }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label { font-size: 14px; color: var(--text-2); }
+
+/* A small dialog anchored below a toolbar button */
+
+.chip {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+
+.form-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--error-bg);
+  color: var(--error);
+  font-size: 15px;
+}
+
+/* ------------------------------------------------------- reader header */
+
+.goto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.header-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  background: var(--header-control);
+  font-size: 15px;
+}
+
+.header-field:focus-within { box-shadow: 0 0 0 2px var(--header-accent); }
+.header-field-label { font-size: 14px; color: var(--header-muted); white-space: nowrap; }
+
+.header-field input {
+  width: 200px;
+  border: 0;
+  background: transparent;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  outline: none;
+}
+
+.goto-error { font-size: 14px; color: var(--header-error); white-space: nowrap; }
+
+.header-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  font-size: 15px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.header-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--header-accent);
+}
+
+.app-header .reader-menu,
+.drawer-heading,
+.drawer-backdrop,
+.reader-tabs,
+.sheet-grip,
+.touch-selection-help,
+.drawer-only,
+.drawer-slot:empty { display: none; }
+
+/* -------------------------------------------------------------- reader */
+
+.app-main-fixed { overflow: hidden; }
+
+.reader {
+  display: flex;
+  gap: 16px;
+  height: 100%;
+  padding: 16px;
+}
+
+.reader .panel { border-radius: 10px; }
+
+.reader-nav {
+  flex: 0 0 280px;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.nav-card {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.nav-card > .label { margin-bottom: 8px; }
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 48px;
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-item:hover { background: var(--page); color: var(--text); }
+.nav-item.is-current { background: var(--accent-tint); }
+.nav-item.is-current .nav-item-title { font-weight: 600; }
+.nav-item-meta { font-size: 13px; color: var(--muted); }
+
+.book-grid-nav {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-top: 0;
+}
+
+.book-grid-nav a { height: 36px; }
+
+.book-grid a.is-current,
+.book-grid a.is-current:hover {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+
+/* text pane */
+
+.text-pane {
+  flex: 0 1 860px;
+  min-width: 480px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pane-toolbar {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 61px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pane-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pane-title-book { font-weight: 400; color: var(--muted); }
+/* a button that opens Go to, drawn as plain text */
+.pane-range {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 13px;
+  line-height: inherit;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.toolbar-spacer { flex: 1 1 0; }
+
+.pager { display: flex; gap: 4px; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+}
+
+.icon-btn:hover { border-color: var(--muted); color: var(--text); }
+.icon-btn.is-disabled { opacity: 0.4; }
+
+.selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 4px 0 10px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.selection-chip[hidden] { display: none; }
+
+.chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--accent-dark);
+  cursor: pointer;
+}
+
+.chip-clear:hover { background: var(--focus); }
+
+.btn-toolbar { flex: 0 0 auto; gap: 6px; height: 36px; }
+.btn-toolbar[hidden] { display: none; }
+
+.btn-toolbar[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+}
+
+.text-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 24px;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: baseline;
+  padding: 3px 8px 3px 0;
+  border-radius: var(--radius-sm);
+}
+
+.is-prose .line {
+  grid-template-columns: 80px minmax(0, 1fr);
+  margin-bottom: 10px;
+  padding: 6px 10px 8px 0;
+}
+
+.line.is-selected { background: var(--selected); }
+
+.line-ref {
+  padding: 2px 12px 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ref);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: right;
+  cursor: pointer;
+}
+
+.line-ref:hover { color: var(--accent); }
+.line.is-selected .line-ref { color: var(--accent); font-weight: 600; }
+
+.line-words {
+  padding-left: 6px;
+  color: var(--text);
+  font-family: var(--font-greek);
+  font-size: 22px;
+  line-height: 1.6;
+}
+
+.is-prose .line-words { font-size: 21px; line-height: 1.75; }
+
+.w {
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.w:hover { background: var(--accent-tint); }
+
+.w.is-active {
+  background: var(--panel);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* the word the clicked word's role names (reader.js), filled while its
+   name in the Syntax block is hovered or focused */
+.w.is-head { outline: 2px dashed var(--gloss); outline-offset: 1px; border-radius: 6px; }
+.w.is-head.is-pointed { background: var(--highlight); }
+
+.w-t { display: none; }
+
+/* Interlinear: each word of a line with the study data's glosses becomes a
+   small column, Greek over English. */
+.interlinear-on .has-glosses .line-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  padding-left: 0;
+  line-height: normal;
+}
+
+.interlinear-on .is-prose .has-glosses .line-words { gap: 2px 4px; }
+
+.interlinear-on .has-glosses .w {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.interlinear-on .has-glosses .w-g { line-height: 1.45; }
+
+.interlinear-on .has-glosses .w-t {
+  display: block;
+  min-height: 1.3em;
+  color: var(--gloss);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.line > .line-ref { grid-row: 1; grid-column: 1; }
+.line > .line-words { grid-row: 1; grid-column: 2; }
+
+.interlinear-control { display: flex; align-items: center; gap: 14px; }
+
+/* A book without study data: Interlinear is off and says why */
+.interlinear-control.is-unavailable .header-check { cursor: default; color: var(--header-muted); }
+.interlinear-control.is-unavailable input { opacity: 0.5; }
+.header-check-text { display: flex; flex-direction: column; line-height: 1.15; }
+.interlinear-note { font-size: 12px; color: var(--header-muted); }
+
+.next-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  margin: 16px 0 0 68px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.next-page:hover { border-style: solid; background: var(--selected); }
+.pane-empty { margin: 24px 0; color: var(--muted); }
+
+/* a line opened from a search result: flash the search highlight */
+.line.is-hit { animation: hit 2.4s ease-out; }
+
+@keyframes hit {
+  0%, 40% { background: var(--highlight); }
+  100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line.is-hit { animation: none; box-shadow: inset 3px 0 0 var(--gloss); }
+}
+
+/* search: results replace the lines in the text pane */
+
+.search-form { flex: 1 1 auto; display: flex; min-width: 0; }
+
+.search-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--muted);
+}
+
+.search-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
+
+.search-field input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-greek);
+  font-size: 19px;
+  outline: none;
+}
+
+.search-field input::-webkit-search-cancel-button { display: none; }
+
+.search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-clear:hover { background: var(--page); color: var(--text); }
+.pane-toolbar .search-form + .btn-toolbar { height: 44px; }
+
+.search-summary {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 14px 20px 6px;
+}
+
+.search-count { font-weight: 600; }
+.search-note { font-size: 14px; color: var(--muted); }
+.search-results { padding: 0 12px 24px; }
+.search-book { margin: 12px 0 0; padding: 0 8px 4px; }
+
+.search-hit {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: baseline;
+  min-height: 48px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.search-hit:hover { background: var(--selected); color: var(--text); }
+.search-hit.is-current { background: var(--selected); }
+.search-hit .ref { font-size: 13px; color: var(--accent); }
+.search-text { font-family: var(--font-greek); font-size: 20px; line-height: 1.5; }
+.is-prose .search-text { font-size: 18px; line-height: 1.6; }
+
+.search-text mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--highlight);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.search-empty { padding: 20px 8px; }
+.search-more { margin: 16px 8px 0; font-size: 14px; color: var(--muted); }
+
+/* right column */
+
+.reader-side {
+  flex: 1 1 480px;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reader-word { flex: 0 0 auto; min-height: 0; }
+.reader-word[hidden], .passage-box[hidden] { display: none; }
+
+.selection-hint {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+}
+
+.selection-hint[hidden] { display: none; }
+
+/* word strip: top-aligned columns, each starting with a label. Without
+   treebank data: the word, its parsing and its note side by side. With it,
+   they stack on the left (parsing below the word) and the Dictionary column
+   takes the rest: LSJ's short definition, a verb's principal parts and the
+   full LSJ entry. #reader.dict-open (reader.js) opens the entry: on a monitor
+   it makes the pane taller, on a laptop it fills the study column, and on a
+   tablet it is the Dictionary tab. */
+
+.word-strip {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 300px 380px minmax(0, 1fr);
+  grid-template-areas: "word parse note";
+}
+
+.word-strip:not(.has-word) { display: block; }
+
+.ws-col {
+  min-width: 0;
+  padding: 14px 20px 18px;
+}
+
+.ws-word { grid-area: word; }
+.ws-parse { grid-area: parse; }
+.ws-note { grid-area: note; }
+.ws-dict-col { grid-area: dict; }
+.word-strip:not(.has-dict) .ws-col + .ws-col { border-left: 1px solid var(--divider); }
+.ws-col > .label, .ws-dict-head > .label { margin-bottom: 10px; }
+
+.word-strip.has-dict {
+  grid-template-columns: 380px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "word dict"
+    "parse dict"
+    "note dict";
+}
+
+.has-dict .ws-word,
+.has-dict .ws-parse,
+.has-dict .ws-note { border-right: 1px solid var(--divider); }
+.has-dict .ws-parse,
+.has-dict .ws-note { border-top: 1px solid var(--divider); }
+
+.ws-greek {
+  font-family: var(--font-greek);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.ws-meaning { margin-top: 6px; font-size: 17px; line-height: 1.4; }
+
+.ws-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ws-from { font-size: 15px; color: var(--muted); }
+.ws-from .greek { font-size: 17px; color: var(--text); }
+.ws-freq { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+.ws-freq-n { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+.ws-source { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+/* the parsing on one line, for a laptop's open LSJ entry */
+.ws-summary { display: none; }
+
+.parse-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 16px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* parsing keys share the part-of-speech chip's tint */
+.parse-grid dt {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.parse-grid dd { margin: 0; }
+
+/* under the word, values such as "comparative" need the room */
+.has-dict .parse-grid { column-gap: 12px; }
+
+.ws-note-text {
+  max-width: 680px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.ws-muted { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted); }
+
+.ws-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* treebank parsing: a split word (οὐδʼ = οὐ + δέ) shows each part */
+.ws-source-top { margin: 0 0 10px; }
+.ws-part + .ws-part { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider); }
+
+.ws-part-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.ws-part-head .greek { font-size: 19px; font-weight: 700; }
+
+/* the study model's remark when it disagrees with the treebank's parse */
+.ws-check {
+  max-width: 680px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.ws-check .label { margin-bottom: 4px; color: var(--warn); }
+.ws-check p { margin: 0; font-size: 15px; line-height: 1.5; }
+
+/* Syntax: the word's role in its treebank sentence, under the parsing. On a
+   laptop or tablet, Parsing and Syntax are tabs instead (reader.js). */
+.ws-syntax { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--divider); }
+.ws-syntax > .label { margin-bottom: 8px; }
+.ws-syntax .ws-source { margin-top: 8px; }
+
+.syn-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.syn-grid dt {
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.syn-grid dd { margin: 0; }
+.syn-grid [lang=grc] { font-family: var(--font-greek); font-size: 17px; }
+/* the use is a model's label, not the treebank's: its own tint */
+.syn-grid dt.syn-use { background: var(--warn-bg); color: var(--warn); }
+
+/* the word the role points to: hovering or focusing it fills it in the text */
+.syn-ref {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-decoration: underline dashed var(--gloss);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.syn-ref:hover { color: var(--accent-dark); }
+
+.ws-ptabs, .ws-ppanel-source { display: none; }
+
+.ws-ptab {
+  height: 30px;
+  margin-bottom: -1px;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ws-ptab:hover { color: var(--text); }
+.ws-ptab[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--accent-dark); }
+
+@media (max-width: 2100px) {
+  .ws-ptabs { display: flex; gap: 20px; margin: 0 0 12px; border-bottom: 1px solid var(--divider); }
+  .has-syntax > .label, .has-syntax .ws-syntax > .label { display: none; }
+  .has-syntax .ws-ppanel-source { display: block; margin-top: 10px; }
+  .has-syntax .ws-syntax { margin-top: 0; padding-top: 0; border-top: 0; }
+  .has-syntax:not(.show-syntax) .ws-syntax, .has-syntax.show-syntax .ws-ppanel { display: none; }
+}
+
+/* laptop: the word card is 236px wide, so each label starts its line */
+@media (min-width: 1501px) and (max-width: 2100px) {
+  .syn-grid { display: block; }
+  .syn-grid dt { display: inline-block; margin-right: 6px; padding: 1px 7px; }
+  .syn-grid dd { display: inline; }
+  .syn-grid dd::after { content: ""; display: block; margin-bottom: 8px; }
+}
+
+@media (any-pointer: coarse) {
+  .ws-ptab { height: 44px; }
+  .st-switch button { height: 40px; }
+}
+
+/* Dictionary column: short definitions, principal parts, the LSJ entry */
+.ws-dict-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 24px 18px;
+}
+
+.ws-dict-for { display: none; margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+.ws-dict-for .greek { font-size: 16px; color: var(--text); }
+.ws-dict + .ws-dict { margin-top: 8px; }
+.ws-dict .ws-muted .greek { color: var(--text); }
+.ws-dict-line { max-width: 720px; margin: 0; font-size: 16px; line-height: 1.5; }
+.ws-dict-line .greek { margin-right: 8px; font-size: 21px; font-weight: 700; }
+/* a model's dictionary form replaces LSJ's headword; its Homeric forms */
+.ws-dict-forms { max-width: 720px; margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
+.ws-dict-forms .by { white-space: nowrap; }
+
+.ws-dict-src {
+  margin-right: 6px;
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  vertical-align: 3px;
+}
+
+.ws-parts { margin-top: 16px; }
+
+.ws-parts-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.ws-parts-source { font-size: 13px; color: var(--muted); }
+
+/* principal parts: six cells in a row; a list or a summary when narrow */
+.pp-list {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pp {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--row-group);
+  box-shadow: inset 0 0 0 1px var(--divider);
+}
+
+.pp-name { font-size: 13px; color: var(--muted); }
+.pp-value { display: flex; flex-direction: column; gap: 3px; }
+
+.pp-form {
+  font-family: var(--font-greek);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.pp-note { font-size: 13px; line-height: 1.35; color: var(--text-2); }
+.pp-summary { display: none; margin: 0; font-size: 14px; color: var(--muted); }
+.pp-summary .greek { margin-left: 6px; font-size: 18px; color: var(--text); }
+
+/* the principal part the clicked form comes from */
+.pp.is-current { background: var(--accent-tint); box-shadow: inset 0 0 0 2px var(--accent); }
+.pp.is-current .pp-form { color: var(--accent-dark); }
+
+.pp-this {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
+  vertical-align: 1px;
+}
+
+.pp-cur {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* a verb's construction, under its principal parts */
+.ws-constr { margin-top: 14px; max-width: 720px; }
+.ws-constr .label { margin-bottom: 4px; }
+.ws-constr p { margin: 0; font-size: 15px; line-height: 1.5; }
+.ws-constr [lang=grc] { font-family: var(--font-greek); font-size: 17px; }
+
+.ws-lsj-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: 18px;
+}
+
+.ws-lsj-head .label { margin: 0; }
+.ws-lsj-credit { font-size: 13px; color: var(--muted); }
+.ws-lsj-toggle { gap: 6px; margin-left: auto; }
+.ws-lsj-toggle .t-open, .ws-lsj-toggle .t-close, .ws-lsj-toggle .t-collapse { display: none; }
+.ws-lsj-toggle .chevron { transition: transform 0.15s; }
+
+/* the entry scrolls in a box that fills what the column leaves */
+.ws-lsj {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 160px;
+  margin-top: 10px;
+}
+
+.ws-lsj-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 22px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  background: var(--table-head);
+}
+
+.lsj-entry {
+  max-width: 820px;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.lsj-entry + .lsj-entry { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--divider); }
+.lsj-head { margin: 0 0 6px; font-size: 19px; font-weight: 700; color: var(--text); }
+.lsj-entry p { margin: 0 0 10px; }
+.lsj-entry p[data-level="2"] { padding-left: 20px; }
+.lsj-entry p[data-level="3"] { padding-left: 40px; }
+.lsj-entry p[data-level="4"] { padding-left: 60px; }
+.lsj-entry [lang="grc"] { font-family: var(--font-greek); font-size: 17px; color: var(--text); }
+.lsj-entry b { color: var(--accent-dark); }
+.lsj-entry b[lang="grc"] { color: var(--text); }
+.lsj-entry em { font-style: normal; font-weight: 600; color: var(--text); }
+.lsj-entry i { color: var(--muted); }
+.lsj-entry cite { font-style: normal; color: var(--muted); }
+.lsj-credit { max-width: 820px; margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+.lsj-credit cite { font-style: italic; }
+
+/* Laptop only: the passage box, folded while the LSJ entry fills the column */
+.passage-bar { display: none; }
+/* Laptop only: the passage box's Expand button, and Show word on the word
+   folded above the expanded box */
+.pb-expand, .word-unfold { display: none; }
+
+/* Monitor: the open entry makes the word pane taller */
+@media (min-width: 2101px) {
+  .reader.dict-open .reader-word { flex: 0 0 64%; }
+  .reader.dict-open .word-strip { height: 100%; }
+  .reader.dict-open .ws-lsj-toggle .t-expand { display: none; }
+  .reader.dict-open .ws-lsj-toggle .t-collapse { display: inline; }
+  .reader.dict-open .ws-lsj-toggle .chevron { transform: rotate(180deg); }
+}
+
+/* passage box */
+
+.passage-box {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pb-head {
+  flex: 0 0 auto;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.passage-box.has-tabs .pb-head { padding-bottom: 0; border-bottom: 0; }
+
+.pb-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.pb-title { margin: 0; font-size: 16px; font-weight: 600; }
+.pb-title .ref { font-weight: 400; color: var(--muted); }
+
+.pb-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pb-meta .link-btn { font-size: 14px; }
+
+.pb-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pb-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  padding: 8px 20px 0;
+  border-bottom: 1px solid var(--divider);
+}
+
+.pb-tab {
+  height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.pb-tab:hover { color: var(--text); }
+.pb-tab:disabled { opacity: 0.5; cursor: default; }
+.pb-tab:disabled:hover { color: var(--muted); }
+
+.pb-tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.pb-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pb-prose {
+  padding: 16px 20px;
+  font-family: var(--font-greek);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.pb-prose p { max-width: 72ch; margin: 0 0 12px; text-wrap: pretty; }
+
+/* study data: a fluent translation per unit, labelled with the unit's range,
+   and a literal translation per line */
+.pb-unit + .pb-unit { margin-top: 20px; }
+.pb-unit-label { margin-bottom: 6px; font-family: var(--font-ui); }
+.pb-unit-label .ref { letter-spacing: 0; color: var(--accent); }
+.literal-lines { margin: 0; padding: 0; list-style: none; }
+
+.literal-lines li {
+  display: grid;
+  grid-template-columns: 3.2em minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  max-width: 80ch;
+  padding: 2px 0;
+}
+
+.literal-lines .ref { font-size: 13px; color: var(--ref); }
+
+.pb-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 20px;
+}
+
+.pb-lead { margin: 0; font-size: 17px; font-weight: 600; }
+
+.pb-text {
+  max-width: 70ch;
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.pb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* grammar: every word */
+
+.pb-words { padding: 0; }
+.words-table { font-size: 15px; }
+
+.wt-head,
+.wt-row {
+  display: grid;
+  grid-template-columns: 170px 200px 250px minmax(0, 1fr);
+  gap: 20px;
+  padding: 10px 20px;
+}
+
+.wt-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+  background: var(--table-head);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wt-line {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px 20px 6px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--row-group);
+}
+
+.wt-line .ref { font-size: 13px; font-weight: 500; color: var(--accent); }
+.wt-line-text { font-family: var(--font-greek); font-size: 17px; color: var(--muted); }
+
+.wt-row {
+  align-items: baseline;
+  border-bottom: 1px solid var(--row-divider);
+  cursor: pointer;
+}
+
+.wt-row:hover { background: var(--selected); }
+.wt-row.is-active { background: var(--accent-tint); }
+.wt-word { display: flex; flex-direction: column; }
+.wt-form { font-family: var(--font-greek); font-size: 19px; font-weight: 700; }
+.wt-lemma { font-family: var(--font-greek); font-size: 16px; color: var(--muted); }
+.wt-parse { font-size: 14px; color: var(--text-2); }
+.wt-note { line-height: 1.5; color: var(--text-2); text-wrap: pretty; }
+.wt-dict { color: var(--muted); }
+
+.wt-check {
+  display: block;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--warn);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.wt-more { margin: 0; padding: 12px 20px; font-size: 14px; color: var(--muted); }
+/* where the meanings and parsings come from; a parse the treebank lacks names its model */
+.wt-sources { margin: 0; padding: 10px 20px; font-size: 13px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+.wt-by { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+
+/* sentence structure: In order adds each word's role and use; Structure
+   shows each treebank sentence as an outline (reader.js switches them) */
+#panel-words { container: words / inline-size; }
+.st-switch {
+  display: inline-flex;
+  gap: 2px;
+  margin: 12px 20px 2px;
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+}
+.st-switch button {
+  height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.st-switch button:hover { color: var(--text); }
+.st-switch button[aria-checked="true"] {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(26, 29, 34, 0.12);
+}
+
+.words-table.has-roles .wt-head,
+.words-table.has-roles .wt-row { grid-template-columns: 150px 160px 190px 250px minmax(0, 1fr); }
+.wt-role { font-size: 14px; color: var(--accent-dark); }
+.wt-role [lang="grc"], .st-role [lang="grc"] { font-family: var(--font-greek); font-size: 16px; }
+.wt-use, .st-use {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.wt-use [lang="grc"], .st-use [lang="grc"] { font-family: var(--font-greek); font-size: 15px; }
+.wt-use { display: block; width: fit-content; margin-top: 4px; }
+.wt-auto { display: block; margin-top: 2px; font-size: 12px; color: var(--warn); }
+
+.st-sentence + .st-sentence { border-top: 1px solid var(--border); }
+.st-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 12px 20px 2px;
+  background: var(--row-group);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.st-head .ref { font-family: var(--font-mono); color: var(--accent); }
+.st-auto { padding: 1px 8px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); }
+.st-text-toggle { display: none; margin-left: auto; font-size: 13px; }
+.st-text {
+  margin: 0;
+  padding: 2px 20px 10px;
+  border-bottom: 1px solid var(--divider);
+  background: var(--row-group);
+  font-family: var(--font-greek);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.st-text .st-out, .st-row.is-out .st-greek, .st-row.is-out .st-gloss, .st-row.is-out .st-role { color: #A3AAB4; }
+.st-row.is-out .st-use { opacity: 0.55; }
+.st-rows, .st-children { margin: 0; padding: 0; list-style: none; }
+.st-rows { padding: 6px 0 10px; }
+/* a row: its Greek and meaning, indented by depth (with guides), its role and its use */
+.st-row {
+  --step: 22px;
+  --cap: 6;
+  --indent: calc(min(var(--d), var(--cap)) * var(--step));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px minmax(0, 0.9fr);
+  align-items: baseline;
+  gap: 2px 16px;
+  padding: 5px 20px;
+  background-image: repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px var(--step));
+  background-size: var(--indent) 100%;
+  background-position: 27px 0;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.st-row:hover { background-color: var(--selected); }
+.st-item.is-active > .st-row { background-color: var(--accent-tint); }
+.st-item:focus-visible { outline: none; }
+.st-item:focus-visible > .st-row { outline: 2px solid var(--accent); outline-offset: -2px; }
+.st-lead { min-width: 0; padding-left: var(--indent); overflow-wrap: anywhere; }
+.st-greek { font-family: var(--font-greek); font-size: 18px; }
+.st-row.is-clause .st-greek { font-weight: 700; }
+.st-row.is-top .st-greek { font-size: 19px; }
+.st-understood { font-family: var(--font-ui); font-size: 14px; font-style: italic; font-weight: 400; color: var(--muted); }
+.st-gloss { margin-left: 10px; font-size: 15px; color: var(--text-2); }
+.st-gloss.is-lsj { color: var(--muted); }
+.st-role { font-size: 14px; color: var(--accent-dark); }
+.st-use { justify-self: start; }
+.st-toggle {
+  display: inline-block;
+  width: 20px;
+  margin-left: -20px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+.st-toggle::before { content: "▾"; }
+.st-item[aria-expanded="false"] > .st-row .st-toggle::before { content: "▸"; }
+.st-item[aria-expanded="false"] > .st-children { display: none; }
+.st-more { display: none; margin-left: 8px; color: var(--muted); font-size: 13px; }
+.st-item[aria-expanded="false"] > .st-row .st-more { display: inline; }
+.st-deep {
+  margin-right: 6px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--code-bg);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.st-deep-4 { display: none; }
+/* the words of a hovered or focused row: its own, and those under it */
+.w.st-own { outline: 2px dashed var(--gloss); outline-offset: 1px; border-radius: 6px; background: var(--highlight); }
+.w.st-dep { border-radius: 4px; background: var(--warn-bg); }
+
+/* a narrow box (laptop, iPad): the role on the Greek's line, right-aligned
+   when it fits, the use under them; indentation stops at four levels */
+@container words (max-width: 760px) {
+  .st-row { --step: 16px; --cap: 4; display: flex; flex-wrap: wrap; column-gap: 12px; row-gap: 1px; }
+  .st-lead { flex: 1 1 auto; }
+  .st-role { margin-left: auto; font-size: 13px; text-align: right; }
+  .st-use-wrap { flex: 0 0 100%; padding-left: var(--indent); }
+  .st-use { margin-top: 1px; font-size: 12.5px; }
+  .st-toggle { width: 16px; margin-left: -17px; }
+  .st-deep-4 { display: inline; }
+  .st-deep-6 { display: none; }
+}
+
+/* a finger (iPad): a larger triangle, and a tap anywhere left of the Greek,
+   the row's height and up to 44px of its indent, folds the row */
+@media (any-pointer: coarse) {
+  .st-row { --hit: min(44px, calc(20px + var(--indent))); position: relative; }
+  .st-toggle { width: 22px; margin: 0 3px 0 -25px; font-size: 18px; line-height: 1; }
+  .st-toggle::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(20px + var(--indent) - var(--hit));
+    width: var(--hit);
+  }
+}
+
+/* Laptop: a compact word card above a 560px passage column. */
+@media (max-width: 2100px) {
+  .reader {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr) 560px;
+  }
+
+  .text-pane { min-width: 0; }
+  .reader-side { min-width: 0; }
+  .line-words { font-size: 21px; }
+  .pane-toolbar { flex-wrap: wrap; gap: 8px 12px; }
+  .pane-title { white-space: normal; }
+  .reader-word { max-height: 58%; overflow-y: auto; }
+  .word-strip {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "word parse"
+      "note note";
+  }
+  .word-strip.has-dict {
+    grid-template-columns: 236px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "word dict"
+      "parse dict"
+      "note note";
+  }
+  .ws-col { padding: 14px 16px; }
+  .ws-dict-col { padding: 14px 16px 16px; }
+  .word-strip:not(.has-dict) .ws-col.ws-note { border-left: 0; border-top: 1px solid var(--divider); }
+  .has-dict .ws-note { border-right: 0; }
+  .parse-grid { grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; }
+  .ws-dict-line { font-size: 15px; }
+  .ws-dict-line .greek { font-size: 20px; }
+  .ws-parts { margin-top: 14px; }
+  .ws-parts-head .ws-parts-source { flex-basis: 100%; order: 3; }
+  /* principal parts as a list: name, then form and note */
+  .pp-list { grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin-top: 8px; }
+  .pp { display: contents; }
+  .pp-name { align-self: baseline; }
+  .pp-value { display: block; align-self: baseline; }
+  .pp-form { font-size: 18px; }
+  .pp-note { font-size: 12.5px; color: var(--muted); }
+  /* the entry is closed: only its button shows */
+  .ws-lsj, .ws-lsj-head .label, .ws-lsj-credit { display: none; }
+  .ws-lsj-head { margin-top: 14px; }
+  .ws-lsj-toggle { margin-left: 0; color: var(--accent); }
+  .ws-lsj-toggle .t-expand { display: none; }
+  .ws-lsj-toggle .t-open { display: inline; }
+  .pb-head-row { align-items: flex-start; flex-wrap: wrap; }
+  .pb-meta { flex-wrap: wrap; gap: 4px 12px; }
+
+  .wt-head, .wt-row {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 8px 12px;
+    padding: 10px 16px;
+    overflow-wrap: anywhere;
+  }
+  .wt-head [role="columnheader"]:last-child { display: none; }
+  /* the role and use under the parsing */
+  .words-table.has-roles .wt-head,
+  .words-table.has-roles .wt-row { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr); }
+  .words-table.has-roles .wt-head [role="columnheader"]:nth-child(4) { display: none; }
+  .wt-row.has-role .wt-word, .wt-row.has-role .wt-meaning { grid-row: span 2; }
+  .wt-role { grid-column: 3; margin-top: -4px; }
+  .wt-role:empty { display: none; }
+  .wt-note { grid-column: 1 / -1; font-size: 14px; }
+  .wt-note:empty { display: none; }
+  .wt-line { gap: 10px; padding: 12px 16px 6px; }
+  .wt-line-text { min-width: 0; overflow-wrap: anywhere; }
+}
+
+/* Laptop: the open LSJ entry fills the study column. The word and the
+   principal parts shrink to a line each, and the passage box to a bar. */
+@media (min-width: 1501px) and (max-width: 2100px) {
+  .reader.dict-open .reader-word { flex: 1 1 auto; max-height: none; overflow: hidden; display: flex; flex-direction: column; }
+  .reader.dict-open .word-strip { flex: 1 1 auto; min-height: 0; }
+  .reader.dict-open .passage-box { display: none; }
+  .reader.dict-open .passage-bar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px 10px 16px;
+  }
+  .passage-bar .pb-title .ref { font-family: var(--font-mono); font-size: 14px; }
+  .passage-bar .btn { gap: 6px; color: var(--accent); }
+  .passage-bar .chevron { transform: rotate(180deg); }
+  .reader.dict-open .word-strip.has-dict {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "word"
+      "dict";
+  }
+  .reader.dict-open .ws-parse, .reader.dict-open .ws-note, .reader.dict-open .ws-source { display: none; }
+  .reader.dict-open .ws-word {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding-bottom: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--divider);
+  }
+  .reader.dict-open .ws-word > .label { flex-basis: 100%; margin-bottom: 0; }
+  .reader.dict-open .ws-greek { font-size: 26px; }
+  .reader.dict-open .ws-meaning, .reader.dict-open .ws-tags { margin-top: 0; }
+  .reader.dict-open .ws-summary { display: block; flex-basis: 100%; margin: 2px 0 0; font-size: 14px; color: var(--text-2); }
+  .reader.dict-open .ws-parts-head, .reader.dict-open .pp-list { display: none; }
+  .reader.dict-open .pp-summary { display: block; }
+  .reader.dict-open .ws-parts { margin-top: 8px; }
+  .reader.dict-open .ws-lsj { display: block; }
+  .reader.dict-open .ws-lsj-head .label, .reader.dict-open .ws-lsj-credit { display: inline; }
+  .reader.dict-open .ws-lsj-toggle { margin-left: auto; color: var(--text); }
+  .reader.dict-open .ws-lsj-toggle .t-open { display: none; }
+  .reader.dict-open .ws-lsj-toggle .t-close { display: inline; }
+  .reader.dict-open .ws-lsj-toggle .chevron { transform: rotate(180deg); }
+  .reader.dict-open .ws-lsj-scroll { padding: 14px 18px; }
+
+  /* Laptop: the expanded passage box fills the study column. The word folds
+     into a line or two above it, as for the open LSJ entry, beside Show word. */
+  .pb-expand { display: inline-flex; gap: 6px; height: 32px; margin: -4px 0; color: var(--accent); }
+  .pb-expand .chevron { transform: rotate(180deg); }
+  .pb-expand .t-collapse { display: none; }
+  .reader.passage-expanded .pb-expand { color: var(--text); }
+  .reader.passage-expanded .pb-expand .chevron { transform: none; }
+  .reader.passage-expanded .pb-expand .t-expand { display: none; }
+  .reader.passage-expanded .pb-expand .t-collapse { display: inline; }
+  .reader.passage-expanded .reader-word { overflow: hidden; }
+  .reader.passage-expanded .word-strip { display: block; }
+  .reader.passage-expanded .ws-parse,
+  .reader.passage-expanded .ws-note,
+  .reader.passage-expanded .ws-dict-col,
+  .reader.passage-expanded .ws-freq,
+  .reader.passage-expanded .ws-word .ws-source { display: none; }
+  .reader.passage-expanded .ws-word {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding: 12px 136px 12px 16px;
+    border: 0;
+  }
+  .reader.passage-expanded .ws-word > .label { flex-basis: 100%; margin-bottom: 0; }
+  .reader.passage-expanded .ws-greek { font-size: 26px; }
+  .reader.passage-expanded .ws-meaning, .reader.passage-expanded .ws-tags { margin-top: 0; }
+  .reader.passage-expanded .ws-summary { display: block; flex-basis: 100%; margin: 2px 0 0; font-size: 14px; color: var(--text-2); }
+  .reader.passage-expanded .reader-word:has(.word-strip.has-word) .word-unfold {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    display: inline-flex;
+    gap: 6px;
+    color: var(--accent);
+    transform: translateY(-50%);
+  }
+}
+
+/* iPad landscape: drawer navigation, text and one 540px study panel.
+   Two header rows keep every destination and reader control available. */
+@media (max-width: 1500px) {
+  .app-header { flex-basis: auto; min-height: 56px; flex-wrap: wrap; gap: 8px 12px; padding: 8px 16px; }
+  .app-header:has(.reader-menu) { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto auto; }
+  .app-header:has(.reader-menu) .brand { grid-column: 1 / 3; grid-row: 1; }
+  .app-header:has(.reader-menu) .main-nav { grid-column: 3 / 5; grid-row: 1; justify-self: end; }
+  .app-header:has(.reader-menu) .header-spacer { display: none; }
+  .app-header .reader-menu { display: inline-flex; grid-column: 1; grid-row: 2; background: var(--header-control); border-color: var(--header-control); color: var(--header-text); cursor: pointer; }
+  .reader-menu:hover { color: #FFFFFF; border-color: var(--header-muted); }
+  .goto { grid-column: 2; grid-row: 2; flex-wrap: wrap; gap: 4px; }
+  .goto .header-field { flex: 1 1 auto; min-width: 0; max-width: 480px; }
+  .goto .header-field input { width: 100%; min-width: 0; }
+  .goto-error { flex-basis: 100%; white-space: normal; }
+  .interlinear-control { grid-column: 3 / 5; grid-row: 2; justify-self: end; }
+  .main-nav a { height: 48px; padding: 0 12px; }
+  .header-field, .header-check { min-height: 48px; }
+
+  .reader { grid-template-columns: minmax(0, 1fr) 540px; gap: 12px; padding: 12px; }
+  .reader-nav { display: none; }
+  .drawer-backdrop:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 40; border: 0; background: rgba(26, 29, 34, 0.35); cursor: pointer; }
+  .reader.nav-open .reader-nav {
+    position: fixed;
+    inset: 12px auto 12px 12px;
+    z-index: 41;
+    display: flex;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--page);
+    box-shadow: 0 12px 40px rgba(26, 29, 34, 0.2);
+    overscroll-behavior: contain;
+  }
+  .drawer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .book-grid-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .book-grid-nav a { height: 48px; }
+  .reader-side { gap: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); overflow: hidden; }
+  .reader-tabs { flex: 0 0 auto; display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--divider); }
+  .reader-tabs .pb-tab { height: 52px; }
+  .reader-tabs .pb-tab:disabled { opacity: 0.5; cursor: default; }
+  .reader .reader-side .panel { border: 0; border-radius: 0; }
+  .reader-word { flex: 1 1 auto; max-height: none; overflow-y: auto; }
+  .reader-side .pb-tabs { display: none; }
+  .reader-side .pb-head { padding: 14px 16px 12px; border-bottom: 1px solid var(--divider); }
+  .reader-side .pb-prose, .reader-side .pb-body { padding: 16px; }
+  .text-scroll { padding: 12px 12px 20px; overscroll-behavior: contain; }
+  .pane-toolbar { padding: 10px 12px; }
+  .selection-chip { min-height: 48px; }
+  .icon-btn { flex-shrink: 0; width: 48px; height: 48px; }
+  .btn, .btn-small, .btn-toolbar, .search-field { min-height: 48px; }
+  .chip-clear, .search-clear { width: 48px; height: 48px; }
+  /* A finger-sized number that still reads on its line of Greek: the line
+     aligns baselines as on a laptop, so the number and its gloss mark sit on
+     the Greek, not lower (Interlinear off) or between it and its glosses */
+  .line-ref { min-height: 48px; touch-action: manipulation; }
+  .w { display: inline-block; min-width: 44px; min-height: 48px; }
+  .interlinear-on .has-glosses .w { min-height: 56px; }
+  .wt-row { min-height: 48px; }
+  .ws-lsj summary { min-height: 48px; padding-top: 12px; padding-bottom: 12px; }
+  .search-summary { flex-wrap: wrap; gap: 4px 12px; }
+  .mouse-selection-help { display: none; }
+  .touch-selection-help { display: inline; }
+  .pb-panel, .pb-body { overscroll-behavior: contain; }
+  /* The full LSJ entry is the Dictionary tab, which "Full LSJ entry" opens:
+     the entry under its headword, short definition and principal parts. */
+  .ws-lsj-toggle .chevron { transform: rotate(-90deg); }
+  .reader.dict-open .word-strip.has-dict { display: block; }
+  .reader.dict-open .ws-word, .reader.dict-open .ws-parse, .reader.dict-open .ws-note { display: none; }
+  .reader.dict-open .ws-dict-col { padding: 16px; }
+  .reader.dict-open .ws-dict-head .label, .reader.dict-open .ws-parts-head, .reader.dict-open .pp-list { display: none; }
+  .reader.dict-open .ws-dict-for, .reader.dict-open .pp-summary { display: block; }
+  .reader.dict-open .ws-parts { margin-top: 6px; }
+  .reader.dict-open .ws-lsj-head { margin-top: 0; padding: 14px 0 8px; border-bottom: 1px solid var(--divider); }
+  .reader.dict-open .ws-lsj-head .label, .reader.dict-open .ws-lsj-credit { display: inline; }
+  .reader.dict-open .ws-lsj-toggle { display: none; }
+  .reader.dict-open .ws-lsj { display: block; position: static; min-height: 0; margin-top: 12px; }
+  .reader.dict-open .ws-lsj-scroll { position: static; overflow: visible; padding: 0; border: 0; background: none; }
+}
+
+/* iPad portrait: full-width text above a 540px bottom study panel. */
+@media (max-width: 1100px) {
+  .reader { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) min(540px, 50dvh); }
+  .reader-word .word-strip { grid-template-columns: 260px minmax(0, 1fr); }
+  /* the note spans both columns: Phase 5c notes run to several sentences,
+     which a 330 px column turned into a tall strip below the panel's edge */
+  .reader-word .word-strip.has-dict {
+    grid-template-columns: 330px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "word dict"
+      "parse dict"
+      "note note";
+  }
+  .reader-word .parse-grid { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); }
+  /* under the word, 330 px is too narrow for two pairs such as "Voice middle/passive" */
+  .reader-word .has-dict .parse-grid { grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; }
+  .has-dict .ws-note { border-right: 0; }
+  .ws-dict-col { padding: 14px 20px 16px; }
+  .ws-parts-head .ws-parts-source { flex-basis: auto; order: 0; }
+  .pp-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .pp { display: flex; padding: 8px 10px; }
+  .pp-value { display: flex; }
+  .pp-form { font-size: 19px; }
+  .pp-note { color: var(--text-2); }
+  .reader-tabs { padding: 0 16px; }
+  .pane-title { font-size: 17px; }
+  /* the study panel shows a few outline rows: a sentence's text folds */
+  .st-head { padding-top: 4px; padding-bottom: 4px; }
+  .st-text-toggle { display: inline-flex; align-items: center; min-height: 40px; }
+  .st-sentence:not(.shows-text) .st-text { display: none; }
+  .st-sentence:not(.shows-text) .st-head { border-bottom: 1px solid var(--divider); }
+}
+
+/* iPad, both orientations, and phones: one slim bar instead of two header
+   rows and the text toolbar. The header keeps the drawer button and
+   Interlinear; the text toolbar is fixed between them (it stays in the text
+   pane's markup, so pane swaps keep working), and reader.js moves Go to into
+   the drawer (and a phone's Interlinear). On an iPad nothing around the text
+   changes size or moves while you read: the page doesn't bounce, and the
+   range hint floats over the text. Keep the breakpoints in sync with
+   reader.js. */
+@media (max-width: 1500px) {
+  html, body { overscroll-behavior: none; }
+  .reader-word { overscroll-behavior: contain; }
+
+  .app { --bar-end: 112px; } /* the Interlinear control */
+  .app-header:has(.reader-menu) {
+    display: flex;
+    flex: 0 0 60px;
+    min-height: 0;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .app-header:has(.reader-menu) .brand,
+  .app-header:has(.reader-menu) .main-nav,
+  .app-header:has(.reader-menu) .header-spacer,
+  .app-header .goto { display: none; }
+  .app-header .interlinear-control { flex: 0 0 var(--bar-end); justify-content: flex-end; margin-left: auto; }
+
+  #text-pane { position: relative; }
+  #text-pane > .pane-toolbar {
+    position: fixed;
+    top: 0;
+    left: 72px; /* 12px, the 48px drawer button, 12px */
+    right: calc(var(--bar-end) + 24px);
+    z-index: 30;
+    height: 60px;
+    min-height: 0;
+    padding: 0;
+    flex-wrap: nowrap;
+    gap: 12px;
+    border: 0;
+    color: var(--header-text);
+  }
+  #text-pane > .pane-toolbar :focus-visible { outline-color: var(--header-accent); }
+  .pane-toolbar .pane-title {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #FFFFFF;
+  }
+  .pane-toolbar .pane-title-book, .pane-toolbar .pane-range { color: var(--header-muted); }
+  .pane-toolbar .pane-range { flex-shrink: 0; align-self: stretch; padding: 0 4px; }
+  .pane-toolbar .icon-btn,
+  .pane-toolbar .btn-toolbar { border-color: transparent; background: var(--header-control); color: var(--header-text); }
+  .pane-toolbar .icon-btn.is-disabled { opacity: 0.35; }
+  .pane-toolbar .btn-toolbar[aria-expanded="true"] { border-color: var(--header-accent); background: rgba(242, 207, 122, 0.18); color: #FFFFFF; }
+  .pane-toolbar .selection-chip { flex-shrink: 0; background: rgba(255, 255, 255, 0.16); color: #FFFFFF; }
+  .pane-toolbar .chip-clear { color: inherit; }
+  .pane-toolbar .chip-clear:hover { background: rgba(255, 255, 255, 0.16); }
+
+  .selection-hint {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    border-radius: 9px 9px 0 0;
+    box-shadow: 0 6px 16px rgba(26, 29, 34, 0.12);
+  }
+
+  /* the drawer: Go to on top, then the texts and books, and the app's pages */
+  .drawer-only { display: block; }
+  .drawer-pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
+  .reader-nav .goto .header-field { flex: 1 1 100%; max-width: none; }
+  .reader-nav .header-field { border: 1px solid var(--border-strong); background: var(--panel); color: var(--text); }
+  .reader-nav .header-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
+  .reader-nav .header-field-label { color: var(--muted); }
+  .reader-nav .header-field input { flex: 1 1 auto; min-width: 0; max-width: none; color: var(--text); }
+  .reader-nav .goto-error { color: var(--error); }
+}
+
+/* iPad portrait and a phone in landscape: the selection makes room for the
+   book's title */
+@media (max-width: 1100px) {
+  .pane-toolbar .selection-word { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
+/* Phone: a 56px bar holds the drawer button and the text toolbar: the
+   book's title over the line at the top, the arrows and search. Interlinear
+   is in the drawer, under Go to. */
+@media (max-width: 700px) {
+  .app-header { padding: 8px 12px; }
+  .page { padding: 28px 16px 40px; }
+  .app-header:has(.reader-menu) { flex-basis: 56px; gap: 8px; padding: 0 8px; }
+  .app-header .interlinear-control { display: none; }
+  .app-header .reader-menu, .pane-toolbar .icon-btn { width: 44px; height: 44px; }
+  #text-pane > .pane-toolbar { left: 60px; right: 8px; height: 56px; gap: 4px; }
+  /* the title over the range; the range is the button under both, so a tap
+     on either opens Go to */
+  #text-pane > .pane-toolbar:has(> .pane-title) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+  }
+  .pane-toolbar .pane-title { grid-area: 1 / 1; align-self: end; font-size: 16px; line-height: 20px; }
+  .pane-title-part { display: none; }
+  .pane-toolbar .pane-range { grid-area: 1 / 1 / 3 / 2; padding: 30px 0 0; font-size: 12px; text-align: left; }
+  .pane-toolbar .pager { grid-area: 1 / 2 / 3 / 3; }
+  .pane-toolbar > .icon-btn { grid-area: 1 / 3 / 3 / 4; }
+  .pane-toolbar .toolbar-spacer, .pane-toolbar .selection-chip { display: none; }
+  .pane-toolbar .search-form + .btn-toolbar { min-height: 44px; height: 44px; padding: 0 10px; }
+  .pane-toolbar .search-field { min-height: 44px; height: 44px; }
+
+  .text-scroll { padding: 8px 12px 20px 0; }
+  .line { grid-template-columns: 52px minmax(0, 1fr); padding-right: 0; }
+  .is-prose .line { grid-template-columns: 64px minmax(0, 1fr); padding-right: 0; }
+  .line-ref { padding: 2px 8px 2px 0; font-size: 12px; }
+  .line-words { font-size: 20px; }
+  .is-prose .line-words { font-size: 19px; }
+  .next-page { margin-left: 52px; }
+  .search-results { padding: 0 4px 20px; }
+  .search-summary { padding: 12px 12px 4px; }
+  .search-hit { grid-template-columns: 64px minmax(0, 1fr); }
+
+  .reader-tabs { padding: 0 4px; }
+  .reader-tabs .pb-tab { flex: 0 0 auto; height: 48px; padding: 0 8px; font-size: 14px; white-space: nowrap; }
+  .reader-word .word-strip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .reader-word .word-strip.has-dict {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "word"
+      "parse"
+      "note"
+      "dict";
+  }
+  .has-dict .ws-word, .has-dict .ws-parse, .has-dict .ws-note { border-right: 0; }
+  .has-dict .ws-dict-col { border-top: 1px solid var(--divider); }
+  .reader-word .parse-grid { grid-template-columns: auto minmax(0, 1fr); }
+}
+
+/* Phone, and a short screen with the study panel under the text (a phone in
+   landscape): the text takes the screen under the bar, and the study panel
+   is a sheet under it, open while a word or lines are tapped. Its handle, a
+   swipe down or Escape closes it (reader.js). Keep the breakpoints in sync
+   with reader.js. */
+@media (max-width: 700px), (max-width: 1100px) and (max-height: 500px) {
+  .reader { --sheet-h: 55dvh; grid-template-rows: minmax(0, 1fr) auto; gap: 0; padding: 0; background: var(--panel); }
+  .reader > .text-pane { border: 0; border-radius: 0; }
+  /* The Greek keeps its spacing, so more lines fit: a word's target reaches
+     into the space around it instead, and a line number's above and below
+     it, so a line's targets tile it */
+  .w, .line-ref { position: relative; min-height: 0; }
+  .w { display: inline; min-width: 0; }
+  .w::after, .line-ref::after { content: ""; position: absolute; inset: -5px -3px; }
+  .line-ref::after { inset: -8px 0; }
+  /* the range hint floats over the bottom of the text, by the sheet, so it
+     doesn't cover the line just tapped */
+  .selection-hint { top: auto; bottom: 0; border-radius: 0; box-shadow: 0 -6px 16px rgba(26, 29, 34, 0.12); }
+  .reader-side { display: none; }
+  .reader.sheet-open .reader-side {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    height: var(--sheet-h);
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 24px rgba(26, 29, 34, 0.16);
+    transition: transform 0.15s ease-out;
+  }
+  /* a swipe down here closes the sheet; the tabs still scroll sideways */
+  .sheet-grip { flex: 0 0 auto; display: flex; touch-action: none; }
+  .reader-tabs { overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
+  .reader-tabs::-webkit-scrollbar { display: none; }
+  .sheet-handle {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    background: none;
+    cursor: pointer;
+  }
+  .sheet-handle::before { content: ""; width: 40px; height: 5px; border-radius: 3px; background: var(--border-strong); }
+  .sheet-handle:hover::before { background: var(--muted); }
+  .sheet-handle:focus-visible { outline-offset: -3px; }
+}
+
+/* a short screen: half of it for the sheet */
+@media (max-width: 1100px) and (max-height: 500px) {
+  .reader { --sheet-h: 50dvh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader.sheet-open .reader-side { transition: none; }
+}
+
+/* a phone's Interlinear, in the drawer */
+.reader-nav .interlinear-control { justify-self: auto; padding: 0 4px; }
+.reader-nav .header-check { flex: 1 1 auto; min-height: 44px; color: var(--text); }
+.reader-nav .header-check input { accent-color: var(--accent); }
+.reader-nav .interlinear-control.is-unavailable .header-check,
+.reader-nav .interlinear-note { color: var(--muted); }
+
+@media (any-pointer: coarse) {
+  .btn, .btn-small, .link-btn, .main-nav a, .book-grid a { min-height: 48px; }
+  .mouse-selection-help { display: none; }
+  .touch-selection-help { display: inline; }
+}
+
+/* ------------------------------------------------------------------- about */
+
+.about { max-width: 960px; }
+.about-section { margin-top: 40px; }
+.about-section h2 {
+  margin: 0 0 12px;
+  font-family: var(--font-greek);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.about-section p { margin: 0 0 12px; max-width: 72ch; line-height: 1.6; color: var(--text-2); }
+.about-table tbody th { white-space: nowrap; }
+.about-table td, .about-table tbody th { line-height: 1.5; }
+.about-author { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+.about-sources { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); gap: 12px 24px; margin: 0; }
+.about-sources dt { font-weight: 600; color: var(--text); }
+.about-sources dd { margin: 0; max-width: 64ch; line-height: 1.6; color: var(--text-2); }
+
+@media (max-width: 700px) {
+  .about-sources { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .about-sources dd + dt { margin-top: 12px; }
+  .about-table tbody th { white-space: normal; }
+}
+
+/* ---------------------------------------------------------------- contents */
+
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.data-table th, .data-table td { padding: 14px 20px; text-align: left; vertical-align: top; }
+.data-table thead { background: var(--table-head); color: var(--muted); font-size: 13px; }
+.data-table thead th { border-bottom: 1px solid var(--border); }
+.data-table tbody tr + tr { border-top: 1px solid var(--divider); }
+.data-table tbody th { font-weight: 500; }
+.data-table tbody tr:hover { background: var(--selected); }
+.contents-table { margin-top: 28px; }
+.contents-table td, .contents-table th { vertical-align: middle; }
+.contents-table td:last-child { text-align: right; }
+.contents-table .ref { color: var(--accent); white-space: nowrap; }
+
+@media (max-width: 700px) {
+  .data-table th, .data-table td { padding: 12px; }
+}

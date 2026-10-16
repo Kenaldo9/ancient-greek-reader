@@ -1,0 +1,41 @@
+<treebank version="2" xml:lang="grc">
+<!-- An excerpt in the shape of GLAUx's Thucydides (0003-001.xml), for tests: Greek in NFD; sentence 2 annotated by its parser; οὐδʼ split as οὐ + -δ’ (MWE); an elliptic node (z, E) and a bare CO. -->
+  <sentence struct_id="1" id="1" document_id="0003-001" analysis="manual">
+    <word id="100000001" form="Θουκυδίδης" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="Θουκυδίδης" postag="n-s---mn-" head="100000003" relation="SBJ"/>
+    <word id="100000002" form="Ἀθηναῖος" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="Ἀθηναῖος" postag="a-s---mn-" head="100000001" relation="ATR"/>
+    <word id="100000003" form="ξυνέγραψε" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="συγγράφω" postag="v3saia---" head="0" relation="PRED"/>
+    <word id="100000004" form="τὸν" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="ὁ" postag="l-s---ma-" head="100000005" relation="ATR"/>
+    <word id="100000005" form="πόλεμον" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="πόλεμος" postag="n-s---ma-" head="100000003" relation="OBJ"/>
+    <word id="100000006" form="," div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="," postag="u--------" head="100000007" relation="AuxX"/>
+    <word id="100000007" form="καὶ" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="καί" postag="b--------" head="100000003" relation="COORD"/>
+    <word id="100000008" form="ἐλπίσας" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="ἐλπίζω" postag="v-sapamn-" head="100000007" relation="ADV_CO"/>
+    <word id="100000009" form="μέγαν" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="μέγας" postag="a-s---ma-" head="100000011" relation="PNOM"/>
+    <word id="100000010" form="τε" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="τε" postag="b--------" head="100000011" relation="AuxY"/>
+    <word id="100000011" form="ἔσεσθαι" div_book="1" div_chapter="1.1" div_section="1.1.1" lemma="εἰμί" postag="v--fnm---" head="100000008" relation="OBJ"/>
+    <word id="100000012" form="οὐ" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="οὐ" postag="d--------" head="100000014" relation="AuxZ"/>
+    <word id="100000013" form="-δ’" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="δέ" postag="b--------" head="100000012" relation="MWE"/>
+    <word id="100000014" form="ὀλίγον" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="ὀλίγος" postag="a-s---ma-" head="100000009" relation="ATR"/>
+    <word id="100000015" form="." div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="." postag="u--------" head="0" relation="AuxK"/>
+  </sentence>
+  <sentence struct_id="2" id="2" document_id="0003-001" analysis="auto">
+    <word id="100000021" form="κίνησις" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="κίνησις" postag="n-s---fn-" head="100000028" relation="SBJ"/>
+    <word id="100000022" form="γὰρ" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="γάρ" postag="g--------" head="100000028" relation="AuxY"/>
+    <word id="100000023" form="αὕτη" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="οὗτος" postag="p-s---fn-" head="100000021" relation="ATR"/>
+    <word id="100000024" form="μεγίστη" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="μέγας" postag="a-s---fns" head="100000028" relation="PNOM"/>
+    <word id="100000025" form="δὴ" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="δή" postag="g--------" head="100000024" relation="AuxZ"/>
+    <word id="100000026" form="τοῖς" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="ὁ" postag="l-p---md-" head="100000027" relation="ATR"/>
+    <word id="100000027" form="Ἕλλησιν" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="Ἕλλην" postag="n-p---md-" head="100000028" relation="ADV"/>
+    <word id="100000028" form="ἐγένετο" div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="γίγνομαι" postag="v3saim---" head="0" relation="PRED"/>
+    <word id="100000029" form="." div_book="1" div_chapter="1.1" div_section="1.1.2" lemma="." postag="u--------" head="0" relation="AuxK"/>
+  </sentence>
+  <sentence struct_id="3" id="3" document_id="0003-001" analysis="manual">
+    <word id="100000031" form="Ἄρχεται" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="ἄρχω" postag="v3spie---" head="100000032" relation="PRED_CO"/>
+    <word id="100000032" form="δὲ" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="δέ" postag="b--------" head="0" relation="COORD"/>
+    <word id="100000033" form="ὁ" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="ὁ" postag="l-s---mn-" head="100000034" relation="ATR"/>
+    <word id="100000034" form="πόλεμος" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="πόλεμος" postag="n-s---mn-" head="100000031" relation="SBJ"/>
+    <word id="100000035" form="ἐνθένδε" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="ἐνθένδε" postag="d--------" head="100000031" relation="ADV"/>
+    <word id="100000036" form="ἤδη" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="ἤδη" postag="d--------" head="100000032" relation="CO"/>
+    <word id="1000000001" form="E" div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="E" postag="z--------" head="100000032" relation="PRED_CO" artificial="elliptic"/>
+    <word id="100000037" form="." div_book="2" div_chapter="2.1" div_section="2.1.1" lemma="." postag="u--------" head="0" relation="AuxK"/>
+  </sentence>
+</treebank>

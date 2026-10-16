@@ -1,0 +1,58 @@
+{# A link that swaps only the text pane (and the book grid / Go to box), keeping
+   the word strip and passage box as they are. Works as a plain link without JS. #}
+{% macro pane_link(url) -%}
+href="{{ url }}" hx-get="{{ url }}" hx-select="#text-pane" hx-target="#text-pane" hx-swap="outerHTML" hx-select-oob="#book-nav,#goto,#interlinear-control" hx-push-url="true"
+{%- endmacro %}
+
+{% macro icon(name) -%}
+{%- if name == "prev" -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+{%- elif name == "next" -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+{%- elif name == "chevron" -%}
+<svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+{%- elif name == "close" -%}
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+{%- elif name == "search" -%}
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+{%- endif -%}
+{%- endmacro %}
+
+{# One line of the text pane. A line with the study data's glosses
+   (.has-glosses) shows them under its words in interlinear mode. #}
+{% macro text_line(lv, unit, hit_ref=none) -%}
+<div class="line{% if lv.glosses is not none %} has-glosses{% endif %}{% if hit_ref and lv.ref == hit_ref %} is-hit{% endif %}" data-line="{{ lv.line.line_number }}" data-ref="{{ lv.ref }}">
+  <button type="button" class="line-ref" aria-pressed="false" aria-label="Select {{ unit }} {{ lv.ref }}">{{ lv.ref }}</button>
+  <div class="line-words" lang="grc">
+    {%- for w in lv.words -%}
+    <span class="w" data-i="{{ loop.index0 }}" tabindex="-1"><span class="w-g">{{ w }}</span><span class="w-t">
+      {%- if lv.glosses is not none %}{{ lv.glosses[loop.index0] or "·" }}{% endif -%}
+    </span></span>{{ " " }}
+    {%- endfor -%}
+  </div>
+</div>
+{%- endmacro %}
+
+{# A role phrase (greek/syntax.py): its text and the words it names, each
+   with its line's reference when that is another line. With links, the word
+   the role points to is a button that outlines it in the text (reader.js). #}
+{% macro phrase(parts, links=true) -%}
+{%- for p in parts -%}
+{%- if p is string %}{{ p }}{% else -%}
+{%- if links and p.link and p.line_number is not none -%}
+<button type="button" class="syn-ref" lang="grc" data-line="{{ p.line_number }}" data-i="{{ p.token_index }}" title="Show it in the text">{{ p.form }}</button>
+{%- else %}<span lang="grc">{{ p.form }}</span>{% endif -%}
+{%- if p.reference %} ({{ p.reference }}){% endif -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro %}
+
+{# The code's commit and the database's last migration (greek/version.py) #}
+{% macro version_line() -%}
+{%- set v = versions() -%}
+<p class="version-line">Code <span class="ref">{{ v.commit or "unknown" }}</span>
+{%- if v.built %} · built {{ v.built | date }} {{ v.built | time }}{% endif %}
+ · Database <span class="ref">{{ v.database_number or "none" }}</span>
+{%- if v.unknown %}<span class="version-warn">, newer than this code: rebuild</span>
+{%- elif v.pending %}, {{ v.pending | length }} to apply on restart{% endif %}</p>
+{%- endmacro %}

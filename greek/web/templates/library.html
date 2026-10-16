@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{# What a book chip's colour says (TextStudy) #}
+{% set book_states = {
+  "translated": "with translations, glosses and notes",
+  "partly": "some translations",
+  "none": "grammar and dictionary",
+} %}
+{% block title %}Library — Ancient Greek Reader{% endblock %}
+{% block main %}
+<div class="page page-wide">
+  <h1 class="page-title">Library</h1>
+
+  {% if cards %}
+  <p class="page-lede">{{ cards | length | count_noun("text") }} from the Perseus Digital Library.</p>
+
+  <div class="library-grid">
+    {% for c in cards %}
+    {% set t = c.text %}
+    <article class="panel text-card" aria-labelledby="text-{{ t.id }}">
+      <div>
+        {% if t.author %}<div class="label">{{ t.author }}</div>{% endif %}
+        <h2 class="text-card-title" id="text-{{ t.id }}">{{ t.title }}</h2>
+        <div class="text-card-stats">
+          {%- if c.books %}{{ c.books | length | count_noun("book") }} · {% endif -%}
+          {{ t.line_count | count_noun(c.unit) }}
+        </div>
+      </div>
+
+      <p class="text-card-first" lang="grc">
+        {%- if c.first_line -%}
+        {%- if c.first_line.reference %}<span class="ref">{{ c.first_line.reference }}</span>{% endif -%}
+        {{ c.first_line.content }}
+        {%- endif -%}
+      </p>
+
+      <p class="text-status is-{{ c.study.state }}">{{ c.study.label }}</p>
+
+      <div>
+        {% if c.books %}
+        <h3 class="label">Books</h3>
+        <div class="book-grid">
+          {% for b in c.books %}
+          {% set state = c.study.state_of(b.number) %}
+          <a class="is-{{ state }}" href="/texts/{{ t.id }}/read?at={{ b.ref_start }}" aria-label="Book {{ b.number }}, {{ ref_range(b.ref_start, b.ref_end) }}, {{ book_states[state] if c.study.treebank or state != 'none' else 'Greek text' }}">{{ b.number }}</a>
+          {% endfor %}
+        </div>
+        <ul class="book-key" aria-label="Key to the books">
+          {% for state in c.study.states %}
+          <li><span class="book-key-chip is-{{ state }}" aria-hidden="true"></span>{{ (book_states[state] if c.study.treebank or state != 'none' else 'Greek text') | capitalize }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="text-card-actions">
+        {# "Continue at …" where this browser last read the text (positions.js) #}
+        <a class="btn btn-primary" href="/texts/{{ t.id }}/read" data-resume="{{ t.id }}" data-resume-label>Start reading</a>
+        <a class="btn" href="/texts/{{ t.id }}/toc">Contents</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="panel empty-state">
+    <p>No texts yet.</p>
+    <p>Download one from the Perseus Digital Library with <code>greek fetch Homer</code> in the terminal, then reload this page.</p>
+  </div>
+  {% endif %}
+
+  {{ m.version_line() }}
+</div>
+{% endblock %}

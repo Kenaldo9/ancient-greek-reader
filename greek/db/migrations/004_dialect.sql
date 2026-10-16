@@ -1,0 +1,1 @@
+ALTER TABLE analyses ADD COLUMN dialect TEXT NOT NULL DEFAULT '';

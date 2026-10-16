@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}About — Ancient Greek Reader{% endblock %}
+{% block main %}
+{% set model_name = model | model_label %}
+<div class="page about">
+  <h1 class="page-title">About</h1>
+  <p class="page-lede">A reader for Ancient Greek texts: the Greek, every word's parsing, its role in the sentence and its dictionary entry, and in the books that have them, a gloss and a note on every word and translations of every line.</p>
+
+  <section class="about-section" aria-labelledby="about-texts">
+    <h2 id="about-texts">What each text has</h2>
+    <div class="panel table-scroll">
+      <table class="data-table about-table">
+        <thead>
+          <tr><th scope="col">Text</th><th scope="col">Parsing and roles</th><th scope="col">Glosses, notes and translations</th></tr>
+        </thead>
+        <tbody>
+          {% for a in texts %}
+          {% set s = a.study %}
+          <tr>
+            <th scope="row">{{ a.text.title }}{% if a.text.author %}<span class="about-author">{{ a.text.author }}</span>{% endif %}</th>
+            <td>
+              {%- if a.work and a.work.corpus == "glaux" -%}
+              GLAUx: {{ a.hand_share }}% of the sentences by hand, from {{ a.work.hand }}; the rest by GLAUx's parser, which can be wrong
+              {%- elif s.treebank -%}
+              The Perseus treebank, by hand
+              {%- else -%}
+              None yet
+              {%- endif -%}
+            </td>
+            <td>{% if s.state == "translated" %}Every book{% elif s.state == "partly" %}{{ s.label }}{% else %}Not yet{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="about-section" aria-labelledby="about-model">
+    <h2 id="about-model">Glosses, notes and translations</h2>
+    <p>The gloss and note on each word, the literal translation of each line and the fluent translation of each passage were written by {{ model_name }}, Anthropic's model, from the Greek text and the treebank's parse of every word. So were the use labels under Syntax, the dictionary forms and constructions, and the principal parts. They were made once, in batches, and saved: the reader itself asks no model anything.</p>
+    <p><strong>They can be wrong.</strong> Check them against the parsing and the dictionary. Where the model disagreed with the treebank's parse, the word shows its remark under Parse check.</p>
+  </section>
+
+  <section class="about-section" aria-labelledby="about-sources">
+    <h2 id="about-sources">Sources and licences</h2>
+    <dl class="about-sources">
+      <dt>Greek texts</dt>
+      <dd>The Perseus Digital Library (Tufts University), <a href="https://github.com/PerseusDL/canonical-greekLit">canonical-greekLit</a>: CC BY-SA 4.0.</dd>
+      <dt>The Iliad and the Odyssey: parsing and roles</dt>
+      <dd>The <a href="https://github.com/PerseusDL/treebank_data">Ancient Greek Dependency Treebank 2.1</a>, Perseus Digital Library: CC BY-SA 3.0.</dd>
+      <dt>Herodotus and Thucydides: parsing and roles</dt>
+      <dd>The <a href="https://github.com/alekkeersmaekers/glaux">GLAUx corpus</a> (Alek Keersmaekers, KU Leuven): CC BY-SA 4.0. Its sentences annotated by hand come from the <a href="https://github.com/proiel/proiel-treebank">PROIEL treebank</a> (Herodotus: CC BY-NC-SA 3.0) and <a href="https://github.com/vgorman1/Greek-Dependency-Trees">Vanessa Gorman's treebanks</a> (Thucydides: CC BY-NC-SA 4.0), not for commercial use. The reader marks the others, annotated by GLAUx's parser, as automatic.</dd>
+      <dt>Dictionary</dt>
+      <dd>Liddell, Scott and Jones, <cite>A Greek-English Lexicon</cite>, Perseus Digital Library, <a href="https://github.com/PerseusDL/lexica">lexica</a>: CC BY-SA 4.0.</dd>
+      <dt>Glosses, notes and translations</dt>
+      <dd>{{ model_name }}, as above: CC BY-SA 4.0.</dd>
+      <dt>Typefaces</dt>
+      <dd>Gentium Book Plus (SIL International), IBM Plex Sans and IBM Plex Mono: SIL Open Font License 1.1.</dd>
+    </dl>
+  </section>
+
+  <section class="about-section" aria-labelledby="about-code">
+    <h2 id="about-code">Code and data</h2>
+    <p>The reader is free software under the MIT licence: <a href="{{ repository }}">{{ repository | replace("https://", "") }}</a>. Its database, with the texts, treebanks, dictionary and study data, is published there as a <a href="{{ repository }}/releases">release</a>, to run the reader on your own computer.</p>
+    <p>The server keeps nothing about you. Where you stopped reading each text, the passage tab you last chose and the Interlinear setting stay in this browser.</p>
+  </section>
+
+  {{ m.version_line() }}
+</div>
+{% endblock %}

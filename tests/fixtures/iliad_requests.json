@@ -1,0 +1,646 @@
+{
+ "study": {
+  "custom_id": "12_1-2",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "high",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "fluent": {
+        "type": "string"
+       },
+       "literal": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "words": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "gloss": {
+           "type": "string"
+          },
+          "note": {
+           "type": "string"
+          },
+          "parse_check": {
+           "type": "string"
+          },
+          "parse": {
+           "type": "object",
+           "properties": {
+            "lemma": {
+             "type": "string"
+            },
+            "pos": {
+             "type": "string",
+             "enum": [
+              "noun",
+              "verb",
+              "adjective",
+              "adverb",
+              "article",
+              "particle",
+              "conjunction",
+              "preposition",
+              "pronoun",
+              "numeral",
+              "interjection",
+              "exclamation",
+              "irregular"
+             ]
+            },
+            "person": {
+             "type": "string",
+             "enum": [
+              "-",
+              "1",
+              "2",
+              "3"
+             ]
+            },
+            "number": {
+             "type": "string",
+             "enum": [
+              "-",
+              "singular",
+              "plural",
+              "dual"
+             ]
+            },
+            "tense": {
+             "type": "string",
+             "enum": [
+              "-",
+              "present",
+              "imperfect",
+              "perfect",
+              "pluperfect",
+              "future perfect",
+              "future",
+              "aorist"
+             ]
+            },
+            "mood": {
+             "type": "string",
+             "enum": [
+              "-",
+              "indicative",
+              "subjunctive",
+              "optative",
+              "infinitive",
+              "imperative",
+              "participle"
+             ]
+            },
+            "voice": {
+             "type": "string",
+             "enum": [
+              "-",
+              "active",
+              "passive",
+              "middle",
+              "middle/passive"
+             ]
+            },
+            "gender": {
+             "type": "string",
+             "enum": [
+              "-",
+              "masculine",
+              "feminine",
+              "neuter"
+             ]
+            },
+            "case": {
+             "type": "string",
+             "enum": [
+              "-",
+              "nominative",
+              "genitive",
+              "dative",
+              "accusative",
+              "vocative",
+              "locative"
+             ]
+            },
+            "degree": {
+             "type": "string",
+             "enum": [
+              "-",
+              "comparative",
+              "superlative"
+             ]
+            }
+           },
+           "required": [
+            "lemma",
+            "pos",
+            "person",
+            "number",
+            "tense",
+            "mood",
+            "voice",
+            "gender",
+            "case",
+            "degree"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "gloss",
+          "note"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "fluent",
+       "literal",
+       "words"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek philology and Homeric epic. You write study aids for a reader working through the Iliad in Greek: translations of each passage, and a gloss and a note for every word.\n\nEach request gives a passage of whole sentences: its lines, labelled book.line, and then every word of the passage in order, numbered from 1, with its lemma and parse from the Perseus Ancient Greek Dependency Treebank. A word the treebank divides is shown with both parts (\"οὐδʼ: οὐ, adverb + δέ, particle\"); it is still one word. A word marked \"no treebank parse\" has none. A word marked \"first in this book\" is the first appearance of its lemma in this book of the Iliad.\n\nReturn a JSON object with these fields.\n\n\"fluent\": an accurate, natural English translation of the whole passage, in prose.\n\n\"literal\": a literal translation with exactly one string per Greek line, in order. Follow the Greek word order and constructions as closely as English allows, and keep each Greek line's words in that line's string, even when a sentence runs on into the next line.\n\n\"words\": exactly one object per numbered word, in order, so there are as many objects as numbered words. Never skip, merge, split or add a word; punctuation is not a word. Each object has:\n- \"gloss\": the word's meaning in this context, as it would stand under the word in an interlinear translation: one to four English words that render the form (\"the gods\", \"he sent\", \"of Peleus' son\", \"having seen\"). Give a particle the sense it has here (\"and\", \"but\", \"indeed\"), or, when English has none, a label in parentheses such as \"(modal particle)\".\n- \"note\": what a reader should know about this word here. Let the length follow how much there is to say: a common word with nothing particular here gets a few words or one short sentence; a word worth a closer look gets up to four or five sentences. Words worth a closer look include epic and unusual forms; names, epithets and formulas, with the story, people and places behind them; rare words, and words whose sense here differs from the usual one; syntax a reader could misread (what the word agrees with or depends on, an unusual case or construction); words that carry the poem's themes (μῆνις, κλέος, τιμή); a parallel elsewhere in Homer when it helps; and what a translation can't carry over. Do not restate the parse or repeat the gloss. A word marked \"first in this book\" gets its background here; later in the book, say only what is particular to this place.\n- \"parse_check\": only when the treebank's lemma or parse for this word is wrong in this context. Say briefly what it should be and why, e.g. \"imperative, not indicative: addressed to the Muses\". Leave it out when the treebank is right, and for differences of convention: particle or conjunction (δέ, τε), adjective or pronoun (αὐτός, ὅσος), an epic or Attic spelling of a lemma, and \"middle/passive\" for a form that is middle or passive.\n- \"parse\": only for a word marked \"no treebank parse\": its lemma (the dictionary form) and full parse. Use \"-\" for each field that does not apply to the word. A participle is pos \"verb\" with mood \"participle\"; an infinitive is pos \"verb\" with mood \"infinitive\".",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Iliad 1.1–1.2: 2 lines, 7 words. Give \"literal\" 2 strings and \"words\" 7 objects.\n\nLines:\n1.1 μῆνιν ἄειδε, θεὰ Πηληϊάδεω\n1.2 οὐδʼ Ἄϊδι προΐαψεν·\n\nWords:\n[1.1]\n1 μῆνιν: μῆνις, noun singular feminine accusative | first in this book\n2 ἄειδε: ἀείδω, verb 2nd singular present imperative active | first in this book\n3 θεὰ: θεά, noun singular feminine vocative\n4 Πηληϊάδεω: Πηληιάδης, noun singular masculine genitive\n[1.2]\n5 οὐδʼ: οὐ, adverb + δέ, particle\n6 Ἄϊδι: no treebank parse\n7 προΐαψεν: προϊάπτω, verb 3rd singular aorist indicative active | first in this book"
+    }
+   ]
+  }
+ },
+ "study_medium": {
+  "custom_id": "12_1-2",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "medium",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "fluent": {
+        "type": "string"
+       },
+       "literal": {
+        "type": "array",
+        "items": {
+         "type": "string"
+        }
+       },
+       "words": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "gloss": {
+           "type": "string"
+          },
+          "note": {
+           "type": "string"
+          },
+          "parse_check": {
+           "type": "string"
+          },
+          "parse": {
+           "type": "object",
+           "properties": {
+            "lemma": {
+             "type": "string"
+            },
+            "pos": {
+             "type": "string",
+             "enum": [
+              "noun",
+              "verb",
+              "adjective",
+              "adverb",
+              "article",
+              "particle",
+              "conjunction",
+              "preposition",
+              "pronoun",
+              "numeral",
+              "interjection",
+              "exclamation",
+              "irregular"
+             ]
+            },
+            "person": {
+             "type": "string",
+             "enum": [
+              "-",
+              "1",
+              "2",
+              "3"
+             ]
+            },
+            "number": {
+             "type": "string",
+             "enum": [
+              "-",
+              "singular",
+              "plural",
+              "dual"
+             ]
+            },
+            "tense": {
+             "type": "string",
+             "enum": [
+              "-",
+              "present",
+              "imperfect",
+              "perfect",
+              "pluperfect",
+              "future perfect",
+              "future",
+              "aorist"
+             ]
+            },
+            "mood": {
+             "type": "string",
+             "enum": [
+              "-",
+              "indicative",
+              "subjunctive",
+              "optative",
+              "infinitive",
+              "imperative",
+              "participle"
+             ]
+            },
+            "voice": {
+             "type": "string",
+             "enum": [
+              "-",
+              "active",
+              "passive",
+              "middle",
+              "middle/passive"
+             ]
+            },
+            "gender": {
+             "type": "string",
+             "enum": [
+              "-",
+              "masculine",
+              "feminine",
+              "neuter"
+             ]
+            },
+            "case": {
+             "type": "string",
+             "enum": [
+              "-",
+              "nominative",
+              "genitive",
+              "dative",
+              "accusative",
+              "vocative",
+              "locative"
+             ]
+            },
+            "degree": {
+             "type": "string",
+             "enum": [
+              "-",
+              "comparative",
+              "superlative"
+             ]
+            }
+           },
+           "required": [
+            "lemma",
+            "pos",
+            "person",
+            "number",
+            "tense",
+            "mood",
+            "voice",
+            "gender",
+            "case",
+            "degree"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "gloss",
+          "note"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "fluent",
+       "literal",
+       "words"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek philology and Homeric epic. You write study aids for a reader working through the Iliad in Greek: translations of each passage, and a gloss and a note for every word.\n\nEach request gives a passage of whole sentences: its lines, labelled book.line, and then every word of the passage in order, numbered from 1, with its lemma and parse from the Perseus Ancient Greek Dependency Treebank. A word the treebank divides is shown with both parts (\"οὐδʼ: οὐ, adverb + δέ, particle\"); it is still one word. A word marked \"no treebank parse\" has none. A word marked \"first in this book\" is the first appearance of its lemma in this book of the Iliad.\n\nReturn a JSON object with these fields.\n\n\"fluent\": an accurate, natural English translation of the whole passage, in prose.\n\n\"literal\": a literal translation with exactly one string per Greek line, in order. Follow the Greek word order and constructions as closely as English allows, and keep each Greek line's words in that line's string, even when a sentence runs on into the next line.\n\n\"words\": exactly one object per numbered word, in order, so there are as many objects as numbered words. Never skip, merge, split or add a word; punctuation is not a word. Each object has:\n- \"gloss\": the word's meaning in this context, as it would stand under the word in an interlinear translation: one to four English words that render the form (\"the gods\", \"he sent\", \"of Peleus' son\", \"having seen\"). Give a particle the sense it has here (\"and\", \"but\", \"indeed\"), or, when English has none, a label in parentheses such as \"(modal particle)\".\n- \"note\": what a reader should know about this word here. Let the length follow how much there is to say: a common word with nothing particular here gets a few words or one short sentence; a word worth a closer look gets up to four or five sentences. Words worth a closer look include epic and unusual forms; names, epithets and formulas, with the story, people and places behind them; rare words, and words whose sense here differs from the usual one; syntax a reader could misread (what the word agrees with or depends on, an unusual case or construction); words that carry the poem's themes (μῆνις, κλέος, τιμή); a parallel elsewhere in Homer when it helps; and what a translation can't carry over. Do not restate the parse or repeat the gloss. A word marked \"first in this book\" gets its background here; later in the book, say only what is particular to this place.\n- \"parse_check\": only when the treebank's lemma or parse for this word is wrong in this context. Say briefly what it should be and why, e.g. \"imperative, not indicative: addressed to the Muses\". Leave it out when the treebank is right, and for differences of convention: particle or conjunction (δέ, τε), adjective or pronoun (αὐτός, ὅσος), an epic or Attic spelling of a lemma, and \"middle/passive\" for a form that is middle or passive.\n- \"parse\": only for a word marked \"no treebank parse\": its lemma (the dictionary form) and full parse. Use \"-\" for each field that does not apply to the word. A participle is pos \"verb\" with mood \"participle\"; an infinitive is pos \"verb\" with mood \"infinitive\".",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Iliad 1.1–1.2: 2 lines, 7 words. Give \"literal\" 2 strings and \"words\" 7 objects.\n\nLines:\n1.1 μῆνιν ἄειδε, θεὰ Πηληϊάδεω\n1.2 οὐδʼ Ἄϊδι προΐαψεν·\n\nWords:\n[1.1]\n1 μῆνιν: μῆνις, noun singular feminine accusative | first in this book\n2 ἄειδε: ἀείδω, verb 2nd singular present imperative active | first in this book\n3 θεὰ: θεά, noun singular feminine vocative\n4 Πηληϊάδεω: Πηληιάδης, noun singular masculine genitive\n[1.2]\n5 οὐδʼ: οὐ, adverb + δέ, particle\n6 Ἄϊδι: no treebank parse\n7 προΐαψεν: προϊάπτω, verb 3rd singular aorist indicative active | first in this book"
+    }
+   ]
+  }
+ },
+ "notes": {
+  "custom_id": "12_1-2",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "high",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "notes": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "word": {
+           "type": "string"
+          },
+          "note": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "word",
+          "note"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "notes"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek philology and Homeric epic. You write study notes for a reader working through the Iliad in Greek: a note for every word.\n\nEach request gives a passage of whole sentences: its lines, labelled book.line, an English translation of the passage, and then every word of the passage in order, numbered from 1, with its lemma and parse from the Perseus Ancient Greek Dependency Treebank and the gloss the reader sees with it. A word the treebank divides is shown with both parts (\"οὐδʼ: οὐ, adverb + δέ, particle\"); it is still one word. A word marked \"first in this book\" is the first appearance of its lemma in this book of the Iliad.\n\nReturn a JSON object with one field, \"notes\": exactly one object per numbered word, in order, so there are as many objects as numbered words. Never skip, merge, split or add a word; punctuation is not a word. Each object has:\n- \"word\": the numbered word, exactly as given.\n- \"note\": what a reader should know about this word here. Let the length follow how much there is to say: a common word with nothing particular here gets a few words or one short sentence; a word worth a closer look gets up to four or five sentences. Words worth a closer look include epic and unusual forms; names, epithets and formulas, with the story, people and places behind them; rare words, and words whose sense here differs from the usual one; syntax a reader could misread (what the word agrees with or depends on, an unusual case or construction); words that carry the poem's themes (μῆνις, κλέος, τιμή); a parallel elsewhere in Homer when it helps; and what a translation can't carry over. Do not restate the parse or repeat the gloss. A word marked \"first in this book\" gets its background here; later in the book, say only what is particular to this place.",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Iliad 1.1–1.2: 2 lines, 7 words. Give \"notes\" 7 objects.\n\nLines:\n1.1 μῆνιν ἄειδε, θεὰ Πηληϊάδεω\n1.2 οὐδʼ Ἄϊδι προΐαψεν·\n\nTranslation:\nSing the wrath, goddess, of Peleus' son. Not to Hades did it send.\n\nWords:\n[1.1]\n1 μῆνιν: μῆνις, noun singular feminine accusative | gloss: wrath | first in this book\n2 ἄειδε: ἀείδω, verb 2nd singular present imperative active | gloss: sing | first in this book\n3 θεὰ: θεά, noun singular feminine vocative | gloss: goddess\n4 Πηληϊάδεω: Πηληιάδης, noun singular masculine genitive | gloss: of Peleus' son\n[1.2]\n5 οὐδʼ: οὐ, adverb + δέ, particle | gloss: and not\n6 Ἄϊδι: no treebank parse | gloss: to Hades\n7 προΐαψεν: προϊάπτω, verb 3rd singular aorist indicative active | gloss: sent forth | first in this book"
+    }
+   ]
+  }
+ },
+ "uses": {
+  "custom_id": "12_1-2",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "high",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "uses": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "n": {
+           "type": "integer"
+          },
+          "word": {
+           "type": "string"
+          },
+          "use": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "n",
+          "word",
+          "use"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "uses"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek syntax and Homeric epic. You say how words work in their sentence, for a reader working through the Iliad in Greek.\n\nEach request gives a passage of whole sentences: its lines, labelled book.line, an English translation of the passage, and then every word of the passage in order, numbered from 1, with its lemma and parse from the Perseus Ancient Greek Dependency Treebank, the gloss the reader sees with it, and its role in the sentence as the treebank's tree gives it. A word the treebank divides is shown with both parts (\"οὐδʼ: οὐ, adverb + δέ, particle\"); it is still one word. Some words are marked \"→ use\".\n\nReturn a JSON object with one field, \"uses\": exactly one object per marked word, in order. Each object has:\n- \"n\": the word's number.\n- \"word\": the word, exactly as given.\n- \"use\": how this form works here, in a few words: one of the names below, written exactly as listed, so that the same use reads the same in every passage. Words in brackets say when a name applies and are not part of it. When no name below fits, use the usual name of Greek grammar in the same pattern. Add a short phrase after a colon only when it helps (\"genitive of separation: from the ships\"). Do not repeat the parse, the gloss or the role, and say nothing of how the word is formed (its ending, spelling or dialect): the reader's notes cover that. The treebank's role can be wrong; label what the Greek does.\n\nYou may also add an object, in its place among the others, for an unmarked word whose use a reader could miss, such as an accusative of respect that the treebank calls an object (χωόμενος κῆρ, \"angered at heart\"). Give its number and word the same way. Do not add one for a word whose use is plain.\n\nNames:\n- Genitive: genitive of possession, partitive genitive, genitive of description, genitive of material, genitive of time within which, genitive of place (Homeric), genitive of separation, genitive of comparison, genitive of cause, genitive of price, objective genitive, subjective genitive, genitive absolute; with a verb, \"genitive with a verb of hearing\" (or of remembering, ruling, touching, aiming).\n- Dative: indirect object, dative of advantage, dative of disadvantage, dative of interest, dative of possession, ethical dative, dative of means, dative of manner, dative of cause, dative of accompaniment, dative of place, dative of time, dative of respect; with a verb or adjective, \"dative with ἕπομαι\".\n- Accusative: accusative of respect, accusative of extent (of time or space), accusative of goal (Homeric, without a preposition), cognate accusative, adverbial accusative.\n- Subjunctive: hortatory subjunctive, deliberative subjunctive, prohibitive subjunctive, subjunctive of purpose, subjunctive of fearing, general subjunctive (with κε or ἄν), future more vivid protasis, anticipatory subjunctive (Homeric).\n- Optative: optative of wish, potential optative (with κε or ἄν), future less vivid protasis, past general optative, optative of purpose (secondary sequence), optative of fearing (secondary sequence), optative in indirect speech.\n- Imperative: imperative of command, imperative of prayer, imperative of prohibition.\n- Infinitive: complementary infinitive, infinitive of purpose, infinitive of result, infinitive in indirect statement, imperatival infinitive (Homeric), epexegetic infinitive, infinitive as subject, articular infinitive.\n- Participle: attributive participle, substantive participle, circumstantial participle with its kind after a comma (\"circumstantial participle, temporal\"; also causal, concessive, conditional, manner, means, and purpose with the future), supplementary participle, genitive absolute.",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Iliad 1.1–1.2: 2 lines, 7 words, 2 marked. Give \"uses\" 2 objects, one per marked word, in order.\n\nLines:\n1.1 μῆνιν ἄειδε, θεὰ Πηληϊάδεω\n1.2 οὐδʼ Ἄϊδι προΐαψεν·\n\nTranslation:\nSing the wrath, goddess, of Peleus' son. Not to Hades did it send.\n\nWords:\n[1.1]\n1 μῆνιν: μῆνις, noun singular feminine accusative | gloss: wrath | role: object of ἄειδε\n2 ἄειδε: ἀείδω, verb 2nd singular present imperative active | gloss: sing | role: main verb → use\n3 θεὰ: θεά, noun singular feminine vocative | gloss: goddess | role: addressed\n4 Πηληϊάδεω: Πηληιάδης, noun singular masculine genitive | gloss: of Peleus' son | role: genitive with μῆνιν → use\n[1.2]\n5 οὐδʼ: οὐ, adverb + δέ, particle | gloss: and not\n6 Ἄϊδι: no treebank parse | gloss: to Hades\n7 προΐαψεν: προϊάπτω, verb 3rd singular aorist indicative active | gloss: sent forth"
+    }
+   ]
+  }
+ },
+ "forms": {
+  "custom_id": "12_forms_1",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "medium",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "lemmas": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "lemma": {
+           "type": "string"
+          },
+          "headword": {
+           "type": "string"
+          },
+          "forms": {
+           "type": "string"
+          },
+          "comparison": {
+           "type": "string"
+          },
+          "construction": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "lemma",
+          "headword",
+          "forms",
+          "comparison",
+          "construction"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "lemmas"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek morphology and syntax, above all the language of Homer. You give the dictionary forms of nouns and adjectives, and the constructions of verbs, to a reader working through the Iliad in Greek.\n\nEach request lists lemmas of the Perseus Ancient Greek Dependency Treebank, numbered, each with its part of speech, the start of its LSJ entry when LSJ has one (for a verb, LSJ's short definition), or a short identification when it doesn't, and forms of it that occur in the Iliad, the most frequent first.\n\nReturn a JSON object with \"lemmas\": exactly one object per listed lemma, in the order listed. Each object has:\n- \"lemma\": the lemma exactly as listed.\n- \"headword\": the dictionary form as a commentary's vocabulary gives it: a noun with its genitive ending and article (\"μῆνις, -ιος, ἡ\"; a short or irregular noun with its whole genitive: \"κῆρ, κῆρος, τό\"), an adjective with its feminine and neuter endings (\"οὐλόμενος, -η, -ον\"; two endings: \"ἀθάνατος, -ον\"; third declension: \"ταχύς, -εῖα, -ύ\"). Give the Homeric genitive where Homer's differs from the Attic one (\"Ἀχιλλεύς, -ῆος, ὁ\"). A name has its genitive and article too (\"Ἀγαμέμνων, -ονος, ὁ\"); a plural-only noun is given in the plural (\"Ἀχαιοί, -ῶν, οἱ\"). The headword is the dictionary form alone: a remark (another number, a Homeric spelling) goes in \"forms\", not in brackets after it.\n- \"forms\": a few words, or \"\" when nothing needs saying: the Attic form when the headword's is Homeric (\"Attic gen. -έως\"), and Homeric forms a reader might not recognise among those listed or common in Homer (\"dat. pl. -εσσι; gen. -οιο\").\n- \"comparison\": for an adjective whose comparison is irregular, its comparative and superlative (\"ἀμείνων, ἄριστος\"); otherwise \"\", with no remark.\n- \"construction\": for a verb, the cases and constructions it takes in Homer, at most three, the commonest first, separated by semicolons. Write each as the case or construction, a comma, and the sense in a few words: \"+ gen. of the person heard, listen to; + acc. of the sound, hear\"; \"+ acc. and dat. of the person, give\"; \"+ inf., be eager to\"; \"intransitive, stand apart\". Give constructions only: no forms, tenses or quotations. For a noun or adjective, \"\".\n\nFor a verb, \"headword\", \"forms\" and \"comparison\" are \"\": its principal parts are given elsewhere.",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Dictionary forms of 5 lemmas. Give \"lemmas\" 5 objects, in this order.\n\n1 μῆνις (noun) | LSJ: μῆνις, Dor. and Aeol. μᾶνις, ἡ, gen. A. μήνιος … | Iliad: μῆνιν, μῆνις\n2 Πηληιάδης (noun) | LSJ, under Πηλεΐδης: Πηλεΐδης, ου, ὁ … | Iliad: Πηληϊάδεω\n3 οὐλόμενος (adjective) | not in LSJ; identified as: destructive | Iliad: οὐλομένην\n4 Σμινθεύς (noun) | not in LSJ\n5 ἀείδω (verb) | LSJ meaning: sing | Iliad: ἄειδε"
+    }
+   ]
+  }
+ },
+ "parts": {
+  "custom_id": "12_parts_1",
+  "params": {
+   "model": "claude-opus-5-5",
+   "max_tokens": 32000,
+   "output_config": {
+    "effort": "medium",
+    "format": {
+     "type": "json_schema",
+     "schema": {
+      "type": "object",
+      "properties": {
+       "verbs": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "verb": {
+           "type": "string"
+          },
+          "parts": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "form": {
+              "type": "string"
+             },
+             "note": {
+              "type": "string"
+             }
+            },
+            "required": [
+             "form",
+             "note"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "verb",
+          "parts"
+         ],
+         "additionalProperties": false
+        }
+       }
+      },
+      "required": [
+       "verbs"
+      ],
+      "additionalProperties": false
+     }
+    }
+   },
+   "system": [
+    {
+     "type": "text",
+     "text": "You are an expert in Ancient Greek morphology, above all the language of Homer. You give the principal parts of verbs to a reader working through the Iliad in Greek.\n\nEach request lists verbs, numbered, as the lemmas (dictionary forms) of the Perseus Ancient Greek Dependency Treebank.\n\nReturn a JSON object with \"verbs\": exactly one object per listed verb, in the order listed. Each object has:\n- \"verb\": the lemma exactly as listed.\n- \"parts\": exactly six objects, in this order: present, future, aorist, perfect active, perfect middle/passive, aorist passive. Each has:\n  - \"form\": the first person singular indicative, past tenses with their augment. Give the epic or Ionic form a reader of the Iliad meets where Homer's differs from the Attic one; otherwise the Attic form. Give \"—\" when the verb has no such part.\n  - \"note\": a few words, or \"\" when nothing needs saying: the Attic form when the form given is epic (\"Attic ᾄσομαι\"), Homer's unaugmented form, \"middle in form\", \"rare\", \"late\", \"not in Homer\", or the verb a suppletive part comes from.\n\nFor a deponent verb, give its middle or passive forms in the slots they fill (μάχομαι, μαχήσομαι, ἐμαχεσάμην, —, μεμάχημαι, —). When the listed lemma is itself a suppletive past form (εἶπον, εἶδον), give the principal parts of the verb it belongs to, with the lemma in its slot.",
+     "cache_control": {
+      "type": "ephemeral",
+      "ttl": "1h"
+     }
+    }
+   ],
+   "messages": [
+    {
+     "role": "user",
+     "content": "Principal parts of 3 verbs. Give \"verbs\" 3 objects, in this order.\n\n1 ἀείδω\n2 προϊάπτω\n3 εἶπον"
+    }
+   ]
+  }
+ }
+}

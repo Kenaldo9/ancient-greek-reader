@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Excerpt in the shape of the Perseus treebank (AGDT 2.1) of the Iliad, for tests.
+     Heads and relations follow the treebank's: ἄειδε governs μῆνιν and θεὰ; the
+     genitives hang on μῆνιν through an elliptic apposition node; ἔθηκε and
+     προΐαψεν are coordinated by δ̓ with ἣ as their shared subject; and in 2.1–2.2
+     τε joins εὗδον and an elliptic verb. -->
+<treebank version="2.1" xml:lang="grc" cts="urn:cts:greekLit:tlg0012.tlg001.perseus-grc1.tb">
+  <header/>
+  <body>
+    <sentence id="300" document_id="urn:cts:greekLit:tlg0012.tlg001.perseus-grc1" subdoc="2.1-2.2">
+      <word id="1" form="Ἄλλοι" lemma="ἄλλος" postag="a-p---mn-" head="4" relation="ATR" cite="urn:cts:greekLit:tlg0012.tlg001:2.1"/>
+      <word id="2" form="μέν" lemma="μέν" postag="g--------" head="6" relation="AuxY" cite="urn:cts:greekLit:tlg0012.tlg001:2.1"/>
+      <word id="3" form="ῥα" lemma="ἄρα" postag="g--------" head="6" relation="AuxY" cite="urn:cts:greekLit:tlg0012.tlg001:2.1"/>
+      <word id="4" form="θεοί" lemma="θεός" postag="n-p---mn-" head="5" relation="SBJ" cite="urn:cts:greekLit:tlg0012.tlg001:2.1"/>
+      <word id="5" form="τε" lemma="τε" postag="g--------" head="0" relation="COORD" cite="urn:cts:greekLit:tlg0012.tlg001:2.1"/>
+      <word id="6" form="εὗδον" lemma="εὕδω" postag="v3piia---" head="5" relation="PRED_CO" cite="urn:cts:greekLit:tlg0012.tlg001:2.2"/>
+      <word id="7" form="παννύχιοι" lemma="παννύχιος" postag="a-p---mn-" head="9" relation="ATV" cite="urn:cts:greekLit:tlg0012.tlg001:2.2"/>
+      <word id="8" form="." lemma="punc1" postag="u--------" head="0" relation="AuxK" cite=""/>
+      <word id="9" insertion_id="0008e" form="[0]" artificial="elliptic" head="5" relation="PRED_CO"/>
+    </sentence>
+    <sentence id="100" document_id="urn:cts:greekLit:tlg0012.tlg001.perseus-grc1" subdoc="1.1-1.3">
+      <word id="1" form="μῆνιν" lemma="μῆνις" postag="n-s---fa-" head="2" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.1"/>
+      <word id="2" form="ἄειδε" lemma="ἀείδω" postag="v2spma---" head="0" relation="PRED" cite="urn:cts:greekLit:tlg0012.tlg001:1.1"/>
+      <word id="3" form="θεὰ" lemma="θεά" postag="n-s---fv-" head="2" relation="ExD" cite="urn:cts:greekLit:tlg0012.tlg001:1.1"/>
+      <word id="4" form="Πηληϊάδεω" lemma="Πηληιάδης" postag="n-s---mg-" head="18" relation="ATR_AP" cite="urn:cts:greekLit:tlg0012.tlg001:1.1"/>
+      <word id="5" form="Ἀχιλῆος" lemma="Ἀχιλλεύς" postag="n-s---mg-" head="18" relation="ATR_AP" cite="urn:cts:greekLit:tlg0012.tlg001:1.1"/>
+      <word id="6" form="οὐλομένην" lemma="οὐλόμενος" postag="a-s---fa-" head="1" relation="ATR" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="7" form="," lemma="punc1" postag="u--------" head="14" relation="AuxX" cite=""/>
+      <word id="8" form="ἣ" lemma="ὅς" postag="p-s---fn-" head="14" relation="SBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="9" form="μυρί̓" lemma="μυρίος" postag="a-p---na-" head="11" relation="ATR" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="10" form="Ἀχαιοῖς" lemma="Ἀχαιός" postag="a-p---md-" head="12" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="11" form="ἄλγἐ" lemma="ἄλγος" postag="n-p---na-" head="12" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="12" form="ἔθηκε" lemma="τίθημι" postag="v3saia---" head="14" relation="ATR_CO" cite="urn:cts:greekLit:tlg0012.tlg001:1.2"/>
+      <word id="13" form="πολλὰς" lemma="πολύς" postag="a-p---fa-" head="16" relation="ATR" cite="urn:cts:greekLit:tlg0012.tlg001:1.3"/>
+      <word id="14" form="δ̓" lemma="δέ" postag="g--------" head="1" relation="COORD" cite="urn:cts:greekLit:tlg0012.tlg001:1.3"/>
+      <word id="15" form="ἰφθίμους" lemma="ἴφθιμος" postag="a-p---fa-" head="16" relation="ATR" cite="urn:cts:greekLit:tlg0012.tlg001:1.3"/>
+      <word id="16" form="ψυχὰς" lemma="ψυχή" postag="n-p---fa-" head="19" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.4"/>
+      <word id="17" form="Ἄϊδι" lemma="" postag="---------" head="19" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.3"/>
+      <word id="18" insertion_id="0017e" form="[0]" artificial="elliptic" head="1" relation="APOS"/>
+      <word id="19" form="προΐαψεν" lemma="προϊάπτω" postag="v3saia---" head="14" relation="ATR_CO" cite="urn:cts:greekLit:tlg0012.tlg001:1.3"/>
+      <word id="20" form="." lemma="punc1" postag="u--------" head="0" relation="AuxK" cite=""/>
+    </sentence>
+    <sentence id="200" document_id="urn:cts:greekLit:tlg0012.tlg001.perseus-grc1" subdoc="1.5">
+      <word id="1" form="οὐ" lemma="οὐ" postag="d--------" head="3" relation="AuxZ" cite="urn:cts:greekLit:tlg0012.tlg001:1.5"/>
+      <word id="2" form="δ̓" lemma="δέ" postag="g--------" head="3" relation="AuxY" cite="urn:cts:greekLit:tlg0012.tlg001:1.5"/>
+      <word id="3" form="ἔθελον" lemma="ἐθέλω" postag="v3piia---" head="0" relation="PRED" cite="urn:cts:greekLit:tlg0012.tlg001:1.5"/>
+      <word id="4" form="σὰ" lemma="σός" postag="a-p---na-" head="3" relation="OBJ" cite="urn:cts:greekLit:tlg0012.tlg001:1.5"/>
+    </sentence>
+  </body>
+</treebank>

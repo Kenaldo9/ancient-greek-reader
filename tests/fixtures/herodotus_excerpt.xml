@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+  <text>
+    <body>
+      <div n="urn:cts:greekLit:tlg0016.tlg001" type="edition">
+        <div n="1" type="book">
+          <div n="1" type="chapter">
+            <div n="1" type="section">Ἡροδότου Ἁλικαρνησσέος ἱστορίης ἀπόδεξις ἥδε</div>
+            <div n="2" type="section">ὡς μήτε τὰ γενόμενα ἐξ ἀνθρώπων τῷ χρόνῳ ἐξίτηλα γένηται</div>
+          </div>
+          <div n="2" type="chapter">
+            <div n="1" type="section">Φοίνικές τε γὰρ οὗτοι ἐπεὶ ἀπίκοντο ἐς τὴν νῦν Ἑλλάδα</div>
+          </div>
+        </div>
+        <div n="2" type="book">
+          <div n="1" type="chapter">
+            <div n="1" type="section">Κροίσου δὲ τοῦ Λυδοῦ παῖδες ἦσαν δύο</div>
+          </div>
+        </div>
+      </div>
+    </body>
+  </text>
+</TEI>

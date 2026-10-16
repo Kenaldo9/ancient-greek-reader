@@ -1,0 +1,12 @@
+# .git's HEAD and refs only, for the commit the image is built from
+.git
+!.git/HEAD
+!.git/refs
+!.git/packed-refs
+.env
+.venv
+data
+docs
+tests
+**/__pycache__
+greek/build.json

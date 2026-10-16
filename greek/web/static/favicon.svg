@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- owl.svg simplified for 16px tabs: no sprig, rim or feathers; larger owl and eyes -->
+  <defs>
+    <radialGradient id="coin" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#F7DE94"/>
+      <stop offset="1" stop-color="#C9973A"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#coin)"/>
+  <g transform="translate(32 34) scale(1.12) translate(-32 -35)">
+    <path fill="#3B2C12" d="M21 13 C24 15.5 27.5 17 32 17 C36.5 17 40 15.5 43 13 C45 18 46 22 45.5 26
+      C50 32 51 41 47 48 C44 53 38 56 32 56 C26 56 20 53 17 48 C13 41 14 32 18.5 26 C18 22 19 18 21 13 Z"/>
+    <g fill="#F7DE94">
+      <circle cx="25.8" cy="28" r="6.4"/>
+      <circle cx="38.2" cy="28" r="6.4"/>
+      <path d="M29.8 33 L34.2 33 L32 38.5 Z"/>
+    </g>
+    <g fill="#3B2C12">
+      <circle cx="25.8" cy="28" r="3.2"/>
+      <circle cx="38.2" cy="28" r="3.2"/>
+    </g>
+  </g>
+</svg>

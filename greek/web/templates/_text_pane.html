@@ -1,0 +1,95 @@
+{% import "_macros.html" as m %}
+<section id="text-pane" class="panel text-pane{% if unit == 'section' %} is-prose{% endif %}" aria-labelledby="text-pane-title">
+{% if search %}
+  {% set back = refs[at_line] %}
+  <div class="pane-toolbar">
+    <h1 class="visually-hidden" id="text-pane-title">Search in {{ text.title }}</h1>
+    <form class="search-form" role="search" action="/texts/{{ text.id }}/read" method="get"
+          hx-get="/texts/{{ text.id }}/read" hx-select="#text-pane" hx-target="#text-pane" hx-swap="outerHTML" hx-select-oob="#book-nav,#goto,#interlinear-control" hx-push-url="true">
+      <label class="search-field">
+        {{ m.icon("search") }}
+        <span class="visually-hidden">Search in {{ text.title }}</span>
+        <input type="search" name="q" value="{{ search.query }}" lang="grc" placeholder="Search in {{ text.title }}" autocomplete="off" spellcheck="false" autofocus>
+        <button type="button" class="search-clear" data-action="clear-search" aria-label="Clear search" title="Clear search">{{ m.icon("close") }}</button>
+      </label>
+      <input type="hidden" name="at" value="{{ back }}">
+    </form>
+    <a class="btn btn-small btn-toolbar" id="search-back" {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ back) }}>Back to {{ back }}</a>
+  </div>
+
+  {% if search.hits %}
+  <div class="search-summary">
+    <span class="search-count">{{ search.total | count_noun(unit) }} in the {{ text.title }}</span>
+    <span class="search-note">Accents and capitals ignored</span>
+  </div>
+  {% endif %}
+
+  <div class="text-scroll search-results">
+    {% if not search.query %}
+    <div class="search-empty">
+      <p class="pb-lead">Search the {{ text.title }}</p>
+      <p class="pb-text">Type a word or a phrase. Accents and capitals are ignored, so <span class="greek" lang="grc">μηνιν</span> finds <span class="greek" lang="grc">μῆνιν</span>. End a word with * to find every word that starts with it, for example <span class="greek" lang="grc">μην*</span>, and put a phrase in quotes.</p>
+    </div>
+    {% elif not search.hits %}
+    <div class="search-empty">
+      <p class="pb-lead">No {{ unit }}s in the {{ text.title }} contain “{{ search.query }}”</p>
+      <p class="pb-text">Accents and capitals are ignored, but every word has to match. Check the spelling, or end a word with * to find every word that starts with it, for example <span class="greek" lang="grc">μην*</span>.</p>
+    </div>
+    {% else %}
+    {% for hit in search.hits %}
+    {% if hit.book and loop.changed(hit.book) %}<h2 class="label search-book">Book {{ hit.book }}</h2>{% endif %}
+    <a class="search-hit{% if hit.line.line_number == at_line %} is-current{% endif %}" {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ hit.ref ~ "&hit=" ~ hit.ref) }}>
+      <span class="ref">{{ hit.ref }}</span>
+      <span class="search-text" lang="grc">{% for piece, matched in hit.pieces %}{% if matched %}<mark>{{ piece }}</mark>{% else %}{{ piece }}{% endif %}{% endfor %}</span>
+    </a>
+    {% endfor %}
+    {% if search.total > search.hits | length %}
+    <p class="search-more">Showing the first {{ search.hits | length }} of {{ "{:,}".format(search.total) }}. Add a word to narrow the search.</p>
+    {% endif %}
+    {% endif %}
+  </div>
+{% else %}
+  <div class="pane-toolbar">
+    <h1 class="pane-title" id="text-pane-title">{{ text.title }}{% if page.book %} <span class="pane-title-book">· Book {{ page.book.number }}{% if page.parts > 1 %}<span class="pane-title-part">, part {{ page.part }} of {{ page.parts }}</span>{% endif %}</span>{% elif page.parts > 1 %} <span class="pane-title-book">· {{ page.label }}</span>{% endif %}</h1>
+    {% if lines %}
+    {# the line at the top of the text, and the page's last; reader.js follows
+       the scroll. Tapping it opens Go to. #}
+    <button type="button" class="pane-range ref" id="pane-range" data-end="{{ lines[-1].ref }}" title="Go to a line">{{ refs[at_line] }} / {{ lines[-1].ref }}</button>
+    {% endif %}
+    <div class="pager">
+      {% if page.prev %}
+      <a class="icon-btn" {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ refs[page.prev.start]) }} aria-label="Previous: {{ page.prev.label }}" title="Previous: {{ page.prev.label }}">{{ m.icon("prev") }}</a>
+      {% else %}
+      <span class="icon-btn is-disabled" aria-hidden="true">{{ m.icon("prev") }}</span>
+      {% endif %}
+      {% if page.next %}
+      <a class="icon-btn" {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ refs[page.next.start]) }} aria-label="Next: {{ page.next.label }}" title="Next: {{ page.next.label }}">{{ m.icon("next") }}</a>
+      {% else %}
+      <span class="icon-btn is-disabled" aria-hidden="true">{{ m.icon("next") }}</span>
+      {% endif %}
+    </div>
+    <div class="toolbar-spacer"></div>
+    <span class="selection-chip" id="selection-chip" hidden>
+      <span class="ref" id="selection-refs"></span> <span class="selection-word">selected</span>
+      <button type="button" class="chip-clear" id="selection-clear" aria-label="Clear selection" title="Clear selection (Esc)">{{ m.icon("close") }}</button>
+    </span>
+    <a class="icon-btn" data-follows-position {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ refs[at_line] ~ "&q=") }} aria-label="Search in {{ text.title }}" title="Search in {{ text.title }}">{{ m.icon("search") }}</a>
+  </div>
+
+  <p class="selection-hint" id="selection-hint" role="status" hidden></p>
+  <div class="text-scroll">
+    <div id="text-lines" class="text-lines"
+         data-page-start="{{ page.start }}" data-page-end="{{ page.end }}"
+         data-at="{{ at_line }}">
+      {% for lv in lines %}
+      {{ m.text_line(lv, unit, hit_ref) }}
+      {% else %}
+      <p class="pane-empty">There are no {{ unit }}s here.</p>
+      {% endfor %}
+    </div>
+    {% if page.next and lines %}
+    <a class="next-page" {{ m.pane_link("/texts/" ~ text.id ~ "/read?at=" ~ refs[page.next.start]) }}>Continue to {{ page.next.label }}</a>
+    {% endif %}
+  </div>
+{% endif %}
+</section>

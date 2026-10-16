@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Ancient Greek Reader{% endblock %}</title>
+  <link rel="icon" href="{{ static_url('favicon.svg') }}" type="image/svg+xml">
+  {# Home Screen: owl.svg at 78% on the header's teal, 180×180 PNG (iPadOS
+     takes no SVG here and fills transparency with black) #}
+  <link rel="apple-touch-icon" href="{{ static_url('apple-touch-icon.png') }}">
+  <meta name="apple-mobile-web-app-title" content="Greek Reader">
+  {# The Home Screen app is the whole site (scope "/"). Without it iPadOS
+     takes the scope from the page the app was added from, and pages outside
+     it open under an in-app browser bar. #}
+  <link rel="manifest" href="{{ static_url('manifest.webmanifest') }}">
+  <link rel="stylesheet" href="{{ static_url('fonts/fonts.css') }}">
+  <link rel="stylesheet" href="{{ static_url('style.css') }}">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <a class="brand" href="/library"><img class="brand-logo" src="{{ static_url('owl.svg') }}" alt="" width="34" height="34">Ancient Greek Reader</a>
+    {% block header_tools %}{% endblock %}
+    <nav class="main-nav" aria-label="Main">
+      {% for href, label in [("/library", "Library"), ("/about", "About")] %}
+      <a href="{{ href }}"{% if request.url.path.startswith(href) %} aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+    {% block header_controls %}{% endblock %}
+    <div class="header-spacer"></div>
+  </header>
+  <main class="app-main{% block main_class %}{% endblock %}">
+    {% block main %}{% endblock %}
+  </main>
+</div>
+<script src="{{ static_url('htmx.min.js') }}"></script>
+<script src="{{ static_url('positions.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

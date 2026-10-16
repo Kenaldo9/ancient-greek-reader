@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ text.title }} — TOC{% endblock %}
+{% block main %}
+<div class="page">
+<h1 class="page-title">{{ text.title }}</h1>
+<p class="page-lede">Table of contents{% if text.author %} · {{ text.author }}{% endif %}</p>
+<div class="pb-actions"><a class="btn" href="/texts/{{ text.id }}/read">Continue reading</a></div>
+{% if sections %}
+<div class="panel table-scroll contents-table" role="region" aria-label="Table of contents" tabindex="0">
+<table class="data-table">
+  <thead>
+    <tr>
+      <th scope="col">Book</th>
+      <th scope="col">References</th>
+      <th scope="col">Length</th>
+      <th scope="col"><span class="visually-hidden">Open book</span></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in sections %}
+    <tr>
+      <th scope="row">{{ s.book or "—" }}</th>
+      <td class="ref">{{ ref_range(s.ref_start or s.line_start | string, s.ref_end or s.line_end | string) }}</td>
+      <td>{{ s.count | count_noun("section" if s.ref_start and s.ref_start.count(".") >= 2 else "line") }}</td>
+      <td><a class="btn btn-small" href="/texts/{{ text.id }}/read?at={{ s.line_start }}">Read{% if s.book %} book {{ s.book }}{% endif %}</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="panel empty-state"><p>No structure information available.</p></div>
+{% endif %}
+</div>
+{% endblock %}

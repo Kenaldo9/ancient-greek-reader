@@ -1,0 +1,14 @@
+{
+  "name": "Greek Reader",
+  "short_name": "Greek Reader",
+  "start_url": "/library",
+  "scope": "/",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

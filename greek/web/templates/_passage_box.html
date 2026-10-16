@@ -1,0 +1,174 @@
+{% import "_macros.html" as m %}
+{#- The rows of a sentence's outline (greek/syntax.py), nested as a tree. A
+    row opens its word in the word pane, and hovering or focusing it lights
+    the word and the words under it in the text; a row with three rows or
+    more under it folds (reader.js). Deep rows stop indenting at four levels
+    in a narrow box and six in a wide one, and say how much deeper they are. #}
+{%- macro outline_rows(s, rows, first) %}
+{%- for r in rows %}
+{%- set id = "st-" ~ s.sentence_id ~ "-" ~ r.key %}
+{%- set word = r.word %}
+<li class="st-item" role="treeitem" id="{{ id }}" aria-labelledby="{{ id }}-row" aria-level="{{ r.depth + 1 }}"{% if r.foldable %} aria-expanded="true"{% endif %} tabindex="{{ 0 if first and loop.first else -1 }}"{% if word %} data-line="{{ word.line_number }}" data-i="{{ word.token_index }}"{% endif %} data-words="{% for n, i in r.places %}{{ n }}:{{ i }}{{ ' ' if not loop.last }}{% endfor %}">
+  <div class="st-row{% if r.clause %} is-clause{% endif %}{% if r.depth == 0 %} is-top{% endif %}{% if r.key in s.outside %} is-out{% endif %}" id="{{ id }}-row" style="--d: {{ r.depth }}">
+    <span class="st-lead">
+      {%- if r.foldable %}<span class="st-toggle" aria-hidden="true"></span>{% endif %}
+      {%- if r.depth > 4 %}<span class="st-deep st-deep-4" aria-hidden="true">+{{ r.depth - 4 }}</span>{% endif %}
+      {%- if r.depth > 6 %}<span class="st-deep st-deep-6" aria-hidden="true">+{{ r.depth - 6 }}</span>{% endif -%}
+      <span class="st-greek" lang="grc">{% for w in r.words %}{% if not loop.first %}{{ r.joiner }}{% endif %}{% if w.understood %}<span class="st-understood" lang="en">[{{ w.form }}]</span>{% else %}{{ w.form }}{% endif %}{% endfor %}</span>
+      {%- if r.gloss %} <span class="st-gloss{% if r.lsj %} is-lsj{% endif %}"{% if r.lsj %} title="Dictionary meaning"{% endif %}>{{ r.gloss }}</span>{% endif %}
+      {%- if r.foldable %} <span class="st-more">+ {{ r.hidden_words | count_noun("word") }}</span>{% endif -%}
+    </span>
+    <span class="st-role">{{ r.role | greek_spans }}</span>
+    {%- if r.use %}<span class="st-use-wrap"><span class="st-use">{{ r.use | greek_spans }}</span></span>{% endif %}
+  </div>
+  {%- if r.children %}
+  <ul class="st-children" role="group">{{ outline_rows(s, r.children, false) }}</ul>
+  {%- endif %}
+</li>
+{%- endfor %}
+{%- endmacro %}
+{#- The Fluent tab (or the Literal tab, literal=true), or the whole box, for
+    lines the study data doesn't translate: in a book without study data,
+    that its translations are not yet available #}
+{%- macro no_translation(p, literal=false) %}
+{%- set unit = "section" if p.ref_start.count(".") >= 2 else "line" %}
+<div class="pb-body">
+  {% if p.missing %}
+  <p class="pb-lead">{{ "Literal translations" if literal else "Translations" }} of {{ p.missing }} are not yet available</p>
+  {% if p.study %}<p class="pb-text">Every word's parsing, role and dictionary meaning are under Grammar.</p>{% endif %}
+  {% else %}
+  <p class="pb-lead">No translation is saved for {% if p.lines | length == 1 %}this {{ unit }}{% else %}these {{ unit }}s{% endif %} yet</p>
+  {% if p.study %}<p class="pb-text">The parsing and dictionary meaning of every word are under Grammar.</p>{% endif %}
+  {% endif %}
+</div>
+{%- endmacro %}
+{% set p = passage %}
+{% if not p %}
+<section id="passage-box" class="panel passage-box" aria-label="Passage">
+  <div class="pb-head"><h2 class="pb-title">Passage</h2></div>
+  <div class="pb-body">
+    {% if message %}<p class="form-error" role="alert">{{ message }}</p>{% endif %}
+    <p class="pb-lead">Select lines to study them</p>
+    <p class="pb-text"><span class="mouse-selection-help">Click a line number to select it, then Shift+click another to select a range.</span><span class="touch-selection-help">Tap the first line number, then tap the last to select a range. Tap the same number again to clear it.</span> Their translations and the grammar of every word show here.</p>
+  </div>
+</section>
+{% else %}
+{% set refs = ref_range(p.ref_start, p.ref_end) %}
+<section id="passage-box" class="panel passage-box is-{{ p.state }}{% if p.tabbed %} has-tabs{% endif %}" aria-label="Passage {{ refs }}" data-start="{{ p.start }}" data-end="{{ p.end }}" data-ref-start="{{ p.ref_start }}" data-ref-end="{{ p.ref_end }}">
+  <div class="pb-head">
+    <div class="pb-head-row">
+      <h2 class="pb-title">Passage <span class="ref">{{ refs }}</span></h2>
+      <div class="pb-meta">
+        {% if p.state == "study" %}
+        <span>{{ p.study_model | model_label }} · study data</span>
+        {% endif %}
+        {# Laptop: the passage box fills the study column (reader.js) #}
+        <button type="button" class="btn btn-small pb-expand" data-action="expand-passage" aria-expanded="false" aria-controls="passage-box">
+          {{ m.icon("chevron") }}
+          <span class="t-expand">Expand</span>
+          <span class="t-collapse">Collapse</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pb-main">
+    {% if p.tabbed %}
+    <div class="pb-tabs" role="tablist" aria-label="Passage {{ refs }}">
+      <button type="button" role="tab" class="pb-tab" id="tab-fluent" aria-controls="panel-fluent" aria-selected="true" data-tab="fluent">Fluent</button>
+      <button type="button" role="tab" class="pb-tab" id="tab-literal" aria-controls="panel-literal" aria-selected="false" tabindex="-1" data-tab="literal"{% if not p.literal_tab %} disabled{% endif %}>Literal</button>
+      <button type="button" role="tab" class="pb-tab" id="tab-words" aria-controls="panel-words" aria-selected="false" tabindex="-1" data-tab="words">Grammar ({{ p.word_total }})</button>
+    </div>
+    {% if p.state == "study" %}
+    <div class="pb-panel pb-prose" role="tabpanel" id="panel-fluent" aria-labelledby="tab-fluent" tabindex="0">
+      {% for u in p.fluent_units %}
+      <section class="pb-unit" aria-label="Fluent translation of {{ ref_range(u.ref_start, u.ref_end) }}">
+        <h3 class="label pb-unit-label">Fluent translation of <span class="ref">{{ ref_range(u.ref_start, u.ref_end) }}</span></h3>
+        {% for para in u.fluent.split("\n") if para.strip() %}<p>{{ para }}</p>{% endfor %}
+      </section>
+      {% endfor %}
+    </div>
+    <div class="pb-panel pb-prose" role="tabpanel" id="panel-literal" aria-labelledby="tab-literal" tabindex="0" hidden>
+      <ol class="literal-lines" aria-label="Literal translation of {{ refs }}">
+        {% for ll in p.literal_lines %}
+        <li><span class="ref">{{ ll.line.reference or ll.line.line_number }}</span><span class="literal-text">{{ ll.literal }}</span></li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% else %}
+    <div class="pb-panel pb-state" role="tabpanel" id="panel-fluent" aria-labelledby="tab-fluent" tabindex="0">
+      {{ no_translation(p) }}
+    </div>
+    <div class="pb-panel{% if p.missing %} pb-state{% endif %}" role="tabpanel" id="panel-literal" aria-labelledby="tab-literal" tabindex="0" hidden>
+      {%- if p.missing %}{{ no_translation(p, literal=true) }}{% endif -%}
+    </div>
+    {% endif %}
+    <div class="pb-panel pb-words" role="tabpanel" id="panel-words" aria-labelledby="tab-words" tabindex="0" hidden>
+      {% set structure = p.outline %}
+      {% if structure %}
+      <div class="st-switch" role="radiogroup" aria-label="Show the words">
+        <button type="button" role="radio" aria-checked="true" data-words-view="order">In order</button>
+        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-words-view="sentence">Structure</button>
+      </div>
+      {% endif %}
+      {% if p.study %}
+      {% set sources = p.study_sources %}
+      <p class="wt-sources">{% if sources.meaning %}<span>Meaning: {{ sources.meaning }}.</span> {% endif %}<span>Parsing: {{ sources.parsing }}.</span>{% if structure %} <span>Role: the treebank.</span>{% endif %}{% if p.use_models %} <span>Use: {% for model in p.use_models %}{{ model | model_label }}{{ ", " if not loop.last }}{% endfor %}.</span>{% endif %}</p>
+      {% endif %}
+      <div class="words-table{% if structure %} has-roles{% endif %}" role="table" aria-label="All words in {{ refs }}" data-view="order">
+        <div class="wt-head" role="row">
+          <span role="columnheader">Word · lemma</span>
+          <span role="columnheader">Meaning</span>
+          <span role="columnheader">Parsing</span>
+          {% if structure %}<span role="columnheader">Role · use</span>{% endif %}
+          <span role="columnheader">Note</span>
+        </div>
+        {% if p.study %}
+        {% for sl in p.study %}
+        <div role="rowgroup">
+          <div class="wt-line" role="row">
+            <span class="ref" role="rowheader">{{ sl.line.reference or sl.line.line_number }}</span>
+            <span class="wt-line-text" lang="grc">{{ sl.line.content }}</span>
+          </div>
+          {% for w in sl.words %}
+          <div class="wt-row{% if w.role or w.use %} has-role{% endif %}" role="row" data-line="{{ w.line_number }}" data-i="{{ w.index }}">
+            <span class="wt-word" role="cell">
+              <span class="wt-form" lang="grc">{{ w.form }}</span>
+              {% if w.lemma and w.lemma != w.form %}<span class="wt-lemma" lang="grc">{{ w.lemma }}</span>{% endif %}
+            </span>
+            <span class="wt-meaning" role="cell">{% if w.gloss %}{{ w.gloss }}{% elif w.short_defs %}<span class="wt-dict" title="Dictionary meaning (LSJ)">{{ w.short_defs }}</span>{% else %}—{% endif %}</span>
+            <span class="wt-parse" role="cell">{{ w.parse_text }}{% if w.parse_text and w.parse_by %}<span class="wt-by">{{ w.parse_by | model_label }}</span>{% endif %}{% if w.check and w.parsed %}<span class="wt-check"><span class="visually-hidden">Parse check by {{ w.studied | model_label }}: </span>{{ w.check }}</span>{% endif %}</span>
+            {% if structure %}<span class="wt-role" role="cell">{% if w.role %}<span class="wt-role-text">{{ m.phrase(w.role.rows[0].phrase, links=false) }}</span>{% if w.credit.automatic %}<span class="wt-auto" title="{{ w.credit.title }}">automatic, may be wrong</span>{% endif %}{% endif %}{% if w.use %}<span class="wt-use">{{ w.use.use_label | greek_spans }}</span>{% endif %}</span>{% endif %}
+            <span class="wt-note" role="cell">{{ w.note }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        {% if p.study_left_out %}
+        <p class="wt-more">{{ p.study_left_out | count_noun("more word") }} in this selection. Select fewer lines to see every word.</p>
+        {% endif %}
+        {% endif %}
+      </div>
+      {% if structure %}
+      <div class="st-outline" data-view="sentence" hidden>
+        {% for s in structure %}
+        {% set srefs = ref_range(s.ref_start, s.ref_end) %}
+        <section class="st-sentence" aria-label="Sentence {{ srefs }}">
+          <h3 class="st-head"><span class="ref">{{ srefs }}</span>{% if s.credit.automatic %}<span class="st-auto" title="{{ s.credit.title }}">GLAUx, automatic parse: roles may be wrong</span>{% else %}<span title="{{ s.credit.title }}">{{ s.credit.label }}, by hand</span>{% endif %}<button type="button" class="link-btn st-text-toggle" data-action="toggle-sentence-text" aria-expanded="false" aria-controls="st-text-{{ s.sentence_id }}">Show the sentence</button></h3>
+          <p class="st-text" id="st-text-{{ s.sentence_id }}" lang="grc">{% for token, inside in s.text %}{% if inside %}{{ token }}{% else %}<span class="st-out">{{ token }}</span>{% endif %}{{ " " if not loop.last }}{% endfor %}</p>
+          <ul class="st-rows" role="tree" aria-label="Structure of {{ srefs }}">{{ outline_rows(s, s.rows, true) }}</ul>
+        </section>
+        {% endfor %}
+        {% if p.study_left_out %}
+        <p class="wt-more">{{ p.study_left_out | count_noun("more word") }} in this selection. Select fewer lines to see every sentence.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    {% else %}
+    {{ no_translation(p) }}
+    {% endif %}
+  </div>
+</section>
+{% endif %}

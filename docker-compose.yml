@@ -1,0 +1,48 @@
+# The same file runs the reader on your computer and on a server. The
+# Raspberry Pi's deploy (deploy/deploy_pi.sh) sets the variables below to its
+# service user, its port and its data folder; on your computer the defaults
+# apply (and .env).
+name: ancient-greek-reader
+
+services:
+  # The web app, kept running across logouts and reboots. Published on this
+  # computer's localhost only: Docker's published ports bypass the host
+  # firewall.
+  web:
+    build: .
+    image: ancient-greek-reader
+    command: ["web", "--host", "0.0.0.0", "--port", "8999"]
+    env_file: .env
+    environment:
+      HOME: /tmp
+    # Your user, so files written into data/ stay yours.
+    user: "${GREEK_UID:-1000}:${GREEK_GID:-1000}"
+    ports:
+      - "127.0.0.1:${GREEK_PORT:-8999}:8999"
+    volumes:
+      - ${GREEK_DATA:-./data}:/data
+      # Saved times are shown in local time.
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+  # One-off CLI commands: docker compose run --rm greek <command>
+  greek:
+    profiles: [cli]
+    build: .
+    image: ancient-greek-reader
+    env_file: .env
+    environment:
+      HOME: /tmp
+    user: "${GREEK_UID:-1000}:${GREEK_GID:-1000}"
+    volumes:
+      - ${GREEK_DATA:-./data}:/data
+      - /etc/localtime:/etc/localtime:ro
+    stdin_open: true
+    tty: true
+    entrypoint: ["python", "greek.py"]
+    command: ["--help"]
