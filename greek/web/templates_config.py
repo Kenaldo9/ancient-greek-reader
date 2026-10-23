@@ -65,15 +65,20 @@ def static_cache_control(path: str, query_string: bytes) -> str:
     return "no-cache"
 
 
-def absolute_url(request: Request, path: str) -> str:
+def site_origin(request: Request) -> str:
     """
-    A path on this site as a whole URL, for the sitemap and canonical links,
-    with the host the request asked for. Behind Cloudflare a request comes
-    from the tunnel over plain HTTP, so the scheme is its X-Forwarded-Proto.
+    This site's scheme and host as the request asked for them, e.g.
+    https://reader.example. Behind Cloudflare a request comes from the tunnel
+    over plain HTTP, so the scheme is its X-Forwarded-Proto.
     """
     forwarded = request.headers.get("x-forwarded-proto", "").split(",")[0].strip()
     scheme = forwarded if forwarded in ("http", "https") else request.url.scheme
-    return f"{scheme}://{request.headers.get('host') or request.url.netloc}{path}"
+    return f"{scheme}://{request.headers.get('host') or request.url.netloc}"
+
+
+def absolute_url(request: Request, path: str) -> str:
+    """A path on this site as a whole URL, for the sitemap and canonical links."""
+    return site_origin(request) + path
 
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")

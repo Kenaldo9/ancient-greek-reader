@@ -43,6 +43,11 @@ def is_read_only(path: Path) -> bool:
     return path.is_file() and not os.access(path, os.W_OK)
 
 
+def database_is_read_only() -> bool:
+    """Whether this process's database is read-only: the public site's published copy."""
+    return is_read_only(_DB_PATH)
+
+
 def get_connection() -> sqlite3.Connection:
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
     if is_read_only(_DB_PATH):
