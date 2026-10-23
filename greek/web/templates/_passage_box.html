@@ -9,7 +9,7 @@
 {%- set id = "st-" ~ s.sentence_id ~ "-" ~ r.key %}
 {%- set word = r.word %}
 <li class="st-item" role="treeitem" id="{{ id }}" aria-labelledby="{{ id }}-row" aria-level="{{ r.depth + 1 }}"{% if r.foldable %} aria-expanded="true"{% endif %} tabindex="{{ 0 if first and loop.first else -1 }}"{% if word %} data-line="{{ word.line_number }}" data-i="{{ word.token_index }}"{% endif %} data-words="{% for n, i in r.places %}{{ n }}:{{ i }}{{ ' ' if not loop.last }}{% endfor %}">
-  <div class="st-row{% if r.clause %} is-clause{% endif %}{% if r.depth == 0 %} is-top{% endif %}{% if r.key in s.outside %} is-out{% endif %}" id="{{ id }}-row" style="--d: {{ r.depth }}">
+  <div class="st-row{% if r.clause %} is-clause{% endif %}{% if r.depth == 0 %} is-top{% endif %}{% if r.key in s.outside %} is-out{% endif %}" id="{{ id }}-row" data-depth="{{ [r.depth, 6] | min }}">
     <span class="st-lead">
       {%- if r.foldable %}<span class="st-toggle" aria-hidden="true"></span>{% endif %}
       {%- if r.depth > 4 %}<span class="st-deep st-deep-4" aria-hidden="true">+{{ r.depth - 4 }}</span>{% endif %}

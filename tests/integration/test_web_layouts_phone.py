@@ -52,6 +52,7 @@ def phone(engine, live_reader, request):
     page = context.new_page()
     errors, blocked = [], []
     page.on("pageerror", lambda error: errors.append(str(error)))
+    layouts.report_csp_violations(page, errors)
     origin = live_reader.split("/texts/")[0]
 
     def only_local_reads(route):

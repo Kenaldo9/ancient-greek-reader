@@ -5,11 +5,12 @@ load_dotenv()
 
 import click
 
-from greek.db.connection import DatabaseNewerThanCode, get_connection, run_migrations
+from greek.db.connection import DatabaseUnusable, get_connection, run_migrations
 from greek.cli.backup_cmd import backup_cmd
 from greek.cli.export_data_cmd import export_data_cmd
 from greek.cli.import_cmd import import_cmd
 from greek.cli.library_cmd import library_cmd
+from greek.cli.migrate_cmd import migrate_cmd
 from greek.cli.read_cmd import read_cmd
 from greek.cli.search_cmd import search_cmd
 from greek.cli.fetch_cmd import fetch_cmd
@@ -47,7 +48,7 @@ def cli(ctx):
         conn = get_connection()
         try:
             upgrade = run_migrations(conn)
-        except DatabaseNewerThanCode as e:
+        except DatabaseUnusable as e:
             raise click.ClickException(str(e))
         finally:
             conn.close()
@@ -72,6 +73,7 @@ cli.add_command(study_cmd)
 cli.add_command(update_text_cmd)
 cli.add_command(backup_cmd)
 cli.add_command(export_data_cmd)
+cli.add_command(migrate_cmd)
 
 if __name__ == "__main__":
     cli()

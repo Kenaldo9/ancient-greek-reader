@@ -4,13 +4,20 @@ import sqlite3
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from urllib.parse import quote
 
 from fastapi import Request
 
 from greek.api.models import model_label
 from greek.api.study import MODEL as STUDY_MODEL
 from greek.db.repos.lexicon import get_lemma_entries
-from greek.db.repos.lines import book_span, get_lines, search_lines
+from greek.db.repos.lines import (
+    book_span,
+    get_lines,
+    line_lengths,
+    list_books,
+    search_lines,
+)
 from greek.db.repos.parses import (
     get_tb_source,
     has_word_parses,
@@ -52,7 +59,7 @@ from greek.postag import decode
 from greek.search import excerpt, highlight, plain
 from greek.syntax import OutlineRow, Role, SentenceSyntax, build_syntax, text_syntax
 from greek.web.formatting import condensed_parse, number_ranges, parse_items
-from greek.web.reading import tokens
+from greek.web.reading import split_parts, tokens
 
 INTERLINEAR_COOKIE = "interlinear"
 SEARCH_LIMIT = 200  # results shown; the total is always counted
@@ -83,6 +90,34 @@ def references(
     ).fetchall()
     found = {r["line_number"]: r["reference"] or str(r["line_number"]) for r in rows}
     return {n: found.get(n, str(n)) for n in wanted}
+
+
+def reader_path(text_id: int, at: str) -> str:
+    """The reader opened at reference `at`, as the Library and the contents link a book."""
+    return f"/texts/{text_id}/read?at={quote(at, safe='.')}"
+
+
+def page_starts(conn: sqlite3.Connection, text_id: int) -> List[str]:
+    """
+    The reference each of a text's pages starts at, in order: each book, or
+    each part of a book long enough to be split (reading.split_parts), or
+    the whole text from its first line when it has no books, as the reader
+    pages it (find_page).
+    """
+    spans = [(b.line_start, b.line_end) for b in list_books(conn, text_id)]
+    if not spans:
+        first, last = conn.execute(
+            "SELECT MIN(line_number), MAX(line_number) FROM lines WHERE text_id=?",
+            (text_id,),
+        ).fetchone()
+        spans = [(first, last)] if first is not None else []
+    starts = [
+        start
+        for lo, hi in spans
+        for start in (split_parts(line_lengths(conn, text_id, lo, hi)) or [lo])
+    ]
+    refs = references(conn, text_id, starts)
+    return [refs[start] for start in starts]
 
 
 def word_study_at(

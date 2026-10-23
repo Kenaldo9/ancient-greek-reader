@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Unavailable — Ancient Greek Reader{% endblock %}
-{# Every page while the database is newer than this code (greek/web/app.py) #}
+{# Every page while the code can't use its database: newer than this code, or
+   read-only and behind it (greek/web/app.py) #}
 {% block main %}
 <div class="page">
-  <h1 class="page-title">The database is newer than this code</h1>
+  <h1 class="page-title">{{ heading }}</h1>
   <p class="page-lede">{{ message }}</p>
 </div>
 {% endblock %}

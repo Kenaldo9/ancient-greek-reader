@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Ancient Greek Reader{% endblock %}</title>
+  <meta name="description" content="A reader for Ancient Greek texts: the Greek, every word's parsing, its role in the sentence and its dictionary entry, and in the books that have them, a gloss and a note on every word and translations of every line.">
+  {# No style element from htmx: the Content-Security-Policy allows the app's
+     own stylesheets only (greek/web/app.py) #}
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
   <link rel="icon" href="{{ static_url('favicon.svg') }}" type="image/svg+xml">
   {# Home Screen: owl.svg at 78% on the header's teal, 180×180 PNG (iPadOS
      takes no SVG here and fills transparency with black) #}
@@ -15,6 +19,7 @@
   <link rel="manifest" href="{{ static_url('manifest.webmanifest') }}">
   <link rel="stylesheet" href="{{ static_url('fonts/fonts.css') }}">
   <link rel="stylesheet" href="{{ static_url('style.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
 <div class="app">

@@ -129,6 +129,13 @@ asked again. The prompts are in [greek/api/works.py](greek/api/works.py);
   [DATA-LICENSE.md](DATA-LICENSE.md) has each one, by table, and how to
   leave out the non-commercial part.
 
+## Mistakes and feedback
+
+The reader is a hobby project, kept up as time allows. If a gloss, a note
+or a translation is wrong, please
+[open an issue](https://github.com/Kenaldo9/ancient-greek-reader/issues/new/choose)
+with the book and line. There is no promise of a reply or of new features.
+
 ## Development
 
 [ARCHITECTURE.md](ARCHITECTURE.md) explains how the code is put together,

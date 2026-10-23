@@ -41,6 +41,7 @@ def _open(browser, width=2560, height=1324, touch=False):
     page = context.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
+    layouts.report_csp_violations(page, errors)
     return context, page, errors
 
 

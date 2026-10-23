@@ -35,6 +35,18 @@ VIEWPORTS = [
 ]
 
 
+def report_csp_violations(page, errors):
+    """
+    The browser's Content-Security-Policy refusals count as page errors. In
+    WebKit, Playwright's own screenshots add a style the policy refuses too.
+    """
+    page.on(
+        "console",
+        lambda message: "Content Security Policy" in message.text
+        and errors.append(message.text),
+    )
+
+
 @pytest.fixture(scope="module")
 def browser():
     with pw.sync_playwright() as runtime:
@@ -115,6 +127,7 @@ def page(browser, live_reader, request):
     page = context.new_page()
     errors, blocked = [], []
     page.on("pageerror", lambda error: errors.append(str(error)))
+    report_csp_violations(page, errors)
 
     def only_local_reads(route):
         req = route.request
@@ -342,6 +355,7 @@ def test_a_slow_word_does_not_hold_up_the_next_click(browser, live_reader, monke
     page = context.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
+    report_csp_violations(page, errors)
     page.route("**/*", lambda route: route.abort() if route.request.method != "GET" else route.continue_())
     try:
         page.goto(live_reader)

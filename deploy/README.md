@@ -2,7 +2,9 @@
 
 This is how the reader is deployed to a Raspberry Pi in Docker, reachable
 only over [Tailscale](https://tailscale.com): GitHub Actions deploys every
-commit on `main` once the tests and the secret scan pass. Change the names
+commit on `main` once the tests and the secret scan pass. Beside it the same
+image can serve a public site on a published copy of the database
+([The public site](#the-public-site)), reached through Cloudflare Tunnel. Change the names
 (user, folders, ports) to suit your own machine. Replace `PI` below with
 your ssh name for the Pi and `K` with a scratch folder outside the
 repository.
@@ -121,6 +123,61 @@ Push to `main`; the deploy follows the tests. Pause deploys with
 - A new API key: `sudo -u greekreader nano /opt/ancient-greek-reader/app/.env`,
   then `sudo docker compose -f /opt/ancient-greek-reader/app/docker-compose.yml up -d web`.
 
+## The public site
+
+A second compose project, `greek-public`
+([public/docker-compose.yml](public/docker-compose.yml)), runs the same
+image for everyone on the internet. It serves a published copy of the
+database, not the live one, so new study data shows on the private reader
+first and on the public site when you publish it.
+
+- `/opt/ancient-greek-reader/public/` (root's) holds it: `site/greek.db`, the
+  published copy (read-only, owned by the system user `greekpublic`, which
+  can't log in); `greek.db.previous`, the copy the last publish replaced;
+  `releases/data-YYYY-MM-DD/`, the last three exports, the same files as a
+  data release; `incoming/`, where a new copy is checked; `compose.env`, the
+  settings compose reads, which the scripts write; and from the tunnel's
+  setup `tunnel.env` (its token).
+- The web container runs as `greekpublic` with a read-only filesystem
+  (`/tmp` in memory), no Linux capabilities, 512 MB of memory at most, and
+  the published copy mounted read-only. It has no `.env` and no API key, and
+  no port on the Pi: it is on an internal network with no way out, which
+  only `cloudflared` joins.
+- `cloudflared` starts once `tunnel.env` holds the tunnel's token
+  (`TUNNEL_TOKEN=…`). It is the only container of the site with a way out,
+  on its own network (`172.30.250.0/24`). Until then the site runs, and
+  nothing reaches it.
+- A deploy restarts the site on the new image after the private reader
+  passes its checks, and checks it the same way from inside its container
+  (`/version` serving this commit on a fully migrated database, the
+  Library). When the code brings a migration the published copy lacks, it
+  first migrates a copy (`greek migrate`, with no network, as `greekpublic`)
+  and swaps that in. Before the first publish there is nothing to start.
+- Its logs show `cloudflared`'s address on the internal network, not
+  visitors' addresses.
+
+Publish (or publish again after new study data), from your computer:
+
+```bash
+ssh -t PI sudo /opt/ancient-greek-reader/app/deploy/publish.sh
+```
+
+[publish.sh](publish.sh) exports the live database in the private reader's
+container (`greek export-data`, without the batches' bookkeeping, a few
+minutes on a Pi 4), checks the export's checksum and the database it
+decompresses to against its manifest, then checks that copy
+(`integrity_check`, one file with no WAL, this code's last migration). It
+stops the public web app, keeps the copy it replaces as
+`greek.db.previous`, starts the app on the new one and checks it; if a
+check fails, it puts the previous copy back. A deploy and a publish wait for
+each other (`/run/lock/ancient-greek-reader.lock`). `publish.sh --restore`
+puts the previous copy back.
+
+```bash
+sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
+  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml ps   # or logs web
+```
+
 ## Rollback
 
 Revert the bad commit on `main` (`git revert`) and push; the deploy follows.
@@ -133,10 +190,13 @@ again.
 ## Removing it
 
 ```bash
+sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
+  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml --profile tunnel down
 sudo docker compose -f /opt/ancient-greek-reader/app/docker-compose.yml down --rmi all
 sudo tailscale serve --https=8443 off
 sudo rm -rf /opt/ancient-greek-reader /etc/sudoers.d/gha-deploy-ancient-greek-reader
 sudo userdel -r greekreader
+sudo userdel greekpublic
 ```
 
 and remove the key's line from `/home/gha-deploy/.ssh/authorized_keys`.
