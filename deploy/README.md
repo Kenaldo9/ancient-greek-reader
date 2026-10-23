@@ -2,8 +2,8 @@
 
 This is how the reader is deployed to a Raspberry Pi in Docker, reachable
 only over [Tailscale](https://tailscale.com): GitHub Actions deploys every
-commit on `main` once the tests and the secret scan pass. Beside it the same
-image can serve a public site on a published copy of the database
+commit on `main` over the tailnet once the tests and the secret scan pass.
+Beside it the same image can serve a public site on a published copy of the database
 ([The public site](#the-public-site)), reached through Cloudflare Tunnel. Change the names
 (user, folders, ports) to suit your own machine. Replace `PI` below with
 your ssh name for the Pi and `K` with a scratch folder outside the
@@ -27,8 +27,14 @@ repository.
 - `app/.env` on the Pi may hold `ANTHROPIC_API_KEY`, for `greek study`; the
   reader needs none. It is never in GitHub.
 - After the tests and the secret scan pass on `main`, and if the
-  repository variable `PI_DEPLOY_ENABLED` is `true`, the workflow logs in as
-  `gha-deploy` and runs exactly
+  repository variable `PI_DEPLOY_ENABLED` is `true`, the workflow joins the
+  tailnet with [Tailscale's GitHub Action](https://tailscale.com/docs/integrations/github/github-action)
+  as an ephemeral node tagged `tag:ci`, signed in with the run's GitHub
+  identity token (workload identity federation: no Tailscale secret is
+  stored), and removed when the job ends. The tailnet policy lets `tag:ci`
+  reach the Pi's port 22 and nothing else, so the Pi needs no ssh port open
+  to the internet. Over it the workflow logs in as `gha-deploy` and runs
+  exactly
   `sudo -n /opt/ancient-greek-reader/app/deploy/deploy_pi.sh --non-interactive`.
   The login key is locked to that command in `authorized_keys`
   (`restrict,command="…"`), and sudo allows `gha-deploy` that command only.
@@ -38,7 +44,9 @@ repository.
   image.
 - Actions logs are public. With `--non-interactive` the script prints
   neither the tailnet's name nor the app's logs (they hold visitors'
-  addresses); the secrets (the Pi's public name among them) are masked.
+  addresses); the secrets (the Pi's tailnet address among them) are masked.
+  The Tailscale step runs quietly and pings nothing: a ping prints the
+  address its connection goes to.
 - A deploy that brings a new migration: the app copies the database into
   `data/` before applying it ([Database upgrades](../docs/cli.md#database-upgrades)).
   Those copies (about 200 MB each) stay until removed by hand.
@@ -46,10 +54,28 @@ repository.
 ## One-time setup
 
 The Pi needs Docker with the compose plugin, git, curl, python3 and
-Tailscale (up), and a login user `gha-deploy` that GitHub's runners can
-reach over ssh (`sudo useradd --create-home --shell /bin/bash gha-deploy`).
+Tailscale (up, without Tailscale SSH, so that port 22 on the tailnet is the
+Pi's own sshd), and a login user `gha-deploy`
+(`sudo useradd --create-home --shell /bin/bash gha-deploy`).
 Location labels: `[LOCAL]` your computer, `[PI]` the Pi, `[GITHUB]`
-github.com or `gh`.
+github.com or `gh`, `[TAILSCALE]` the Tailscale admin console.
+
+0. `[TAILSCALE]` In the tailnet policy (Access controls), make the tag
+   and let it reach the Pi's ssh and nothing else. If the policy still lets everything reach everything
+   (`"src": ["*"]`), narrow that rule to `autogroup:member` first: a tagged
+   node is not a member, so `tag:ci` then gets only its own rule.
+   ```jsonc
+   "tagOwners": {"tag:ci": ["autogroup:admin"]},
+   "grants": [
+     {"src": ["autogroup:member"], "dst": ["*"], "ip": ["*"]},
+     {"src": ["tag:ci"], "dst": ["<tailnet address>"], "ip": ["tcp:22"]},
+   ],
+   ```
+   Then a trust credential (Settings, Trust credentials, Credential,
+   OpenID Connect): issuer GitHub, subject
+   `repo:<owner>/<repository>:ref:refs/heads/main` (only a run on `main`
+   signs in), scope `auth_keys` (write) with the tag `tag:ci`. Keep its
+   client ID and audience for step 3.
 
 1. `[LOCAL]` Create this repository's own GitHub Actions login key (never
    reuse another repository's) and copy it and the setup script over:
@@ -65,17 +91,19 @@ github.com or `gh`.
    `/etc/sudoers.d/gha-deploy-ancient-greek-reader`, and adds the key to
    `gha-deploy`'s `authorized_keys`, locked to the deploy command. A re-run
    locks the key again instead of adding a copy.
-3. `[GITHUB]` Set the secrets (`PI_HOST` is the Pi's public name):
+3. `[GITHUB]` Set the secrets (`PI_HOST` is the Pi's tailnet address,
+   `100.x.y.z`):
    ```bash
-   gh secret set PI_HOST --body <public name>
-   gh secret set PI_PORT --body 22
-   gh secret set PI_USER --body gha-deploy
+   gh secret set TS_OAUTH_CLIENT_ID --body <client ID>
+   gh secret set TS_AUDIENCE --body <audience>
+   gh secret set PI_HOST --body <tailnet address>
    gh secret set PI_SSH_KEY < $K/ancient-greek-reader-gha
-   ssh-keyscan -t ed25519,ecdsa,rsa <public name> | gh secret set PI_KNOWN_HOSTS
+   ssh-keyscan -t ed25519,ecdsa,rsa <tailnet address> | gh secret set PI_KNOWN_HOSTS
    shred -u $K/ancient-greek-reader-gha $K/ancient-greek-reader-gha.pub
    ```
-   Before pinning, compare every host key type of the public name with the
-   Pi's own (`ssh-keyscan` of its LAN address).
+   Before pinning, compare every host key type with the ones you already
+   trust for the Pi (`ssh-keygen -lf`, or `ssh-keyscan` of its LAN
+   address).
 4. `[LOCAL]` The seed: the [data release](../docs/data.md#the-data-release)'s
    database, and an `.env` with the API key if you will run `greek study`
    on the Pi:
@@ -155,6 +183,11 @@ first and on the public site when you publish it.
   and swaps that in. Before the first publish there is nothing to start.
 - Its logs show `cloudflared`'s address on the internal network, not
   visitors' addresses.
+- On its read-only database the app keeps each page it sends in memory,
+  gzipped, and sends it again to the next request for it
+  ([page_cache.py](../greek/web/page_cache.py)), up to 64 MB. A restart
+  empties it, and every publish and deploy restarts the site. The private
+  reader keeps nothing, so new study data shows there at once.
 
 Publish (or publish again after new study data), from your computer:
 

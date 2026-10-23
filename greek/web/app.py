@@ -11,10 +11,12 @@ from starlette.middleware.gzip import GZipMiddleware  # noqa: E402
 
 from greek.db.connection import (  # noqa: E402
     DatabaseUnusable,
+    database_is_read_only,
     get_connection,
     run_migrations,
 )
 from greek.version import read_versions  # noqa: E402
+from greek.web.page_cache import PageCache  # noqa: E402
 from greek.web.templates_config import (  # noqa: E402
     STATIC_DIR,
     static_cache_control,
@@ -98,6 +100,13 @@ class TextGZipMiddleware(GZipMiddleware):
 # A book page is about 690 KB of HTML and 50–70 KB compressed. Level 6 takes
 # 25 ms for one on the Raspberry Pi 4, level 9 87 ms for 3 KB less.
 app.add_middleware(TextGZipMiddleware, minimum_size=1000, compresslevel=6)
+
+# The public site's published copy never changes while the app runs, so its
+# finished pages are kept, gzipped (page_cache.py): an Iliad book page takes
+# about 0.5 s on the Raspberry Pi 4 (2026-10-23). The private reader's live
+# database gets new study data at any time.
+if database_is_read_only():
+    app.add_middleware(PageCache)
 
 # Every page uses only the app's own scripts, styles, fonts and images: no
 # inline code or style attributes (base.html turns off htmx's injected style).

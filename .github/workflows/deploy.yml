@@ -1,9 +1,10 @@
 name: Test and deploy
 
 # Tests and a secret scan run on every push. On main, after they pass, the
-# Pi pulls main, rebuilds and checks itself (deploy/deploy_pi.sh). Set the
-# repository variable PI_DEPLOY_ENABLED to "true" to turn deploys on; any
-# other value pauses them. Setup: deploy/README.md. The logs are public.
+# runner joins the tailnet for the job and the Pi pulls main, rebuilds and
+# checks itself (deploy/deploy_pi.sh). Set the repository variable
+# PI_DEPLOY_ENABLED to "true" to turn deploys on; any other value pauses
+# them. Setup: deploy/README.md. The logs are public.
 
 on:
   push:
@@ -71,7 +72,25 @@ jobs:
       group: pi-deploy
       cancel-in-progress: false
 
+    # The runner's GitHub identity token signs it in to Tailscale
+    # (workload identity federation): no Tailscale secret is stored.
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
+      # An ephemeral node tagged tag:ci, gone when the job ends; the tailnet
+      # policy lets the tag reach the Pi's ssh and nothing else. Quiet, to
+      # keep its routine output out of the public log, and no ping: it
+      # prints the address a direct connection goes to.
+      - name: Join the tailnet
+        uses: tailscale/github-action@d1b6cd204f8dceda5b3eaad7f1f767be390056cd # v4.2.0
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
+          log-mode: quiet
+
       - name: Prepare SSH key and pinned host key
         env:
           PI_SSH_KEY: ${{ secrets.PI_SSH_KEY }}
@@ -83,35 +102,20 @@ jobs:
           printf '%s\n' "$PI_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/pi_deploy_key ~/.ssh/known_hosts
 
-      - name: Resolve the Pi's name
-        env:
-          PI_HOST: ${{ secrets.PI_HOST }}
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3 4 5 6; do
-            if getent hosts "$PI_HOST" >/dev/null; then
-              exit 0
-            fi
-            echo "DNS lookup failed (attempt $attempt/6), retrying in 5 s"
-            sleep 5
-          done
-          echo "Could not resolve PI_HOST"
-          exit 1
-
+      # PI_HOST is the Pi's address on the tailnet
       - name: Deploy
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
-          PI_PORT: ${{ secrets.PI_PORT }}
-          PI_USER: ${{ secrets.PI_USER }}
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            # Retries cover a failed connection only (ssh exits 255); a
-            # failed deploy is reported as it is.
+            # Retries cover a failed connection only (ssh exits 255), such as
+            # one tried before the tailnet's path to the Pi is up; a failed
+            # deploy is reported as it is.
             status=0
-            ssh -i ~/.ssh/pi_deploy_key -p "${PI_PORT:-22}" \
+            ssh -i ~/.ssh/pi_deploy_key \
               -o StrictHostKeyChecking=yes -o BatchMode=yes -o ConnectTimeout=20 \
-              "${PI_USER:-gha-deploy}@$PI_HOST" \
+              "gha-deploy@$PI_HOST" \
               "sudo -n /opt/ancient-greek-reader/app/deploy/deploy_pi.sh --non-interactive" \
               || status=$?
             if [ "$status" -ne 255 ]; then

@@ -26,11 +26,12 @@ and its licences in [docs/data.md](docs/data.md).
 | `greek/fetch/` | Perseus catalog, downloads, and TEI parsing for poetry and prose |
 | `greek/display/` | Rich CLI rendering |
 | `greek/search.py` | Greek normalization, FTS query construction, and match highlighting |
-| `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs |
+| `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs; on a read-only database, add the page cache |
+| `greek/web/page_cache.py` | The public site's finished pages in memory, gzipped as sent (64 MB, least recently used out): only on a read-only database, which can't change while the app runs; keyed on the path and query, the Interlinear cookie, the site's scheme and host, and gzip; the private reader caches nothing |
 | `greek/web/routes/site.py` | `robots.txt` and `sitemap.xml`: the pages search engines may index, from `page_starts` in `reader_data.py` |
 | `greek/web/deps.py` | Request-scoped database connections |
 | `greek/web/reader_data.py`, `reading.py`, `formatting.py` | Prepare reader views, paginate books, map saved words to tokens, and format display values |
-| `deploy/`, `.github/workflows/deploy.yml` | Tests and a secret scan (gitleaks) on every push, then on `main` a pull, rebuild and checks on a Raspberry Pi, for the private reader and the public site on a published copy of the database (`deploy/public/`, `publish.sh`; [deploy/README.md](deploy/README.md)) |
+| `deploy/`, `.github/workflows/deploy.yml` | Tests and a secret scan (gitleaks) on every push, then on `main`, over the tailnet (an ephemeral `tag:ci` node), a pull, rebuild and checks on a Raspberry Pi, for the private reader and the public site on a published copy of the database (`deploy/public/`, `publish.sh`; [deploy/README.md](deploy/README.md)) |
 | `greek/web/templates/`, `static/` | Jinja pages and fragments, HTMX, vanilla reader JS, one app stylesheet, and self-hosted fonts; templates link static files with `static_url`, which adds a content hash (`?v=`) so browsers fetch changed files |
 
 ## Persistence
