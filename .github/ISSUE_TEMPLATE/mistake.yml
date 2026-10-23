@@ -1,0 +1,36 @@
+name: A mistake in a gloss, note or translation
+description: A word's gloss or note, a line's literal translation, or a passage's fluent translation is wrong.
+labels: ["mistake"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Thank you. The reader is a hobby project: each report is read, but
+        there is no promise of a reply or of when a fix comes.
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: The text and the reference, as Go to takes it.
+      placeholder: Iliad 1.42, the word ἄλγε᾽
+    validations:
+      required: true
+  - type: dropdown
+    id: what
+    attributes:
+      label: What is wrong
+      options:
+        - A word's gloss or note
+        - A line's literal translation
+        - A passage's fluent translation
+        - A word's parsing or role
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: What it says, and what it should say
+      description: Why, if you can (a grammar, LSJ, a commentary).
+    validations:
+      required: true

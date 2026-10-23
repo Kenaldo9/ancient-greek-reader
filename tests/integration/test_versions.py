@@ -1,7 +1,8 @@
 """
 Which code is running and which database it uses (greek/version.py), and the
 migration guard in run_migrations(): an existing database is backed up before
-new migrations, and one that is newer than the code is left alone.
+new migrations, one that is newer than the code is left alone, and a read-only
+one (the public site's published copy) is read where it is.
 """
 
 import json
@@ -18,6 +19,7 @@ import pytest
 import greek.db.connection as connection
 from greek import version
 from greek.db.connection import (
+    DatabaseNeedsMigrations,
     DatabaseNewerThanCode,
     Upgrade,
     applied_migrations,
@@ -128,6 +130,67 @@ def test_no_migration_without_its_backup(tmp_path, monkeypatch):
     with pytest.raises(OSError):
         run_migrations(conn)
     assert applied_migrations(conn) == NAMES[:-1]
+
+
+# -- a read-only database -----------------------------------------------------
+
+# root may write a file whatever its mode
+needs_a_user = pytest.mark.skipif(os.geteuid() == 0, reason="root can write it")
+
+
+@pytest.fixture
+def read_only(tmp_path):
+    """Make a database as the public site has it: one file, on a read-only mount."""
+    folders = []
+
+    def make(path: Path) -> Path:
+        conn = sqlite3.connect(path)
+        conn.execute("PRAGMA journal_mode = DELETE")  # as greek export-data leaves it
+        conn.close()
+        path.chmod(0o444)
+        path.parent.chmod(0o555)
+        folders.append(path.parent)
+        return path
+
+    yield make
+    for folder in folders:
+        folder.chmod(0o755)
+
+
+@needs_a_user
+def test_a_read_only_database_is_read_where_it_is(tmp_path, monkeypatch, read_only):
+    data = tmp_path / "data"
+    data.mkdir()
+    path = read_only(_old_db(data, monkeypatch, upto=NAMES[-1]))
+    monkeypatch.setattr(connection, "_DATA_DIR", data)
+    monkeypatch.setattr(connection, "_DB_PATH", path)
+
+    conn = connection.get_connection()
+    assert run_migrations(conn) == Upgrade()
+    assert conn.execute("SELECT title FROM texts").fetchone()[0] == "Iliad"
+    with pytest.raises(sqlite3.OperationalError, match="readonly"):
+        conn.execute("DELETE FROM texts")
+    conn.close()
+    # no -wal or -shm beside it: WAL would need a write
+    assert sorted(p.name for p in data.iterdir()) == ["greek.db", "old-migrations"]
+
+
+@needs_a_user
+def test_a_read_only_database_behind_the_code_is_left_alone(
+    tmp_path, monkeypatch, read_only
+):
+    path = read_only(_old_db(tmp_path, monkeypatch))
+    conn = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
+
+    with pytest.raises(DatabaseNeedsMigrations) as refused:
+        run_migrations(conn)
+
+    assert str(refused.value) == (
+        f"{path} is read-only and lacks this code's migrations ({NAMES[-1]}): "
+        "migrate a writable copy with `greek migrate` and put it in its place."
+    )
+    assert applied_migrations(conn) == NAMES[:-1]
+    assert _backups(tmp_path) == []
 
 
 # -- the code's version -------------------------------------------------------
@@ -299,6 +362,37 @@ def test_a_command_refuses_a_database_newer_than_the_code(tmp_path, monkeypatch)
     assert NAMES[-1] not in applied_migrations(sqlite3.connect(path))
 
 
+def test_greek_migrate_applies_the_pending_migrations_and_says_so(
+    tmp_path, monkeypatch
+):
+    _old_db(tmp_path, monkeypatch)
+
+    result = _greek(tmp_path, "migrate")
+
+    assert result.returncode == 0, result.stderr
+    backup = tmp_path / f"greek-backup-{TODAY}-pre-{LAST}.db"
+    assert (
+        result.stderr
+        == f"Backed up the database to {backup}, then applied {NAMES[-1]}.\n"
+    )
+    assert result.stdout == f"The database is at {LAST}, the code's last migration.\n"
+    assert _greek(tmp_path, "migrate").stderr == ""  # nothing more to do
+
+
+@needs_a_user
+def test_a_command_refuses_a_read_only_database_behind_the_code(
+    tmp_path, monkeypatch, read_only
+):
+    read_only(_old_db(tmp_path, monkeypatch))
+
+    result = _greek(tmp_path, "library")
+
+    assert result.returncode == 1
+    assert (
+        f"is read-only and lacks this code's migrations ({NAMES[-1]})" in result.stderr
+    )
+
+
 # -- the web app --------------------------------------------------------------
 
 
@@ -352,7 +446,7 @@ def test_a_newer_database_closes_every_page_but_says_why(client, monkeypatch):
     import greek.web.app as web_app
 
     message = "/data/greek.db has migrations this code doesn't have (999_future.sql): newer code has upgraded it."
-    monkeypatch.setattr(web_app, "startup_error", message)
+    monkeypatch.setattr(web_app, "startup_error", DatabaseNewerThanCode(message))
 
     for page in ("/", "/library", "/texts/1/read", "/verbs"):
         response = client.get(page, follow_redirects=False)
@@ -361,3 +455,19 @@ def test_a_newer_database_closes_every_page_but_says_why(client, monkeypatch):
         assert "(999_future.sql)" in response.text
     assert client.get("/static/style.css").status_code == 200
     assert client.get("/version").json()["serving"] is False
+
+
+def test_a_read_only_database_behind_the_code_closes_every_page_but_says_why(
+    client, monkeypatch
+):
+    import greek.web.app as web_app
+
+    message = (
+        f"/data/greek.db is read-only and lacks this code's migrations ({NAMES[-1]})."
+    )
+    monkeypatch.setattr(web_app, "startup_error", DatabaseNeedsMigrations(message))
+
+    response = client.get("/library")
+    assert response.status_code == 503
+    assert "The database needs this code&#39;s migrations" in response.text
+    assert f"({NAMES[-1]})." in response.text

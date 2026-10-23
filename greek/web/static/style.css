@@ -1616,6 +1616,7 @@ code {
 .st-rows { padding: 6px 0 10px; }
 /* a row: its Greek and meaning, indented by depth (with guides), its role and its use */
 .st-row {
+  --d: 0;
   --step: 22px;
   --cap: 6;
   --indent: calc(min(var(--d), var(--cap)) * var(--step));
@@ -1630,6 +1631,13 @@ code {
   background-repeat: no-repeat;
   cursor: pointer;
 }
+/* the depth from data-depth (6 at most), not a style attribute: the CSP allows none */
+.st-row[data-depth="1"] { --d: 1; }
+.st-row[data-depth="2"] { --d: 2; }
+.st-row[data-depth="3"] { --d: 3; }
+.st-row[data-depth="4"] { --d: 4; }
+.st-row[data-depth="5"] { --d: 5; }
+.st-row[data-depth="6"] { --d: 6; }
 .st-row:hover { background-color: var(--selected); }
 .st-item.is-active > .st-row { background-color: var(--accent-tint); }
 .st-item:focus-visible { outline: none; }

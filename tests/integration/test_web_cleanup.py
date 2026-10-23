@@ -10,7 +10,9 @@ def test_toc_links_to_book_start_without_selecting_entire_book(client, db_text):
     assert response.status_code == 200
     assert 'class="page-title"' in response.text
     assert 'aria-label="Table of contents"' in response.text
-    assert f'href="/texts/{text_id}/read?at=1"' in response.text
+    # by its reference, as the Library links it and the reader's canonical
+    # link names it
+    assert f'href="/texts/{text_id}/read?at=1.1"' in response.text
     assert "1.1–1.5" in response.text
     assert "5 lines" in response.text
     assert "?lines=1-5" not in response.text
@@ -33,7 +35,7 @@ def test_toc_prose_counts_sections_and_opens_each_book(client, web_db):
     assert "2 sections" in html
     assert "1 section" in html
     assert "1.1.0–1.2.1" in html
-    assert f'href="/texts/{tid}/read?at=3"' in html
+    assert f'href="/texts/{tid}/read?at=2.1.1"' in html
 
 
 def test_toc_without_references_uses_integer_range(client, web_db):

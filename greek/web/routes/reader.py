@@ -22,6 +22,7 @@ from greek.web.formatting import line_unit
 from greek.web.reader_data import (
     interlinear_on,
     passage_view,
+    reader_path,
     ref,
     references,
     saved_principal_parts,
@@ -132,7 +133,7 @@ def read(
     pg = find_page(books, at_line, text.line_count, _parts_of(db, text_id))
     search = search_view(db, text_id, q) if q is not None else None
     line_views = [] if search else _line_views(db, text_id, pg.start, pg.end)
-    refs = references(db, text_id, [at_line, pg.prev_start, pg.next_start])
+    refs = references(db, text_id, [at_line, pg.start, pg.prev_start, pg.next_start])
 
     passage = None
     if selection:
@@ -161,6 +162,9 @@ def read(
             "interlinear": interlinear_on(request, interlinear),
             "glossless": glossless,
             "goto_error": goto_error,
+            # the page as the Library and the contents open it: one URL for
+            # search engines however it was opened (routes/site.py)
+            "canonical": reader_path(text_id, refs[pg.start]),
         },
     )
 

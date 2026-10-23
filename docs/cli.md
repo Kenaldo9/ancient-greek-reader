@@ -368,6 +368,18 @@ greek export-data /tmp/greek-export
 ssh HOST docker exec CONTAINER python greek.py export-data /data/export
 ```
 
+### greek migrate
+
+Apply the database's pending migrations and say where it stands. Every
+command does this as it starts (see below); this one does nothing else, for
+a database the web app serves read-only (the public site's published copy,
+[deploy/README.md](../deploy/README.md)) or one from a data release made by
+older code.
+
+```bash
+greek migrate
+```
+
 ## Database upgrades
 
 The CLI and web app apply pending SQL migrations at startup. Before they
@@ -383,6 +395,12 @@ A database that has migrations the code doesn't have was upgraded by newer
 code. Commands then stop with an error, and the web app shows that on every
 page (`/version` still answers), until you update the checkout or rebuild the
 image. Nothing is migrated.
+
+A read-only database file (one the app can't write, such as the public
+site's on a read-only mount) is read where it is, without WAL. If it lacks
+some of the code's migrations, commands stop and the web app says so on every
+page in the same way: migrate a writable copy with `greek migrate` and put
+it in its place.
 
 Back up by hand before other bulk changes, such as `import-treebank`, with
 [greek backup](#greek-backup):

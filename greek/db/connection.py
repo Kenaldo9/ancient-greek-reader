@@ -12,8 +12,22 @@ _DB_PATH = _DATA_DIR / "greek.db"
 _MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
-class DatabaseNewerThanCode(RuntimeError):
+class DatabaseUnusable(RuntimeError):
+    """A database this code can't use as it is; the message says why."""
+
+    heading = "The database can't be used"
+
+
+class DatabaseNewerThanCode(DatabaseUnusable):
     """The database has migrations this code doesn't have: newer code upgraded it."""
+
+    heading = "The database is newer than this code"
+
+
+class DatabaseNeedsMigrations(DatabaseUnusable):
+    """A read-only database lacks migrations this code has: a writable copy needs them."""
+
+    heading = "The database needs this code's migrations"
 
 
 @dataclass
@@ -24,12 +38,24 @@ class Upgrade:
     backup: Optional[Path] = None
 
 
+def is_read_only(path: Path) -> bool:
+    """Whether a database file exists and can't be written, e.g. on a read-only mount."""
+    return path.is_file() and not os.access(path, os.W_OK)
+
+
 def get_connection() -> sqlite3.Connection:
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
+    if is_read_only(_DB_PATH):
+        # The public site's published copy (deploy/README.md): read in its own
+        # journal mode, since switching to WAL is a write
+        conn = sqlite3.connect(
+            f"{_DB_PATH.resolve().as_uri()}?mode=ro", uri=True, check_same_thread=False
+        )
+    else:
+        conn = sqlite3.connect(_DB_PATH, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode = WAL")
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
@@ -89,7 +115,8 @@ def run_migrations(conn: sqlite3.Connection) -> Upgrade:
     """
     Apply this code's migrations that the database hasn't had. An existing
     database file is backed up first; a database that has migrations this
-    code doesn't know is left alone (DatabaseNewerThanCode).
+    code doesn't know is left alone (DatabaseNewerThanCode), and so is a
+    read-only one that lacks some (DatabaseNeedsMigrations).
     """
     # Migrations may call greek_plain() to fill in the accent-free search text
     conn.create_function("greek_plain", 1, plain, deterministic=True)
@@ -103,12 +130,20 @@ def run_migrations(conn: sqlite3.Connection) -> Upgrade:
             f"({', '.join(unknown)}): newer code has upgraded it. Update this "
             "checkout, or rebuild the Docker image (docker compose up -d --build)."
         )
+    pending = [name for name in known if name not in applied]
+    if path and is_read_only(Path(path)):
+        if pending:
+            raise DatabaseNeedsMigrations(
+                f"{path} is read-only and lacks this code's migrations "
+                f"({', '.join(pending)}): migrate a writable copy with "
+                "`greek migrate` and put it in its place."
+            )
+        return Upgrade()
     conn.execute(
         "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime('now')))"
     )
     conn.commit()
     upgrade = Upgrade()
-    pending = [name for name in known if name not in applied]
     # A new database has nothing to lose, and one in memory has no file to copy
     if pending and applied and path:
         upgrade.backup = backup_database(conn, Path(pending[0]).stem)

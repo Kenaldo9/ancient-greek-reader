@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deploy the reader to the Raspberry Pi: pull main, build the image, restart
 # the web app, publish it on the tailnet with `tailscale serve`, and check the
-# result. GitHub Actions runs
+# result; then restart the public site on the same image (deploy/public/),
+# once it has a published database. GitHub Actions runs
 #   sudo -n /opt/ancient-greek-reader/app/deploy/deploy_pi.sh --non-interactive
 # after the tests pass on main; the first run is by hand, seeded with a
 # database (deploy/README.md). GitHub Actions logs are public in a public
@@ -30,6 +31,7 @@ SEED_SOURCE=""
 NON_INTERACTIVE="false"
 DRY_RUN="false"
 GIT_COMMIT="unknown"
+PUBLIC_STATUS="(dry-run)"
 
 usage() {
   cat <<USAGE
@@ -146,7 +148,7 @@ require_root() {
 check_prereqs() {
   dry "check docker, docker compose, git, curl, python3 and tailscale" && return
   local cmd
-  for cmd in docker git curl python3 runuser tailscale; do
+  for cmd in docker git curl python3 runuser tailscale flock; do
     command -v "${cmd}" >/dev/null 2>&1 || die "${cmd} not found"
   done
   docker compose version >/dev/null 2>&1 || die "'docker compose' plugin not found"
@@ -197,6 +199,19 @@ run_checked_out_script() {
     log "Continuing with the checked-out deploy script"
     GREEK_DEPLOY_SYNCED=1 exec bash "${checked_out}" "${ORIGINAL_ARGS[@]}"
   fi
+}
+
+# The public site's steps (deploy/public/common.sh), as checked out, and the
+# lock a publish takes too: a deploy restarts the reader it exports from.
+load_public_site_steps() {
+  local steps="${APP_DIR}/deploy/public/common.sh"
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    log "[dry-run] Would load ${steps} and wait for ${SITE_LOCK:-the site lock}"
+    return
+  fi
+  # shellcheck source=public/common.sh
+  source "${steps}"
+  take_site_lock
 }
 
 # The reader needs no key; greek study's batches do.
@@ -328,6 +343,24 @@ run_health_checks() {
   serve_is_set || die "tailscale serve does not pass port ${SERVE_PORT} to ${SERVE_TARGET}"
 }
 
+# The same image on the published copy of the database, migrated first when
+# this code brings a migration. Before the first publish there is nothing to
+# start.
+deploy_public_site() {
+  dry "start the public site on its published database and check it" && return
+  ensure_public_site
+  if [[ ! -f "${PUBLIC_DB}" ]]; then
+    log "The public site has no published database yet: nothing to start"
+    PUBLIC_STATUS="none published yet (sudo ${APP_DIR}/deploy/publish.sh)"
+    return
+  fi
+  migrate_published_copy "${GIT_COMMIT}"
+  start_public_site
+  check_public_site "${GIT_COMMIT}" || die "The public site is not the version just deployed"
+  PUBLIC_STATUS="running on $(database_migration "${PUBLIC_DB}")"
+  [[ -s "${PUBLIC_TUNNEL_ENV}" ]] || PUBLIC_STATUS+=", no tunnel yet"
+}
+
 prune_images() {
   dry "remove old untagged reader images" && return
   docker image prune -f --filter "label=${TITLE_LABEL}" >/dev/null
@@ -347,11 +380,14 @@ Deployment complete.
 - Commit:                ${GIT_COMMIT}
 - Image created:         ${created}
 - Data:                  ${DATA_DIR}
+- Public site:           ${PUBLIC_STATUS}
 
 Useful commands:
 - docker exec -it ancient-greek-reader-web-1 python greek.py --version
 - sudo docker compose -f ${COMPOSE_FILE} logs -f web
 - tailscale serve status
+- sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
+    -f ${APP_DIR}/deploy/public/docker-compose.yml ps
 SUMMARY
 }
 
@@ -379,11 +415,13 @@ main() {
   ensure_directories
   sync_repository
   run_checked_out_script
+  load_public_site_steps
   ensure_app_env
   ensure_database
   build_and_start
   configure_tailscale_serve
   run_health_checks
+  deploy_public_site
   prune_images
   print_summary
 }

@@ -26,10 +26,11 @@ and its licences in [docs/data.md](docs/data.md).
 | `greek/fetch/` | Perseus catalog, downloads, and TEI parsing for poetry and prose |
 | `greek/display/` | Rich CLI rendering |
 | `greek/search.py` | Greek normalization, FTS query construction, and match highlighting |
-| `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code, answer every page with why), mount static files, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), and serve `/version` |
+| `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs |
+| `greek/web/routes/site.py` | `robots.txt` and `sitemap.xml`: the pages search engines may index, from `page_starts` in `reader_data.py` |
 | `greek/web/deps.py` | Request-scoped database connections |
 | `greek/web/reader_data.py`, `reading.py`, `formatting.py` | Prepare reader views, paginate books, map saved words to tokens, and format display values |
-| `deploy/`, `.github/workflows/deploy.yml` | Tests and a secret scan (gitleaks) on every push, then on `main` a pull, rebuild and checks on a Raspberry Pi ([deploy/README.md](deploy/README.md)) |
+| `deploy/`, `.github/workflows/deploy.yml` | Tests and a secret scan (gitleaks) on every push, then on `main` a pull, rebuild and checks on a Raspberry Pi, for the private reader and the public site on a published copy of the database (`deploy/public/`, `publish.sh`; [deploy/README.md](deploy/README.md)) |
 | `greek/web/templates/`, `static/` | Jinja pages and fragments, HTMX, vanilla reader JS, one app stylesheet, and self-hosted fonts; templates link static files with `static_url`, which adds a content hash (`?v=`) so browsers fetch changed files |
 
 ## Persistence
@@ -43,7 +44,12 @@ it refuses a database with migrations the code doesn't have
 (`DatabaseNewerThanCode`): the CLI exits with the reason, the web app shows it
 on every page. The last applied migration is the database's version, and the
 git commit is the code's (`greek --version`, `/version`, the Library page and
-the iPad drawer). `greek backup` writes a copy made the same way as a
+the iPad drawer). A database file the process can't write (the public
+site's published copy, on a read-only mount) is opened read-only and read in
+place, without WAL; if it lacks some of the code's migrations,
+`run_migrations()` leaves it alone (`DatabaseNeedsMigrations`) and the web
+app says so on every page: `greek migrate` migrates a writable copy, which
+the deploy then swaps in. `greek backup` writes a copy made the same way as a
 migration backup (`copy_database`: SQLite's backup API while the app keeps
 running, then `integrity_check`) to a new file or standard output, so a
 backup elsewhere can fetch the live database over ssh.
@@ -191,6 +197,19 @@ Shared punctuation stripping lives in `greek/display/analysis.py`.
 
 Every route is a GET that reads saved data; the app has no write routes and
 imports no model client, so it needs no API key (tests check both).
+
+On the open internet: `robots.txt` lets search engines index the Library,
+About, each text's contents and each page of its books at the URL the
+Library and the contents open it with (`?at=` its first reference), and no
+other reader URL, fragment or Go to; `sitemap.xml` lists the same pages, and
+a reader page names its page's start as its canonical URL. Whole URLs take
+the host asked for and the scheme from `X-Forwarded-Proto` (Cloudflare's
+tunnel reaches the app over plain HTTP). The Content-Security-Policy allows
+the app's own scripts, styles, fonts and images only: templates have no
+inline code or `style` attributes (the outline's depth is a `data-depth`
+attribute; `base.html` turns off htmx's injected style), and `reader.js`
+sets styles through the CSSOM. A static URL with the file's current version
+may be kept for a year, a font for a week; pages have no cache lifetime.
 
 ## Validation
 

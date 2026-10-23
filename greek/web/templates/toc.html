@@ -22,7 +22,7 @@
       <th scope="row">{{ s.book or "—" }}</th>
       <td class="ref">{{ ref_range(s.ref_start or s.line_start | string, s.ref_end or s.line_end | string) }}</td>
       <td>{{ s.count | count_noun("section" if s.ref_start and s.ref_start.count(".") >= 2 else "line") }}</td>
-      <td><a class="btn btn-small" href="/texts/{{ text.id }}/read?at={{ s.line_start }}">Read{% if s.book %} book {{ s.book }}{% endif %}</a></td>
+      <td><a class="btn btn-small" href="/texts/{{ text.id }}/read?at={{ s.ref_start or s.line_start }}">Read{% if s.book %} book {{ s.book }}{% endif %}</a></td>
     </tr>
   {% endfor %}
   </tbody>

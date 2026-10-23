@@ -25,6 +25,10 @@ gitignored `CLAUDE.local.md`.
   `greek/web/static/fonts/`.
 - Templates link static files with `static_url()`, which adds a content hash
   so browsers fetch changed files.
+- Pages pass a strict Content-Security-Policy (`greek/web/app.py`): no inline
+  `<script>` or `<style>`, `style=` or `on…=` attributes; use classes or
+  data attributes in the stylesheet, or set styles from JS. Browser tests
+  fail on a violation.
 - Add numbered SQL migrations; do not rewrite applied migrations.
   `run_migrations()` backs up an existing database before applying new ones
   and refuses one newer than the code (docs/cli.md); back up by hand before

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
 {% block title %}{{ text.title }}{% if lines %} {{ ref_range(lines[0].ref, lines[-1].ref) }}{% endif %} — Ancient Greek Reader{% endblock %}
+{% block head %}<link rel="canonical" href="{{ absolute_url(request, canonical) }}">{% endblock %}
 
 {% block header_tools %}
 <button type="button" class="icon-btn reader-menu" id="reader-menu" aria-label="Open navigation" aria-expanded="false" aria-controls="reader-nav">

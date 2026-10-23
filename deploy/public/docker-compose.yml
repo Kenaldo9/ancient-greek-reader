@@ -1,0 +1,70 @@
+# The public site: the reader on the published copy of the database, reached
+# only through Cloudflare Tunnel (deploy/README.md, "The public site"). The
+# Raspberry Pi's deploy and deploy/publish.sh run it with
+#   docker compose --env-file /opt/ancient-greek-reader/public/compose.env -f THIS
+# which they write; without it compose stops, since every variable is required.
+name: greek-public
+
+services:
+  # The same image as the private reader's (docker-compose.yml builds it), on
+  # a read-only copy of the published database, with no API key and no .env.
+  web:
+    image: ancient-greek-reader:latest
+    pull_policy: never
+    command: ["web", "--host", "0.0.0.0", "--port", "8999"]
+    user: "${PUBLIC_UID:?}:${PUBLIC_GID:?}"
+    environment:
+      HOME: /tmp
+      PYTHONDONTWRITEBYTECODE: "1"
+    # It writes nothing: the code and the database are read-only, /tmp is in
+    # memory
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    volumes:
+      - ${PUBLIC_SITE:?}:/data:ro
+      - /etc/localtime:/etc/localtime:ro
+    # No port on the Pi: cloudflared is the only way in, and the site network
+    # has no way out
+    networks: [site]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+  # The way in: it connects out to Cloudflare and passes requests to web.
+  # Started with the tunnel profile once tunnel.env holds the tunnel's token
+  # (TUNNEL_TOKEN=…); until then nothing reaches the site.
+  cloudflared:
+    profiles: [tunnel]
+    image: cloudflare/cloudflared:2026.10.0
+    command: ["tunnel", "--no-autoupdate", "run"]
+    env_file: ${PUBLIC_ROOT:?}/tunnel.env
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    networks: [site, out]
+    depends_on: [web]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+networks:
+  site:
+    internal: true
+  # cloudflared's way to the internet, on a fixed subnet so that a firewall
+  # rule can keep it off the home network and the tailnet
+  out:
+    ipam:
+      config:
+        - subnet: 172.30.250.0/24

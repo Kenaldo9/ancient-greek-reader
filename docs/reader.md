@@ -14,7 +14,8 @@ translations coming**. The book chips show the same per book (tinted and
 underlined: translations, glosses and notes; half underlined: some), with a
 key. They are counted from the saved study data, so a book switches as soon
 as its batch is collected. The **About** page (in the header, and in the iPad
-drawer) says what each text has, where its data comes from, and the licences.
+drawer) says what each text has, where its data comes from, the licences,
+where to report a mistake, and what a visitor's browser keeps.
 The
 reading position is saved per text in the browser (`localStorage`), so each
 device keeps its own; nothing is saved on the server. Book links and the TOC
@@ -155,3 +156,29 @@ Every route reads saved data (GET); none writes or calls a model.
 | `/texts/{id}/search` | Compatibility redirect to reader search |
 | `/texts/{id}/passage` | Passage box fragment (GET with `lines`) |
 | `/texts/{id}/word` | Word fragment (GET with `line`, zero-based token `i`) |
+| `/robots.txt`, `/sitemap.xml` | What search engines may index: the Library, About, each text's contents and each page of its books (below) |
+
+## On the open internet
+
+- Search engines may index the Library, About, each text's contents and each
+  page of its books, at the URL the Library and the contents open it with
+  (`/texts/12/read?at=2.1`; each part of a long book has its own).
+  `robots.txt` allows exactly those, and keeps crawlers out of the word,
+  passage and search fragments, Go to, and reader URLs opened partway or
+  with other settings; `sitemap.xml` lists the same pages. A reader page
+  names its page's start as its canonical URL however it was opened. Both
+  make whole URLs from the host asked for, with the scheme from
+  `X-Forwarded-Proto` behind a proxy such as Cloudflare.
+- Every response has a Content-Security-Policy that allows the app's own
+  scripts, styles, fonts and images only (no inline code or `style`
+  attributes; htmx's injected style is off) and refuses framing, with
+  `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`.
+- A static file's URL with its current version (`?v=`) may be kept for a
+  year (`immutable`), a font for a week; anything else is asked for again (a
+  304 when unchanged). Pages have no cache lifetime, so Cloudflare doesn't
+  keep them and a new publish shows at once.
+- FastAPI's `/docs`, `/redoc` and `/openapi.json` are off.
+- The app can serve a read-only database file, as the public site does: it
+  reads it in place, without WAL. One that lacks a migration of the code is
+  left as it is, and every page says so until a migrated copy takes its
+  place (`greek migrate`; [deploy/README.md](../deploy/README.md)).

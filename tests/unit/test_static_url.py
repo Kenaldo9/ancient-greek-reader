@@ -1,4 +1,7 @@
-"""Versioned static URLs: a changed file gets a new URL, so browsers refetch it."""
+"""
+Versioned static URLs: a changed file gets a new URL, so browsers refetch it,
+and a URL with the file's current version may be kept for a year.
+"""
 
 import hashlib
 import os
@@ -6,7 +9,11 @@ import os
 import pytest
 
 from greek.web import templates_config
-from greek.web.templates_config import static_url
+from greek.web.templates_config import (
+    absolute_url,
+    static_cache_control,
+    static_url,
+)
 
 
 @pytest.fixture
@@ -57,3 +64,35 @@ def test_unchanged_file_is_not_read_again(static_dir, monkeypatch):
 
 def test_missing_file_has_no_version(static_dir):
     assert static_url("missing.css") == "/static/missing.css"
+
+
+def test_the_current_version_is_kept_for_a_year_and_any_other_is_not(static_dir):
+    css = static_dir / "style.css"
+    css.write_text("a { color: red; }")
+    version = static_url("style.css").split("?v=")[1]
+    assert static_cache_control("style.css", f"v={version}".encode()) == (
+        "public, max-age=31536000, immutable"
+    )
+    assert static_cache_control("style.css", b"v=0123456789") == "no-cache"
+    assert static_cache_control("style.css", b"") == "no-cache"
+    assert static_cache_control("missing.css", b"v=") == "no-cache"
+
+
+def test_a_font_is_kept_for_a_week(static_dir):
+    (static_dir / "plex.woff2").write_bytes(b"wOF2")
+    assert static_cache_control("plex.woff2", b"") == "public, max-age=604800"
+
+
+class _Request:
+    def __init__(self, headers, scheme="http", netloc="127.0.0.1:8999"):
+        self.headers = headers
+        self.url = type("URL", (), {"scheme": scheme, "netloc": netloc})()
+
+
+def test_absolute_url_takes_the_scheme_a_proxy_forwards():
+    tunnel = _Request({"host": "reader.example", "x-forwarded-proto": "https"})
+    assert absolute_url(tunnel, "/library") == "https://reader.example/library"
+    local = _Request({"host": "127.0.0.1:8999"})
+    assert absolute_url(local, "/about") == "http://127.0.0.1:8999/about"
+    odd = _Request({"host": "reader.example", "x-forwarded-proto": "gopher"})
+    assert absolute_url(odd, "/") == "http://reader.example/"
