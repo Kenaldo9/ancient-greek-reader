@@ -72,10 +72,15 @@ github.com or `gh`, `[TAILSCALE]` the Tailscale admin console.
    ],
    ```
    Then a trust credential (Settings, Trust credentials, Credential,
-   OpenID Connect): issuer GitHub, subject
-   `repo:<owner>/<repository>:ref:refs/heads/main` (only a run on `main`
-   signs in), scope `auth_keys` (write) with the tag `tag:ci`. Keep its
-   client ID and audience for step 3.
+   OpenID Connect): issuer GitHub, scope `auth_keys` (write) with the tag
+   `tag:ci`, and as its subject the one GitHub's tokens carry for a run on
+   `main` (only such a run signs in): the repository's prefix, then
+   `:ref:refs/heads/main`. The prefix is the `sub_claim_prefix` of
+   `gh api repos/<owner>/<repository>/actions/oidc/customization/sub`; with
+   GitHub's immutable subjects it holds the account's and the repository's
+   numeric IDs, `repo:<owner>@<id>/<repository>@<id>`, so a different
+   repository by the same name can't sign in. Keep the credential's client
+   ID and audience for step 3.
 
 1. `[LOCAL]` Create this repository's own GitHub Actions login key (never
    reuse another repository's) and copy it and the setup script over:

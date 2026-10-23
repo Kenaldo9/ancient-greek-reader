@@ -369,7 +369,8 @@ prune_images() {
 print_summary() {
   local created="(dry-run)" site="(dry-run)"
   if [[ "${DRY_RUN}" == "false" ]]; then
-    created="$(docker image inspect --format '{{.Created}}' "${IMAGE}")"
+    # In UTC: the Pi's own offset would tell a public log its time zone
+    created="$(date -u -d "$(docker image inspect --format '{{.Created}}' "${IMAGE}")" '+%Y-%m-%d %H:%M UTC')"
     site="port ${SERVE_PORT} of this Pi's tailnet name"
     [[ "${NON_INTERACTIVE}" == "true" ]] || site="https://$(tailnet_name):${SERVE_PORT}/"
   fi
