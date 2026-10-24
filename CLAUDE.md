@@ -61,10 +61,10 @@ python -m pytest tests/ -q
 ```
 
 - `tests/unit/`: parsing, prompts, formatting, paging, search normalization,
-  treebank and LSJ imports.
+  treebank and LSJ imports, the public tunnel's wall probe.
 - `tests/integration/`: in-memory SQLite migrations/repositories, cascade
-  deletes, FTS, study batches, the data export, routes (read-only), and
-  HTMX fragments.
+  deletes, FTS, study batches, the data export, routes (read-only), HTMX
+  fragments, and the public site's outside check.
 - `tests/fixtures/`: mock API output and poetry/prose TEI excerpts.
 - `tests/integration/test_web_layouts*.py`: optional Playwright regressions for
   four viewports, selection, tabs, drawer focus/dismissal and the browser's

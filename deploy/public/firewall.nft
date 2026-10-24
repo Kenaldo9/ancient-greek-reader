@@ -1,0 +1,45 @@
+#!/usr/sbin/nft -f
+# The public site's tunnel reaches the internet and nothing else: not this
+# Pi, not the home network, not the tailnet, not Docker's other networks.
+# cloudflared's way out is the bridge greek-out (docker-compose.yml, network
+# out); whatever comes in on it to those addresses is dropped.
+#
+# A table of its own: Docker, ufw and Tailscale keep their rules in
+# iptables' tables and never replace it, and a drop here is final whatever
+# their chains accept. greek-public-firewall.service loads it at boot,
+# before Docker starts the containers; the deploy and deploy/tunnel.sh load
+# it again (from /etc/ancient-greek-reader/public-firewall.nft) and check it
+# before cloudflared starts. deploy/README.md, "The tunnel".
+
+# Replaced whole, in one step: declare, delete, define
+table inet greek_public
+delete table inet greek_public
+
+table inet greek_public {
+	# Every IPv4 range that is not the internet: private networks (the home
+	# network, Docker's), the tailnet and MagicDNS (100.64.0.0/10),
+	# loopback, link-local, and the reserved and multicast ranges
+	set not_internet {
+		type ipv4_addr
+		flags interval
+		elements = {
+			0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8,
+			169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.168.0.0/16,
+			198.18.0.0/15, 224.0.0.0/3
+		}
+	}
+
+	# To the Pi itself, on any of its addresses (its sshd and web servers
+	# listen on all of them)
+	chain input {
+		type filter hook input priority filter - 10; policy accept;
+		iifname "greek-out" drop
+	}
+
+	# Through the Pi: IPv4 to the internet only
+	chain forward {
+		type filter hook forward priority filter - 10; policy accept;
+		iifname "greek-out" ip daddr @not_internet drop
+		iifname "greek-out" meta nfproto ipv6 drop
+	}
+}

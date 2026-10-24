@@ -53,8 +53,8 @@ repository.
 
 ## One-time setup
 
-The Pi needs Docker with the compose plugin, git, curl, python3 and
-Tailscale (up, without Tailscale SSH, so that port 22 on the tailnet is the
+The Pi needs Docker with the compose plugin, git, curl, python3, nftables
+(`nft`, for the public site's firewall) and Tailscale (up, without Tailscale SSH, so that port 22 on the tailnet is the
 Pi's own sshd), and a login user `gha-deploy`
 (`sudo useradd --create-home --shell /bin/bash gha-deploy`).
 Location labels: `[LOCAL]` your computer, `[PI]` the Pi, `[GITHUB]`
@@ -170,16 +170,19 @@ first and on the public site when you publish it.
   `releases/data-YYYY-MM-DD/`, the last three exports, the same files as a
   data release; `incoming/`, where a new copy is checked; `compose.env`, the
   settings compose reads, which the scripts write; and from the tunnel's
-  setup `tunnel.env` (its token).
+  setup `tunnel.env` (its token, root's only), or `tunnel.env.off` while
+  the tunnel is off ([The tunnel](#the-tunnel)).
 - The web container runs as `greekpublic` with a read-only filesystem
   (`/tmp` in memory), no Linux capabilities, 512 MB of memory at most, and
   the published copy mounted read-only. It has no `.env` and no API key, and
   no port on the Pi: it is on an internal network with no way out, which
   only `cloudflared` joins.
 - `cloudflared` starts once `tunnel.env` holds the tunnel's token
-  (`TUNNEL_TOKEN=…`). It is the only container of the site with a way out,
-  on its own network (`172.30.250.0/24`). Until then the site runs, and
-  nothing reaches it.
+  (`TUNNEL_TOKEN=…`, [tunnel.sh](tunnel.sh)). It is the only container of
+  the site with a way out, on its own network (bridge `greek-out`,
+  `172.30.250.0/24`, no IPv6), which a firewall walls off from everything
+  but the internet ([The tunnel](#the-tunnel)). Until then the site runs,
+  and nothing reaches it.
 - A deploy restarts the site on the new image after the private reader
   passes its checks, and checks it the same way from inside its container
   (`/version` serving this commit on a fully migrated database, the
@@ -216,6 +219,82 @@ sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
   -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml ps   # or logs web
 ```
 
+### The tunnel
+
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+is the public site's way in: `cloudflared` connects out to Cloudflare, which
+answers visitors at your hostname (TLS, caching static files) and passes
+their requests through the tunnel to the web app. Nothing on the router
+changes and the Pi opens no port.
+
+**Its walls.** [public/firewall.nft](public/firewall.nft) drops whatever
+comes in on the bridge `greek-out` to the Pi itself (any of its addresses:
+its sshd and web servers listen on all of them), to private, tailnet,
+link-local and reserved IPv4 ranges (the home network, the tailnet and
+MagicDNS, Docker's other networks), and all IPv6, so `cloudflared` reaches
+the internet and nothing else. The rules are an nftables table of their own
+(`inet greek_public`): Docker, ufw and Tailscale keep theirs in iptables'
+tables and never replace it, and a drop in it is final whatever their
+chains accept. They are copied to `/etc/ancient-greek-reader/` and loaded
+by `greek-public-firewall.service` at every boot, before Docker starts the
+containers. `cloudflared` asks DNS servers on the internet (`1.1.1.1`),
+not the Pi's.
+
+Whenever the site starts with a token (a deploy, a publish, `tunnel.sh
+on`), the rules are loaded again and checked before `cloudflared` starts:
+a throwaway container on its network ([probe_walls.py](public/probe_walls.py))
+tries the Pi's addresses, the home router, the Pi's DNS servers on the home
+network and the tailnet's, which must not answer, and an address on the
+internet, which must. If one answers, `cloudflared` stays stopped and the
+deploy fails. The log names what answered, never an address.
+
+**Setting it up**, once (`[CLOUDFLARE]` is Cloudflare's dashboard, with
+your domain on Cloudflare's DNS; its menus move now and then, so the names
+below may differ):
+
+1. `[CLOUDFLARE]` Zero Trust, Networks, Tunnels: create a tunnel
+   (`cloudflared`), and give it a public hostname, `reader.example`, with
+   the service `HTTP` `web:8999`. Keep its token: the last word of the
+   install command it shows.
+2. `[CLOUDFLARE]` Before anyone may see it, Zero Trust, Access,
+   Applications: a self-hosted application for the hostname, with a policy
+   that allows the email addresses of your test readers. For the outside
+   check, a service token (Access, Service credentials) and a second policy
+   on the application with the action Service Auth that allows it. Keep its
+   client ID and secret.
+3. `[CLOUDFLARE]` For the domain: SSL/TLS, Edge Certificates, Always Use
+   HTTPS on; and the setting that blocks AI crawlers (Security, Bots).
+   Leave Bot Fight Mode off: it would challenge the outside check.
+4. `[PI]` Save the token and start the tunnel:
+   ```bash
+   ssh -t PI sudo /opt/ancient-greek-reader/app/deploy/tunnel.sh on
+   ```
+   It asks for the token (nothing shows as you paste), keeps it in
+   `public/tunnel.env`, loads and checks the firewall, and starts
+   `cloudflared`. `tunnel.sh status` shows its connections to Cloudflare.
+   From then on deploys and publishes keep it running.
+5. `[GITHUB]` The outside check
+   ([site-check.yml](../.github/workflows/site-check.yml),
+   [check_site.py](public/check_site.py)), hourly: `/version`, the Library,
+   robots.txt and the sitemap, a book page from it, and `http://` sent on to
+   `https://`. Each check is tried three times, 20 seconds apart. GitHub
+   emails a failed run to whoever last changed its schedule.
+   ```bash
+   gh variable set PUBLIC_SITE_URL --body https://reader.example
+   gh secret set CF_ACCESS_CLIENT_ID --body <client ID>
+   gh secret set CF_ACCESS_CLIENT_SECRET   # paste the secret
+   gh workflow run site-check.yml
+   ```
+   By hand from any computer: `CF_ACCESS_CLIENT_ID=… CF_ACCESS_CLIENT_SECRET=…
+   python3 deploy/public/check_site.py https://reader.example`. Without
+   Access (after the preview) it needs no token.
+
+Take the site off the internet with `tunnel.sh off`: it stops
+`cloudflared` and moves the token to `tunnel.env.off`, so no deploy or
+publish starts it again; Cloudflare shows visitors its own error page.
+`tunnel.sh on` starts it again with the same token, and `tunnel.sh on
+--new-token` asks for a new one (after rotating it in Cloudflare).
+
 ## Rollback
 
 Revert the bad commit on `main` (`git revert`) and push; the deploy follows.
@@ -228,8 +307,12 @@ again.
 ## Removing it
 
 ```bash
+sudo /opt/ancient-greek-reader/app/deploy/tunnel.sh off
 sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
-  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml --profile tunnel down
+  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml down
+sudo systemctl disable --now greek-public-firewall.service
+sudo rm -rf /etc/systemd/system/greek-public-firewall.service /etc/ancient-greek-reader
+sudo nft delete table inet greek_public
 sudo docker compose -f /opt/ancient-greek-reader/app/docker-compose.yml down --rmi all
 sudo tailscale serve --https=8443 off
 sudo rm -rf /opt/ancient-greek-reader /etc/sudoers.d/gha-deploy-ancient-greek-reader
@@ -238,4 +321,5 @@ sudo userdel greekpublic
 ```
 
 and remove the key's line from `/home/gha-deploy/.ssh/authorized_keys`.
-Copy `data/greek.db` off the Pi first (`greek backup -`, above).
+Copy `data/greek.db` off the Pi first (`greek backup -`, above). In
+Cloudflare, delete the tunnel and its Access application.
