@@ -13,7 +13,17 @@ PUBLIC_INCOMING="${PUBLIC_ROOT}/incoming"
 PUBLIC_RELEASES="${PUBLIC_ROOT}/releases"
 PUBLIC_COMPOSE_ENV="${PUBLIC_ROOT}/compose.env"
 PUBLIC_TUNNEL_ENV="${PUBLIC_ROOT}/tunnel.env"
-PUBLIC_COMPOSE_FILE="/opt/ancient-greek-reader/app/deploy/public/docker-compose.yml"
+# Where deploy/tunnel.sh off sets the token aside (deploy_pi.sh reads it too)
+# shellcheck disable=SC2034
+PUBLIC_TUNNEL_OFF="${PUBLIC_ROOT}/tunnel.env.off"
+PUBLIC_FILES="/opt/ancient-greek-reader/app/deploy/public"
+PUBLIC_COMPOSE_FILE="${PUBLIC_FILES}/docker-compose.yml"
+# The tunnel's network and its bridge (docker-compose.yml), and the firewall
+# that walls it off (firewall.nft), installed outside the checkout
+PUBLIC_OUT_NETWORK="greek-public_out"
+PUBLIC_OUT_BRIDGE="greek-out"
+PUBLIC_FIREWALL_RULES="/etc/ancient-greek-reader/public-firewall.nft"
+PUBLIC_FIREWALL_UNIT="greek-public-firewall.service"
 MIGRATIONS_DIR="/opt/ancient-greek-reader/app/greek/db/migrations"
 READER_IMAGE="ancient-greek-reader:latest"
 # One deploy or publish at a time: both restart the public site, and a
@@ -106,13 +116,81 @@ with urllib.request.urlopen("http://127.0.0.1:8999" + sys.argv[1], timeout=30) a
 ' "$1"
 }
 
+# The firewall that keeps the tunnel's network off the Pi, the home network
+# and the tailnet (firewall.nft): copied out of the checkout, loaded now and
+# at every boot before Docker starts the containers.
+ensure_public_firewall() {
+  install -D -m 644 -o root -g root "${PUBLIC_FILES}/firewall.nft" "${PUBLIC_FIREWALL_RULES}"
+  install -m 644 -o root -g root "${PUBLIC_FILES}/${PUBLIC_FIREWALL_UNIT}" \
+    "/etc/systemd/system/${PUBLIC_FIREWALL_UNIT}"
+  systemctl daemon-reload
+  systemctl enable --quiet "${PUBLIC_FIREWALL_UNIT}"
+  systemctl restart "${PUBLIC_FIREWALL_UNIT}" \
+    || die "The tunnel's firewall failed to load (systemctl status ${PUBLIC_FIREWALL_UNIT})"
+  nft list table inet greek_public >/dev/null || die "The tunnel's firewall is not loaded"
+}
+
+# The IPv4 address of a network device of the Pi's, if it has one
+device_address() {
+  ip -4 -o addr show dev "$1" 2>/dev/null | awk '{ sub("/.*", "", $4); print $4; exit }'
+}
+
+# A throwaway container on the tunnel's network tries the Pi's addresses, the
+# home router, the DNS servers the Pi asks and the tailnet's, which must not
+# answer, and an address on the internet, which must (probe_walls.py).
+check_tunnel_walls() {
+  local walled=() address device
+  address="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')"
+  [[ -z "${address}" ]] || walled+=("the Pi's home network address=${address}:22")
+  address="$(ip -4 route show default | awk '{ print $3; exit }')"
+  [[ -z "${address}" ]] || walled+=("the home router=${address}:80")
+  address="$(tailscale ip -4 2>/dev/null | head -n 1)"
+  [[ -z "${address}" ]] || walled+=("the Pi's tailnet address=${address}:22")
+  walled+=("the tailnet's DNS=100.100.100.100:53")
+  for device in "${PUBLIC_OUT_BRIDGE}" docker0; do
+    address="$(device_address "${device}")"
+    [[ -z "${address}" ]] || walled+=("the Pi on ${device}=${address}:22")
+  done
+  # The Pi's own DNS servers on the home network (not ones on the internet)
+  while read -r address; do
+    walled+=("the home network's DNS server=${address}:53")
+  done < <(awk '$1 == "nameserver" { print $2 }' /run/systemd/resolve/resolv.conf 2>/dev/null \
+    | python3 -c '
+import ipaddress, sys
+for line in sys.stdin:
+    a = ipaddress.ip_address(line.strip())
+    if a.version == 4 and not a.is_global:
+        print(a)
+')
+  docker run --rm --network "${PUBLIC_OUT_NETWORK}" --user 65534:65534 \
+    --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+    -v "${PUBLIC_FILES}/probe_walls.py:/probe_walls.py:ro" \
+    --entrypoint python "${READER_IMAGE}" /probe_walls.py \
+    --open "the internet=1.1.1.1:443" "${walled[@]}"
+}
+
+# The web app, and with a token in tunnel.env the tunnel: its network is
+# made and checked first, so cloudflared never runs without its walls.
 start_public_site() {
   local tunnel=()
   if [[ -s "${PUBLIC_TUNNEL_ENV}" ]]; then
     tunnel=(--profile tunnel)
+    ensure_public_firewall
+    public_compose "${tunnel[@]}" up --no-start
+    if ! check_tunnel_walls; then
+      cloudflared_container | xargs -r docker rm -f >/dev/null
+      die "The tunnel's network is not walled off (deploy/public/firewall.nft): cloudflared stays stopped"
+    fi
   fi
   log "Starting the public site${tunnel[*]:+ and its tunnel}"
   public_compose "${tunnel[@]}" up -d --remove-orphans
+}
+
+# cloudflared's container, if there is one, found without compose (which
+# refuses the tunnel's profile when tunnel.env is missing)
+cloudflared_container() {
+  docker ps -aq --filter label=com.docker.compose.project=greek-public \
+    --filter label=com.docker.compose.service=cloudflared
 }
 
 # The public web app answers /version with this commit's code, serving a

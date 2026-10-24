@@ -40,12 +40,15 @@ services:
 
   # The way in: it connects out to Cloudflare and passes requests to web.
   # Started with the tunnel profile once tunnel.env holds the tunnel's token
-  # (TUNNEL_TOKEN=…); until then nothing reaches the site.
+  # (TUNNEL_TOKEN=…, deploy/tunnel.sh); until then nothing reaches the site.
   cloudflared:
     profiles: [tunnel]
     image: cloudflare/cloudflared:2026.10.0
     command: ["tunnel", "--no-autoupdate", "run"]
     env_file: ${PUBLIC_ROOT:?}/tunnel.env
+    # Resolvers on the internet: the firewall keeps it off the home
+    # network's DNS server and the tailnet's
+    dns: [1.1.1.1, 1.0.0.1]
     read_only: true
     cap_drop: [ALL]
     security_opt:
@@ -62,9 +65,13 @@ services:
 networks:
   site:
     internal: true
-  # cloudflared's way to the internet, on a fixed subnet so that a firewall
-  # rule can keep it off the home network and the tailnet
+  # cloudflared's way to the internet. The firewall (firewall.nft) knows it
+  # by its bridge's name and lets it reach the internet only, over IPv4; a
+  # fixed subnet, so it never takes a range the home network might use.
   out:
+    driver_opts:
+      com.docker.network.bridge.name: greek-out
+    enable_ipv6: false
     ipam:
       config:
         - subnet: 172.30.250.0/24

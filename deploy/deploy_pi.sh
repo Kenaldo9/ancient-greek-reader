@@ -146,9 +146,9 @@ require_root() {
 }
 
 check_prereqs() {
-  dry "check docker, docker compose, git, curl, python3 and tailscale" && return
+  dry "check docker, docker compose, git, curl, python3, tailscale and nft" && return
   local cmd
-  for cmd in docker git curl python3 runuser tailscale flock; do
+  for cmd in docker git curl python3 runuser tailscale flock nft systemctl; do
     command -v "${cmd}" >/dev/null 2>&1 || die "${cmd} not found"
   done
   docker compose version >/dev/null 2>&1 || die "'docker compose' plugin not found"
@@ -358,7 +358,13 @@ deploy_public_site() {
   start_public_site
   check_public_site "${GIT_COMMIT}" || die "The public site is not the version just deployed"
   PUBLIC_STATUS="running on $(database_migration "${PUBLIC_DB}")"
-  [[ -s "${PUBLIC_TUNNEL_ENV}" ]] || PUBLIC_STATUS+=", no tunnel yet"
+  if [[ -s "${PUBLIC_TUNNEL_ENV}" ]]; then
+    PUBLIC_STATUS+=", the tunnel on and walled off"
+  elif [[ -s "${PUBLIC_TUNNEL_OFF}" ]]; then
+    PUBLIC_STATUS+=", the tunnel off (sudo ${APP_DIR}/deploy/tunnel.sh on)"
+  else
+    PUBLIC_STATUS+=", no tunnel yet"
+  fi
 }
 
 prune_images() {

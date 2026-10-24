@@ -1,0 +1,14 @@
+# Installed by deploy/public/common.sh as
+# /etc/systemd/system/greek-public-firewall.service: loads the public
+# tunnel's firewall (firewall.nft) at boot, before Docker starts cloudflared.
+[Unit]
+Description=Keep the Greek reader's public tunnel off this Pi, the home network and the tailnet
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/ancient-greek-reader/public-firewall.nft
+
+[Install]
+WantedBy=multi-user.target docker.service
