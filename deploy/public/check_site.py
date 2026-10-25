@@ -1,6 +1,6 @@
 """
-Check the public site from outside, as GitHub's scheduled workflow does
-(.github/workflows/site-check.yml), or by hand:
+Check the public site from outside, as GitHub's workflow does after every
+deploy and hourly (.github/workflows/site-check.yml), or by hand:
 
     python deploy/public/check_site.py https://reader.example
 
