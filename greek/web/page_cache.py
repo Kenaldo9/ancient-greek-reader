@@ -45,7 +45,9 @@ class PageCache:
     is kept as it was sent: gzipped, for a browser or Cloudflare that takes
     it.
     Up to max_bytes; the least recently used page goes first. A restart
-    empties it, and every publish and deploy restarts the public site.
+    empties it, and every publish and deploy restarts the public site; the
+    hourly outside check (deploy/public/check_site.py) opens every page in
+    the sitemap, with Interlinear off and on, which fills it again.
     """
 
     def __init__(self, app, max_bytes: int = PAGE_CACHE_BYTES):

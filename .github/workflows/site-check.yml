@@ -1,8 +1,11 @@
 name: Site check
 
 # Every hour the public site is checked from outside, through Cloudflare
-# (deploy/public/check_site.py): /version, the Library, the sitemap and a
-# book page, and http:// sent on to https://. GitHub emails a failed run to
+# (deploy/public/check_site.py): /version, the Library, every page in the
+# sitemap and each text's start, with Interlinear off and on, and http://
+# sent on to https://. Opening every page also builds them into the site's
+# page cache again after a deploy or a publish has emptied it, so readers
+# don't wait for a book's first build. GitHub emails a failed run to
 # whoever last changed the schedule below. It runs once the repository
 # variable PUBLIC_SITE_URL holds the site's address; during the private
 # preview the secrets CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET hold
@@ -21,7 +24,9 @@ jobs:
     name: Check the public site
     if: vars.PUBLIC_SITE_URL != ''
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # A run after a restart waits for the Pi to build every page (minutes);
+    # the others find them kept
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
