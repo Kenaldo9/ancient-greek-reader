@@ -63,8 +63,13 @@ services:
         max-file: "3"
 
 networks:
+  # web's and cloudflared's, with no way out. An internal network still
+  # reaches the Pi itself, so the firewall (firewall.nft) knows this one by
+  # its bridge's name too.
   site:
     internal: true
+    driver_opts:
+      com.docker.network.bridge.name: greek-site
   # cloudflared's way to the internet. The firewall (firewall.nft) knows it
   # by its bridge's name and lets it reach the internet only, over IPv4; a
   # fixed subnet, so it never takes a range the home network might use.

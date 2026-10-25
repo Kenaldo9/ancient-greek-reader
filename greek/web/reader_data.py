@@ -64,6 +64,16 @@ from greek.web.reading import split_parts, tokens
 INTERLINEAR_COOKIE = "interlinear"
 SEARCH_LIMIT = 200  # results shown; the total is always counted
 MAX_STUDY_WORDS = 600  # rows of "Grammar" for one selection
+# Lines one selection may have: a whole page (the longest, Iliad 5, has 909),
+# but not a whole text's translations in one request
+MAX_SELECTION_LINES = 1000
+
+
+def selection_too_long(start: int, end: int) -> Optional[str]:
+    """Why the selection of lines [start, end] is refused, or None."""
+    if end - start + 1 > MAX_SELECTION_LINES:
+        return f"Select at most {MAX_SELECTION_LINES:,} lines at a time."
+    return None
 
 
 def interlinear_on(request: Request, explicit: Optional[bool] = None) -> bool:

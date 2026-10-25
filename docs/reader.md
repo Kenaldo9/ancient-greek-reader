@@ -42,6 +42,8 @@ the search's **Back to …** return to it. A text opened without a line (Go to
 - Mouse: click a line number to select it, then Shift+click another to extend.
 - Touch: tap the first line number, then the last; tap the same number again
   to clear. Ranges can span books.
+- A selection has at most 1,000 lines, more than the longest page (Iliad 5,
+  909 lines).
 - Click a word for its parsing, lemma, and the study data's meaning and
   note.
 - For a text with treebank data (the Iliad, the Odyssey, Herodotus and

@@ -100,6 +100,53 @@ def test_cloudflare_access_asking_for_a_login_is_named():
     assert "Cloudflare Access asks for a login" in lines[0]
 
 
+class _Answer:
+    """What urllib's opener answers with, as far as http_fetch reads it."""
+
+    def __init__(self, status, headers):
+        self.status, self.headers = status, headers
+
+    def read(self):
+        return b""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def test_the_access_token_goes_over_https_only(monkeypatch):
+    sent = {}
+
+    class Opener:
+        def open(self, request, timeout):
+            url = request.full_url
+            sent[url] = {name.lower() for name in request.headers}
+            if url.startswith("http://"):  # Always Use HTTPS
+                return _Answer(301, {"Location": "https://" + url[len("http://") :]})
+            return _Answer(200, {})
+
+    monkeypatch.setattr(
+        check_site.urllib.request, "build_opener", lambda *handlers: Opener()
+    )
+    token = {"CF-Access-Client-Id": "id", "CF-Access-Client-Secret": "secret"}
+    fetch = check_site.http_fetch({"User-Agent": "check"}, token)
+    # The https check asks for http:// itself
+    assert "sent on to https://" in check_site.check_https(
+        fetch, "https://reader.example"
+    )
+    fetch("https://reader.example/library")
+    assert sent == {
+        "http://reader.example/library": {"user-agent"},
+        "https://reader.example/library": {
+            "user-agent",
+            "cf-access-client-id",
+            "cf-access-client-secret",
+        },
+    }
+
+
 def _version(**database):
     body = {
         "code": {"commit": "abc1234", "built": None},

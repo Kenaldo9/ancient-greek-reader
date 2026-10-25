@@ -27,6 +27,7 @@ from greek.web.reader_data import (
     references,
     saved_principal_parts,
     search_view,
+    selection_too_long,
     study_glosses,
     study_word,
     text_study,
@@ -110,9 +111,11 @@ def read(
     selection = None
     if lines:
         start, end, err = resolve_line_range(db, text_id, lines)
+        if not err:
+            selection = (min(start, end), max(start, end))
+            err = selection_too_long(*selection)
         if err:
             raise HTTPException(status_code=400, detail=err)
-        selection = (min(start, end), max(start, end))
 
     if at:
         at_line = resolve_line(db, text_id, at)

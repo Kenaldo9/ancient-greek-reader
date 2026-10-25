@@ -18,10 +18,12 @@ PUBLIC_TUNNEL_ENV="${PUBLIC_ROOT}/tunnel.env"
 PUBLIC_TUNNEL_OFF="${PUBLIC_ROOT}/tunnel.env.off"
 PUBLIC_FILES="/opt/ancient-greek-reader/app/deploy/public"
 PUBLIC_COMPOSE_FILE="${PUBLIC_FILES}/docker-compose.yml"
-# The tunnel's network and its bridge (docker-compose.yml), and the firewall
-# that walls it off (firewall.nft), installed outside the checkout
+# The tunnel's network and its bridge, the site's own network
+# (docker-compose.yml), and the firewall that walls them off (firewall.nft),
+# installed outside the checkout
 PUBLIC_OUT_NETWORK="greek-public_out"
 PUBLIC_OUT_BRIDGE="greek-out"
+PUBLIC_SITE_NETWORK="greek-public_site"
 PUBLIC_FIREWALL_RULES="/etc/ancient-greek-reader/public-firewall.nft"
 PUBLIC_FIREWALL_UNIT="greek-public-firewall.service"
 MIGRATIONS_DIR="/opt/ancient-greek-reader/app/greek/db/migrations"
@@ -135,11 +137,13 @@ device_address() {
   ip -4 -o addr show dev "$1" 2>/dev/null | awk '{ sub("/.*", "", $4); print $4; exit }'
 }
 
-# A throwaway container on the tunnel's network tries the Pi's addresses, the
-# home router, the DNS servers the Pi asks and the tailnet's, which must not
-# answer, and an address on the internet, which must (probe_walls.py).
+# A throwaway container on both of cloudflared's networks tries the Pi's
+# addresses (the site network's gateway too: an internal network still
+# reaches the Pi), the home router, the DNS servers the Pi asks and the
+# tailnet's, which must not answer, and an address on the internet, which
+# must (probe_walls.py). The caller runs it in an `if`, where set -e is off.
 check_tunnel_walls() {
-  local walled=() address device
+  local walled=() address device probe
   address="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')"
   [[ -z "${address}" ]] || walled+=("the Pi's home network address=${address}:22")
   address="$(ip -4 route show default | awk '{ print $3; exit }')"
@@ -151,6 +155,11 @@ check_tunnel_walls() {
     address="$(device_address "${device}")"
     [[ -z "${address}" ]] || walled+=("the Pi on ${device}=${address}:22")
   done
+  # Docker's own record, whatever its bridge is called
+  address="$(docker network inspect --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}' \
+    "${PUBLIC_SITE_NETWORK}")"
+  [[ -n "${address}" ]] || { log "The site's network ${PUBLIC_SITE_NETWORK} has no gateway"; return 1; }
+  walled+=("the Pi on the site's network=${address}:22")
   # The Pi's own DNS servers on the home network (not ones on the internet)
   while read -r address; do
     walled+=("the home network's DNS server=${address}:53")
@@ -162,11 +171,17 @@ for line in sys.stdin:
     if a.version == 4 and not a.is_global:
         print(a)
 ')
-  docker run --rm --network "${PUBLIC_OUT_NETWORK}" --user 65534:65534 \
+  # Where cloudflared is: on the tunnel's network, and joined to the site's
+  probe="$(docker create --rm --network "${PUBLIC_OUT_NETWORK}" --user 65534:65534 \
     --read-only --cap-drop ALL --security-opt no-new-privileges:true \
     -v "${PUBLIC_FILES}/probe_walls.py:/probe_walls.py:ro" \
     --entrypoint python "${READER_IMAGE}" /probe_walls.py \
-    --open "the internet=1.1.1.1:443" "${walled[@]}"
+    --open "the internet=1.1.1.1:443" "${walled[@]}")" || return 1
+  if ! docker network connect "${PUBLIC_SITE_NETWORK}" "${probe}"; then
+    docker rm -f "${probe}" >/dev/null
+    return 1
+  fi
+  docker start --attach "${probe}"
 }
 
 # The web app, and with a token in tunnel.env the tunnel: its network is

@@ -8,9 +8,9 @@ It checks /version (a database the code can use, fully migrated), the
 Library, robots.txt and the sitemap, a book page from the sitemap, and that
 plain http:// is sent on to https://. During the private preview the site
 is behind Cloudflare Access: with CF_ACCESS_CLIENT_ID and
-CF_ACCESS_CLIENT_SECRET set it sends that service token. Each check is
-tried three times, 20 seconds apart; the script exits 1 if one still fails.
-Python's standard library only.
+CF_ACCESS_CLIENT_SECRET set it sends that service token, over https://
+only. Each check is tried three times, 20 seconds apart; the script exits 1
+if one still fails. Python's standard library only.
 """
 
 import json
@@ -52,12 +52,17 @@ class _NoRedirects(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def http_fetch(headers: dict[str, str]):
-    """fetch(url) -> Response over the network, sending headers."""
+def http_fetch(headers: dict[str, str], token: dict[str, str] | None = None):
+    """
+    fetch(url) -> Response over the network, sending headers, and the token
+    (Access's service token) to https:// URLs only: the http:// check's
+    request crosses the internet unencrypted.
+    """
     opener = urllib.request.build_opener(_NoRedirects)
 
     def fetch(url: str) -> Response:
-        request = urllib.request.Request(url, headers=headers)
+        sent = headers | token if token and url.startswith("https://") else headers
+        request = urllib.request.Request(url, headers=sent)
         try:
             with opener.open(request, timeout=TIMEOUT) as r:
                 return Response(r.status, _lower(r.headers), r.read())
@@ -172,15 +177,13 @@ def main(argv=None) -> int:
         return 2
     site = args[0].rstrip("/")
     headers = {"User-Agent": "ancient-greek-reader site check"}
+    token = {}
     client_id = os.environ.get("CF_ACCESS_CLIENT_ID")
     secret = os.environ.get("CF_ACCESS_CLIENT_SECRET")
     if client_id and secret:
-        headers |= {"CF-Access-Client-Id": client_id, "CF-Access-Client-Secret": secret}
-    return (
-        0
-        if run(site, http_fetch(headers), out=lambda line: print(line, flush=True))
-        else 1
-    )
+        token = {"CF-Access-Client-Id": client_id, "CF-Access-Client-Secret": secret}
+    fetch = http_fetch(headers, token)
+    return 0 if run(site, fetch, out=lambda line: print(line, flush=True)) else 1
 
 
 if __name__ == "__main__":

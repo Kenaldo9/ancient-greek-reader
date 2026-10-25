@@ -2,7 +2,9 @@
 # The public site's tunnel reaches the internet and nothing else: not this
 # Pi, not the home network, not the tailnet, not Docker's other networks.
 # cloudflared's way out is the bridge greek-out (docker-compose.yml, network
-# out); whatever comes in on it to those addresses is dropped.
+# out); whatever comes in on it to those addresses is dropped. Its other
+# network, site (bridge greek-site), is internal: Docker lets it reach
+# nothing but the Pi itself, which is dropped here.
 #
 # A table of its own: Docker, ufw and Tailscale keep their rules in
 # iptables' tables and never replace it, and a drop here is final whatever
@@ -30,10 +32,10 @@ table inet greek_public {
 	}
 
 	# To the Pi itself, on any of its addresses (its sshd and web servers
-	# listen on all of them)
+	# listen on all of them), from either of the site's networks
 	chain input {
 		type filter hook input priority filter - 10; policy accept;
-		iifname "greek-out" drop
+		iifname { "greek-out", "greek-site" } drop
 	}
 
 	# Through the Pi: IPv4 to the internet only

@@ -1,6 +1,6 @@
 """
 Whether the network this runs on reaches only the internet. The public
-site's deploy runs it in a throwaway container on the tunnel's network
+site's deploy runs it in a throwaway container on cloudflared's networks
 before cloudflared starts (deploy/public/common.sh, check_tunnel_walls):
 
     python probe_walls.py --open LABEL=HOST:PORT ... LABEL=HOST:PORT ...
