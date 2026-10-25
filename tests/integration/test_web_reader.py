@@ -9,6 +9,7 @@ from greek.db.repos.lines import insert_lines
 from greek.db.repos.study import save_study_result
 from greek.db.repos.texts import insert_text
 from greek.models import LineTranslation, TranslationUnit, WordStudy
+from greek.web.reader_data import MAX_SELECTION_LINES
 
 # Book 1 has 45 lines, book 2 has 3; each book is one page. Every line has 2 words.
 BOOK1 = [(f"1.{i}", f"λόγος{i} ἔργον{i}") for i in range(1, 46)]
@@ -320,6 +321,30 @@ def test_passage_box_bad_range(client, text_id):
 
 def test_passage_box_range_without_lines(client, text_id):
     assert "No lines found" in _passage_box(client, text_id, "200-210")
+
+
+def test_a_selection_longer_than_any_page_is_refused(client, web_db):
+    count = MAX_SELECTION_LINES + 1
+    tid = insert_text(web_db, "Long", "Homer", "long.txt", "/d/long.txt", count)
+    insert_lines(
+        web_db,
+        tid,
+        ["μῆνιν ἄειδε"] * count,
+        [f"1.{n}" for n in range(1, count + 1)],
+    )
+    refused = f"Select at most {MAX_SELECTION_LINES:,} lines at a time."
+    whole = f"1.1-1.{count}"
+    # Either way round, by reference or by line number
+    for lines in (whole, f"1.{count}-1.1", f"1-{count}"):
+        html = _passage_box(client, tid, lines)
+        assert refused in html and 'aria-label="Passage"' in html
+    resp = client.get(f"/texts/{tid}/read", params={"lines": whole})
+    assert resp.status_code == 400 and refused in resp.text
+    # A whole page's worth is still a selection
+    html = _passage_box(client, tid, f"1.2-1.{count}")
+    assert refused not in html and f'aria-label="Passage 1.2–1.{count}"' in html
+    resp = client.get(f"/texts/{tid}/read", params={"lines": f"1.1-1.{count - 1}"})
+    assert resp.status_code == 200
 
 
 def test_passage_box_without_study_data(client, text_id):

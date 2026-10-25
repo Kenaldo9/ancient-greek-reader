@@ -175,8 +175,8 @@ first and on the public site when you publish it.
 - The web container runs as `greekpublic` with a read-only filesystem
   (`/tmp` in memory), no Linux capabilities, 512 MB of memory at most, and
   the published copy mounted read-only. It has no `.env` and no API key, and
-  no port on the Pi: it is on an internal network with no way out, which
-  only `cloudflared` joins.
+  no port on the Pi: it is on an internal network with no way out (bridge
+  `greek-site`), which only `cloudflared` joins.
 - `cloudflared` starts once `tunnel.env` holds the tunnel's token
   (`TUNNEL_TOKEN=…`, [tunnel.sh](tunnel.sh)). It is the only container of
   the site with a way out, on its own network (bridge `greek-out`,
@@ -232,20 +232,23 @@ comes in on the bridge `greek-out` to the Pi itself (any of its addresses:
 its sshd and web servers listen on all of them), to private, tailnet,
 link-local and reserved IPv4 ranges (the home network, the tailnet and
 MagicDNS, Docker's other networks), and all IPv6, so `cloudflared` reaches
-the internet and nothing else. The rules are an nftables table of their own
-(`inet greek_public`): Docker, ufw and Tailscale keep theirs in iptables'
-tables and never replace it, and a drop in it is final whatever their
-chains accept. They are copied to `/etc/ancient-greek-reader/` and loaded
+the internet and nothing else. Docker's internal network, which the web app
+and `cloudflared` share, still reaches the Pi itself (its gateway address),
+so the rules drop that too, by its bridge `greek-site`. The rules are an
+nftables table of their own (`inet greek_public`): Docker, ufw and
+Tailscale keep theirs in iptables' tables and never replace it, and a drop
+in it is final whatever their chains accept. They are copied to `/etc/ancient-greek-reader/` and loaded
 by `greek-public-firewall.service` at every boot, before Docker starts the
 containers. `cloudflared` asks DNS servers on the internet (`1.1.1.1`),
 not the Pi's.
 
 Whenever the site starts with a token (a deploy, a publish, `tunnel.sh
 on`), the rules are loaded again and checked before `cloudflared` starts:
-a throwaway container on its network ([probe_walls.py](public/probe_walls.py))
-tries the Pi's addresses, the home router, the Pi's DNS servers on the home
-network and the tailnet's, which must not answer, and an address on the
-internet, which must. If one answers, `cloudflared` stays stopped and the
+a throwaway container on both of its networks
+([probe_walls.py](public/probe_walls.py)) tries the Pi's addresses (the
+internal network's gateway among them), the home router, the Pi's DNS
+servers on the home network and the tailnet's, which must not answer, and
+an address on the internet, which must. If one answers, `cloudflared` stays stopped and the
 deploy fails. The log names what answered, never an address.
 
 **Setting it up**, once (`[CLOUDFLARE]` is Cloudflare's dashboard, with
