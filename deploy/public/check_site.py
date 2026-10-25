@@ -5,14 +5,18 @@ Check the public site from outside, as GitHub's scheduled workflow does
     python deploy/public/check_site.py https://reader.example
 
 It checks /version (a database the code can use, fully migrated), the
-Library, robots.txt and the sitemap, a book page from the sitemap, and that
-plain http:// is sent on to https://. During the private preview the site
+Library, robots.txt and the sitemap, every page the sitemap lists and each
+text's start, with Interlinear off and on, and that plain http:// is sent
+on to https://. Opening every page also builds each one into the site's
+page cache again after a restart (greek/web/page_cache.py), so a reader's
+first visit to a book doesn't wait for it. During the private preview the site
 is behind Cloudflare Access: with CF_ACCESS_CLIENT_ID and
 CF_ACCESS_CLIENT_SECRET set it sends that service token, over https://
 only. Each check is tried three times, 20 seconds apart; the script exits 1
 if one still fails. Python's standard library only.
 """
 
+import gzip
 import json
 import os
 import re
@@ -28,6 +32,9 @@ PAUSE = 20
 TIMEOUT = 30
 GREEK = re.compile("[Ͱ-Ͽἀ-῿]")
 SITEMAP = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+# The Interlinear cookie as the reader sets it (interlinear_on in
+# greek/web/reader_data.py): with it, a page is one of its own in the cache
+INTERLINEAR = {"Cookie": "interlinear=1"}
 
 
 @dataclass
@@ -54,20 +61,23 @@ class _NoRedirects(urllib.request.HTTPRedirectHandler):
 
 def http_fetch(headers: dict[str, str], token: dict[str, str] | None = None):
     """
-    fetch(url) -> Response over the network, sending headers, and the token
-    (Access's service token) to https:// URLs only: the http:// check's
-    request crosses the internet unencrypted.
+    fetch(url, more=None) -> Response over the network, sending headers and
+    more, and the token (Access's service token) to https:// URLs only: the
+    http:// check's request crosses the internet unencrypted. A gzipped
+    answer is unzipped.
     """
     opener = urllib.request.build_opener(_NoRedirects)
 
-    def fetch(url: str) -> Response:
-        sent = headers | token if token and url.startswith("https://") else headers
+    def fetch(url: str, more: dict[str, str] | None = None) -> Response:
+        sent = headers | (more or {})
+        if token and url.startswith("https://"):
+            sent |= token
         request = urllib.request.Request(url, headers=sent)
         try:
             with opener.open(request, timeout=TIMEOUT) as r:
-                return Response(r.status, _lower(r.headers), r.read())
+                return _unzipped(Response(r.status, _lower(r.headers), r.read()))
         except urllib.error.HTTPError as e:
-            return Response(e.code, _lower(e.headers), e.read())
+            return _unzipped(Response(e.code, _lower(e.headers), e.read()))
 
     return fetch
 
@@ -76,9 +86,15 @@ def _lower(headers) -> dict[str, str]:
     return {name.lower(): value for name, value in headers.items()}
 
 
-def get(fetch, url: str) -> Response:
-    """A page that must answer 200."""
-    r = fetch(url)
+def _unzipped(r: Response) -> Response:
+    if r.headers.get("content-encoding") == "gzip":
+        r.body = gzip.decompress(r.body)
+    return r
+
+
+def get(fetch, url: str, more: dict[str, str] | None = None) -> Response:
+    """A page that must answer 200 (more: headers to send besides fetch's own)."""
+    r = fetch(url, more)
     if r.status in (
         301,
         302,
@@ -123,13 +139,22 @@ def check_pages(fetch, site: str) -> str:
     urls = [e.text or "" for e in sitemap.findall("s:url/s:loc", SITEMAP)]
     if not urls or any(not url.startswith(site + "/") for url in urls):
         raise CheckFailed(f"the sitemap's {len(urls)} URLs are not all on {site}")
-    books = [url for url in urls if "/read?at=" in url]
-    if not books:
+    if not any("/read?at=" in url for url in urls):
         raise CheckFailed("the sitemap lists no book pages")
-    page = books[0][len(site) :]
-    if not GREEK.search(get(fetch, books[0]).text):
-        raise CheckFailed(f"{page} has no Greek")
-    return f"the sitemap's {len(urls)} URLs; {page} has its Greek"
+    # The Library's Start reading opens a text without at=, a page of its own
+    starts = re.findall(r'href="(/texts/\d+/read)"', get(fetch, site + "/library").text)
+    pages = urls + [site + path for path in sorted(set(starts))]
+    # Each page as a reader opens it: what the cache keeps is that request's
+    for url in pages:
+        path = url[len(site) :]
+        for more in ({}, INTERLINEAR):
+            text = get(fetch, url, more).text
+            if "/read" in path and not GREEK.search(text):
+                raise CheckFailed(f"{path} has no Greek")
+    return (
+        f"the sitemap's {len(urls)} pages and {len(set(starts))} texts' starts, "
+        "with Interlinear off and on; every reader page has its Greek"
+    )
 
 
 def check_https(fetch, site: str) -> str:
@@ -176,7 +201,12 @@ def main(argv=None) -> int:
         print(__doc__.strip())
         return 2
     site = args[0].rstrip("/")
-    headers = {"User-Agent": "ancient-greek-reader site check"}
+    # gzip, as Cloudflare asks the site for pages: the cache keeps a gzipped
+    # page apart from a plain one
+    headers = {
+        "User-Agent": "ancient-greek-reader site check",
+        "Accept-Encoding": "gzip",
+    }
     token = {}
     client_id = os.environ.get("CF_ACCESS_CLIENT_ID")
     secret = os.environ.get("CF_ACCESS_CLIENT_SECRET")

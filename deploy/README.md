@@ -194,8 +194,12 @@ first and on the public site when you publish it.
 - On its read-only database the app keeps each page it sends in memory,
   gzipped, and sends it again to the next request for it
   ([page_cache.py](../greek/web/page_cache.py)), up to 64 MB. A restart
-  empties it, and every publish and deploy restarts the site. The private
-  reader keeps nothing, so new study data shows there at once.
+  empties it, and every publish and deploy restarts the site; the hourly
+  outside check ([The tunnel](#the-tunnel), step 5) opens every page in the
+  sitemap, which builds them into it again, so a reader's first visit to a
+  book needn't wait the second or two a Pi takes to build one. To fill it
+  at once after a deploy or publish: `gh workflow run site-check.yml`. The
+  private reader keeps nothing, so new study data shows there at once.
 
 Publish (or publish again after new study data), from your computer:
 
@@ -279,8 +283,11 @@ below may differ):
 5. `[GITHUB]` The outside check
    ([site-check.yml](../.github/workflows/site-check.yml),
    [check_site.py](public/check_site.py)), hourly: `/version`, the Library,
-   robots.txt and the sitemap, a book page from it, and `http://` sent on to
-   `https://`. Each check is tried three times, 20 seconds apart. GitHub
+   robots.txt and the sitemap, every page in it and each text's start (the
+   Library's Start reading), with Interlinear off and on, and `http://` sent
+   on to `https://`. After a restart this fills the page cache again (a few
+   minutes for the Pi); other runs take a minute or two. Each check is tried
+   three times, 20 seconds apart. GitHub
    emails a failed run to whoever last changed its schedule.
    ```bash
    gh variable set PUBLIC_SITE_URL --body https://reader.example
