@@ -253,6 +253,13 @@ def test_about_names_each_source_and_licence(client):
     assert '<a href="/about" aria-current="page">About</a>' in html
 
 
+def test_about_says_where_to_report_a_mistake(client):
+    html = client.get("/about").text
+    assert 'href="https://github.com/Kenaldo9/ancient-greek-reader/issues"' in html
+    assert '<a href="mailto:greek@kenaldo.dev">greek@kenaldo.dev</a>' in html
+    assert "no promise of a reply" in html
+
+
 def test_about_says_what_each_text_has(client, iliad, web_db):
     db, text_id = iliad
     _save_study(db, text_id)

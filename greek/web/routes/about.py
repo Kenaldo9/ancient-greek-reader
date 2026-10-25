@@ -17,6 +17,8 @@ router = APIRouter()
 
 # The public repository: the code, and its releases the database
 REPOSITORY = "https://github.com/Kenaldo9/ancient-greek-reader"
+# Reports of mistakes by email, beside the repository's issues
+CONTACT = "greek@kenaldo.dev"
 
 
 @dataclass
@@ -48,5 +50,10 @@ def about(request: Request, db=Depends(get_db)):
     return templates.TemplateResponse(
         request,
         "about.html",
-        {"texts": texts, "model": STUDY_MODEL, "repository": REPOSITORY},
+        {
+            "texts": texts,
+            "model": STUDY_MODEL,
+            "repository": REPOSITORY,
+            "contact": CONTACT,
+        },
     )
