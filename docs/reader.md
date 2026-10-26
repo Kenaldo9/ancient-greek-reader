@@ -69,11 +69,12 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   the book when others have them), and so does the word pane in place of a
   gloss and note; parsing, roles, LSJ, frequency and Structure work as
   everywhere.
-- On a laptop (1501–2100px wide), **Expand** in the passage box's header
-  makes the box fill the study column. The word folds into a line or two
-  above it (the word, its meaning and its parsing), and words you click show
-  there. **Show word**, **Collapse** or Escape bring the word pane back. The
-  browser remembers the choice.
+- On a laptop or a monitor (wider than 1500px), **Expand** in the passage
+  box's header makes the box fill the study column (on a monitor it closes
+  the open LSJ entry). The word folds into a line or two above it (the word,
+  its meaning and its parsing), and words you click show there. **Show
+  word**, **Collapse** or Escape bring the word pane back. The browser
+  remembers the choice.
 - For a text with a treebank, **Grammar** has two views, and remembers the
   one you chose. **In order** is the table of words with each word's role and
   saved use. **Structure** shows every treebank sentence the selection
