@@ -146,8 +146,8 @@ word details, and a passage box. Search replaces the text pane. The responsive
 layout uses a compact word card on laptops, a navigation drawer and shared
 study tabs on iPad landscape, and a bottom study panel on iPad portrait. On
 a laptop one box can fill the study column: the open LSJ entry (the passage
-box folds into a bar) or the expanded passage box (the word folds into its
-summary; `reader.js` remembers this in `localStorage`). On
+box folds into a bar) or, on a monitor too, the expanded passage box (the
+word folds into its summary; `reader.js` remembers this in `localStorage`). On
 iPad, one slim bar replaces the header and the text toolbar: the toolbar keeps
 its place in the text pane's markup but is fixed into the bar, and `reader.js`
 moves Go to into the drawer (and back above 1500px), keeping its id for the

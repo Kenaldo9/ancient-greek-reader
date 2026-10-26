@@ -1326,8 +1326,8 @@ code {
 
 /* Laptop only: the passage box, folded while the LSJ entry fills the column */
 .passage-bar { display: none; }
-/* Laptop only: the passage box's Expand button, and Show word on the word
-   folded above the expanded box */
+/* Laptop and monitor: the passage box's Expand button, and Show word on the
+   word folded above the expanded box */
 .pb-expand, .word-unfold { display: none; }
 
 /* Monitor: the open entry makes the word pane taller */
@@ -1826,9 +1826,12 @@ code {
   .reader.dict-open .ws-lsj-toggle .t-close { display: inline; }
   .reader.dict-open .ws-lsj-toggle .chevron { transform: rotate(180deg); }
   .reader.dict-open .ws-lsj-scroll { padding: 14px 18px; }
+}
 
-  /* Laptop: the expanded passage box fills the study column. The word folds
-     into a line or two above it, as for the open LSJ entry, beside Show word. */
+/* Laptop and monitor: the expanded passage box fills the study column. The
+   word folds into a line or two above it, as for a laptop's open LSJ entry,
+   beside Show word. */
+@media (min-width: 1501px) {
   .pb-expand { display: inline-flex; gap: 6px; height: 32px; margin: -4px 0; color: var(--accent); }
   .pb-expand .chevron { transform: rotate(180deg); }
   .pb-expand .t-collapse { display: none; }
@@ -1848,7 +1851,8 @@ code {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 4px 12px;
-    padding: 12px 136px 12px 16px;
+    padding-block: 12px;
+    padding-right: 136px;
     border: 0;
   }
   .reader.passage-expanded .ws-word > .label { flex-basis: 100%; margin-bottom: 0; }

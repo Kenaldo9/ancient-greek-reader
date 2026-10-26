@@ -39,7 +39,7 @@
     touchAnchor: null, // first tap; the next tap completes the range
     studyTab: "fluent",
     dictOpen: false, // the full LSJ entry, outside the tablet's Dictionary tab
-    passageExpanded: false, // the passage box fills a laptop's study column
+    passageExpanded: false, // the passage box fills a laptop's or monitor's study column
     sheetOpen: false, // a phone's study panel
     sheetFrom: null, // the word or line number that opened it, for focus
   };
@@ -370,17 +370,19 @@
 
   // ----------------------------------------------------- expanded passage
 
-  // On a laptop the passage box can fill the study column instead: the word
-  // folds into a line or two above it (its parsing as a summary) and stays
-  // folded as other words are clicked, until Show word or Collapse. The
-  // choice is remembered, like the tab. It needs selected lines, and an open
-  // LSJ entry covers it.
+  // On a laptop or a monitor the passage box can fill the study column
+  // instead: the word folds into a line or two above it (its parsing as a
+  // summary) and stays folded as other words are clicked, until Show word or
+  // Collapse. The choice is remembered, like the tab. It needs selected
+  // lines, and an open LSJ entry covers it; on a monitor, where both show,
+  // Expand closes the entry.
   function passageExpanded() {
-    return state.passageExpanded && laptop.matches && !compact.matches && !!$("#passage-box[data-start]") && !dictShown();
+    return state.passageExpanded && !compact.matches && !!$("#passage-box[data-start]") && !dictShown();
   }
 
   function expandPassage(on) {
     state.passageExpanded = on;
+    if (on) state.dictOpen = false;
     try { localStorage.setItem("greek.passageExpanded", on ? "1" : "0"); } catch (e) { /* private mode */ }
     paintColumn();
   }

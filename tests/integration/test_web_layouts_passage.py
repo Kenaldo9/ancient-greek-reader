@@ -1,8 +1,8 @@
 """Optional browser regressions for the expanded passage box (see
-test_web_layouts.py): on a laptop, Expand makes the passage box fill the study
-column, with the word folded into a line or two above it. Monitors and tablets
-have no Expand button. The data is test_web_layouts_dictionary.py's: 1.7
-starts with a verb with an LSJ entry and principal parts.
+test_web_layouts.py): on a laptop or a monitor, Expand makes the passage box
+fill the study column, with the word folded into a line or two above it.
+Tablets have no Expand button. The data is test_web_layouts_dictionary.py's:
+1.7 starts with a verb with an LSJ entry and principal parts.
 """
 
 import pytest
@@ -79,10 +79,10 @@ def test_laptop_passage_fills_the_column(browser, dict_reader):
         pw.expect(page.locator("#word-strip .ws-empty")).to_be_visible()
         pw.expect(unfold).to_be_hidden()
 
-        # A monitor has room for both boxes
+        # A monitor keeps it expanded
         page.set_viewport_size({"width": 2560, "height": 1324})
-        pw.expect(_expanded(page)).to_have_count(0)
-        pw.expect(toggle).to_be_hidden()
+        pw.expect(_expanded(page)).to_be_attached()
+        pw.expect(toggle).to_have_accessible_name("Collapse")
         page.set_viewport_size({"width": 1824, "height": 1024})
         pw.expect(_expanded(page)).to_be_attached()
 
@@ -120,11 +120,50 @@ def test_laptop_passage_fills_the_column(browser, dict_reader):
         context.close()
 
 
+def test_monitor_passage_fills_the_column(browser, dict_reader):
+    context, page, errors, blocked = _open(browser, dict_reader, 2560, 1324, False)
+    try:
+        page.goto(dict_reader + "&lines=1.4-1.5")
+        strip = _show_verb(page, False)
+        # The open LSJ entry makes the word pane taller; Expand closes it
+        strip.locator(".ws-lsj-toggle").click()
+        pw.expect(page.locator("#reader.dict-open")).to_be_attached()
+        toggle = page.locator("#passage-box .pb-expand")
+        pw.expect(toggle).to_have_accessible_name("Expand")
+        before = _height(page, "#passage-box")
+        toggle.click()
+        pw.expect(_expanded(page)).to_be_attached()
+        pw.expect(page.locator("#reader.dict-open")).to_have_count(0)
+        pw.expect(toggle).to_have_accessible_name("Collapse")
+        pw.expect(toggle).to_have_attribute("aria-expanded", "true")
+        assert _height(page, "#passage-box") > before + 500
+        # The word folds into its summary, beside Show word
+        pw.expect(strip.locator(".ws-parse")).to_be_hidden()
+        pw.expect(strip.locator(".ws-dict-col")).to_be_hidden()
+        pw.expect(strip.locator(".ws-summary")).to_be_visible()
+        unfold = page.get_by_role("button", name="Show word")
+        pw.expect(unfold).to_be_visible()
+        button = unfold.bounding_box()
+        for part in (".label", ".ws-meaning", ".ws-summary"):
+            box = strip.locator(f".ws-word {part}").bounding_box()
+            assert box["x"] + box["width"] <= button["x"]
+        assert _fits(page)
+        # Show word brings the word pane back, with its entry closed
+        unfold.click()
+        pw.expect(_expanded(page)).to_have_count(0)
+        pw.expect(strip.locator(".ws-dict-col")).to_be_visible()
+        pw.expect(page.locator("#reader.dict-open")).to_have_count(0)
+        pw.expect(toggle).to_be_focused()
+        assert errors == [] and blocked == []
+    finally:
+        context.close()
+
+
 @pytest.mark.parametrize(
     "width, height, touch",
-    [(2560, 1324, False), (1373, 789, True), (954, 1208, True)],
+    [(1373, 789, True), (954, 1208, True)],
 )
-def test_only_a_laptop_expands_the_passage(browser, dict_reader, width, height, touch):
+def test_no_tablet_expands_the_passage(browser, dict_reader, width, height, touch):
     context, page, errors, blocked = _open(browser, dict_reader, width, height, touch)
     try:
         # even with the choice remembered from a laptop

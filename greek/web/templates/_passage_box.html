@@ -62,7 +62,7 @@
         {% if p.state == "study" %}
         <span>{{ p.study_model | model_label }} · study data</span>
         {% endif %}
-        {# Laptop: the passage box fills the study column (reader.js) #}
+        {# Laptop and monitor: the passage box fills the study column (reader.js) #}
         <button type="button" class="btn btn-small pb-expand" data-action="expand-passage" aria-expanded="false" aria-controls="passage-box">
           {{ m.icon("chevron") }}
           <span class="t-expand">Expand</span>
