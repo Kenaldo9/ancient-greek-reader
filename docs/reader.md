@@ -76,9 +76,11 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   word**, **Collapse** or Escape bring the word pane back. The browser
   remembers the choice.
 - For a text with a treebank, **Grammar** has two views, and remembers the
-  one you chose. **In order** is the table of words with each word's role and
-  saved use. **Structure** shows every treebank sentence the selection
-  touches, whole (words outside the selection in grey): its text, then an
+  one you chose; the switch between them stays at the top as the words
+  scroll (a phone in landscape keeps only the column heads there). **In
+  order** is the table of words with each word's role and saved use.
+  **Structure** shows every treebank sentence the selection touches, whole
+  (words outside the selection in grey): its text, then an
   outline with one row per word or phrase, indented under the word it depends
   on, with its meaning (LSJ's in grey), a short role and the use. Clicking a
   row opens the word; hovering or focusing it highlights the word and the

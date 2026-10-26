@@ -106,9 +106,12 @@
     <div class="pb-panel pb-words" role="tabpanel" id="panel-words" aria-labelledby="tab-words" tabindex="0" hidden>
       {% set structure = p.outline %}
       {% if structure %}
-      <div class="st-switch" role="radiogroup" aria-label="Show the words">
-        <button type="button" role="radio" aria-checked="true" data-words-view="order">In order</button>
-        <button type="button" role="radio" aria-checked="false" tabindex="-1" data-words-view="sentence">Structure</button>
+      {# stays at the top of the panel as the words scroll #}
+      <div class="st-bar">
+        <div class="st-switch" role="radiogroup" aria-label="Show the words">
+          <button type="button" role="radio" aria-checked="true" data-words-view="order">In order</button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" data-words-view="sentence">Structure</button>
+        </div>
       </div>
       {% endif %}
       {% if p.study %}
@@ -119,7 +122,7 @@
         <div class="wt-head" role="row">
           <span role="columnheader">Word · lemma</span>
           <span role="columnheader">Meaning</span>
-          <span role="columnheader">Parsing</span>
+          <span role="columnheader">Parsing{% if structure %}<span class="wt-head-role"> · role</span>{% endif %}</span>
           {% if structure %}<span role="columnheader">Role · use</span>{% endif %}
           <span role="columnheader">Note</span>
         </div>
