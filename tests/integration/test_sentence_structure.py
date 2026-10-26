@@ -244,9 +244,14 @@ def test_all_words_has_a_switch_roles_and_an_outline(client, iliad):
     assert 'aria-checked="true" data-words-view="order">In order</button>' in html
     assert 'data-words-view="sentence">Structure</button>' in html
     assert "Role: the treebank.</span> <span>Use: Claude Opus 5.5.</span>" in flat
-    # In order: a Role · use column, the role's words in Greek, the use
+    # In order: a Role · use column, the role's words in Greek, the use; where
+    # they sit under the parsing (the stylesheet), the Parsing column names the role
     assert '<div class="words-table has-roles"' in html
     assert '<span role="columnheader">Role · use</span>' in html
+    assert (
+        '<span role="columnheader">Parsing<span class="wt-head-role"> · role</span>'
+        in html
+    )
     assert (
         '<span class="wt-role" role="cell"><span class="wt-role-text">object of '
         '<span lang="grc">ἄειδε</span></span></span>' in html

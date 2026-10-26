@@ -4,7 +4,8 @@ Chromium and WebKit.
 On a phone, and a phone in landscape, the text takes the screen under one
 slim bar and the study panel is a sheet: closed until a word or a line number
 is tapped, closed again by its handle, a swipe down or Escape. Every write
-request fails the test.
+request fails the test. WebKit is Safari's engine, so an iPad's layouts that
+only it gets wrong are tested here too.
 """
 
 import os
@@ -13,11 +14,16 @@ import re
 
 import pytest
 
+from greek.db.repos.study import save_uses_result
+from greek.models import WordUse
+
 pw = pytest.importorskip("playwright.sync_api")
 
 from tests.integration import test_web_layouts as layouts  # noqa: E402
+from tests.integration import test_web_layouts_structure as structure  # noqa: E402
 
 live_reader = layouts.live_reader
+outline_reader = structure.outline_reader
 
 PORTRAIT = (393, 852)
 SMALL = (360, 800)
@@ -299,3 +305,35 @@ def test_wider_than_a_phone_the_tools_and_the_panel_come_back(phone):
     phone.set_viewport_size({"width": PORTRAIT[0], "height": PORTRAIT[1]})
     pw.expect(phone.locator("#reader-nav #interlinear-toggle")).to_have_count(1)
     pw.expect(phone.locator("#reader-nav #goto")).to_have_count(1)
+
+
+LONG_USE = (
+    "genitive of possession, with the noun it belongs to understood from the "
+    "line before, as often in Homer's catalogues"
+)
+
+
+@pytest.mark.parametrize("phone", [(954, 1208)], indirect=True)
+def test_on_ipad_portrait_a_use_that_wraps_stays_in_its_row(
+    phone, outline_reader, web_db
+):
+    """
+    The outline puts the use in a column of its own there. A label too long
+    for it makes its row taller; WebKit lined an inline label up by its last
+    line, so it reached into the row above.
+    """
+    tid = int(outline_reader.split("/texts/")[1].split("/")[0])
+    model = "claude-opus-5-5"
+    save_uses_result(
+        web_db, tid, model, 4, 5, [WordUse(tid, 5, 0, model, LONG_USE, "high")]
+    )
+    phone.goto(outline_reader)
+    phone.locator("#reader-tab-words").tap()
+    phone.locator("[data-words-view='sentence']").tap()
+    row = phone.locator('.st-item[data-line="5"][data-i="0"] > .st-row')
+    use = row.locator(".st-use")
+    pw.expect(use).to_have_text(LONG_USE)
+    r, u = row.bounding_box(), use.bounding_box()
+    assert u["height"] > 25  # it wraps
+    assert r["y"] - 0.5 <= u["y"]
+    assert u["y"] + u["height"] <= r["y"] + r["height"] + 0.5

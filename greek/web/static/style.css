@@ -1487,7 +1487,7 @@ code {
 
 .wt-head {
   position: sticky;
-  top: 0;
+  top: var(--st-bar);
   z-index: 1;
   border-bottom: 1px solid var(--border);
   background: var(--table-head);
@@ -1495,6 +1495,10 @@ code {
   font-weight: 600;
   color: var(--muted);
 }
+
+/* where the role and use sit under the parsing (2100px and below), the
+   Parsing column names the role */
+.wt-head-role { display: none; }
 
 .wt-line {
   display: flex;
@@ -1540,10 +1544,25 @@ code {
 /* sentence structure: In order adds each word's role and use; Structure
    shows each treebank sentence as an outline (reader.js switches them) */
 #panel-words { container: words / inline-size; }
+/* The switch stays at the top of the panel as the words scroll, with In
+   order's column heads under it (41px: a 13px line at 1.5, 10px above and
+   below, a 1px border). A word's row scrolled into view (a click in the
+   text) stops below both. */
+#panel-words { --st-bar: 0px; --wt-head: 41px; scroll-padding-top: var(--st-bar); }
+#panel-words:has(.st-bar) { --st-bar: 58px; }
+#panel-words:has(.words-table:not([hidden])) { scroll-padding-top: calc(var(--st-bar) + var(--wt-head)); }
+.st-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: var(--st-bar);
+  padding: 12px 20px 8px;
+  background: var(--panel);
+}
+.st-bar + .wt-sources { padding-top: 4px; }
 .st-switch {
   display: inline-flex;
   gap: 2px;
-  margin: 12px 20px 2px;
   padding: 3px;
   border-radius: var(--radius);
   background: var(--code-bg);
@@ -1650,7 +1669,9 @@ code {
 .st-gloss { margin-left: 10px; font-size: 15px; color: var(--text-2); }
 .st-gloss.is-lsj { color: var(--muted); }
 .st-role { font-size: 14px; color: var(--accent-dark); }
-.st-use { justify-self: start; }
+/* lined up by its first line, so a label that wraps makes its row taller
+   rather than reaching into the row above */
+.st-use { display: block; width: fit-content; }
 .st-toggle {
   display: inline-block;
   width: 20px;
@@ -1769,6 +1790,7 @@ code {
   .words-table.has-roles .wt-head,
   .words-table.has-roles .wt-row { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.2fr); }
   .words-table.has-roles .wt-head [role="columnheader"]:nth-child(4) { display: none; }
+  .wt-head-role { display: inline; }
   .wt-row.has-role .wt-word, .wt-row.has-role .wt-meaning { grid-row: span 2; }
   .wt-role { grid-column: 3; margin-top: -4px; }
   .wt-role:empty { display: none; }
@@ -2180,6 +2202,10 @@ code {
 /* a short screen: half of it for the sheet */
 @media (max-width: 1100px) and (max-height: 500px) {
   .reader { --sheet-h: 50dvh; }
+  /* Grammar has about 80px there: the switch scrolls away with the words,
+     and only the column heads stay */
+  #panel-words:has(.st-bar) { --st-bar: 0px; }
+  .st-bar { position: static; height: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

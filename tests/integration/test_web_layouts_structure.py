@@ -1,8 +1,9 @@
 """Optional browser regressions for sentence structure in Grammar (see
 test_web_layouts.py): the In order /
-Structure switch and its memory, the outline's rows (opening a word, lighting
-its words in the text, folding, the keyboard), depth markers in a narrow box
-and the folded sentence text on iPad portrait, at the four viewports.
+Structure switch, its memory and its place at the top as the words scroll,
+the outline's rows (opening a word, lighting its words in the text, folding,
+the keyboard), depth markers in a narrow box and the folded sentence text on
+iPad portrait, at the four viewports.
 
 One treebank sentence runs from 1.4 to 1.7 and nests six deep; the
 selection is 1.4–1.5, so the words of 1.6 and 1.7 are outside it.
@@ -410,6 +411,83 @@ def test_grammar_keeps_its_place_in_each_view(
         pw.expect(page.locator(".st-outline")).to_be_visible()
         pw.expect(page.locator(".st-item.is-active")).to_have_count(0)
         assert _words_top(page) == 0
+        assert errors == [] and blocked == []
+    finally:
+        context.close()
+
+
+def _top(page, selector):
+    return page.locator(selector).evaluate("el => el.getBoundingClientRect().top")
+
+
+def _bottom(page, selector):
+    return page.locator(selector).evaluate("el => el.getBoundingClientRect().bottom")
+
+
+@pytest.mark.parametrize(
+    "width, height, touch",
+    layouts.VIEWPORTS + [(393, 852, True), (360, 800, True), (852, 393, True)],
+)
+def test_the_switch_stays_at_the_top_as_the_words_scroll(
+    browser, long_reader, width, height, touch
+):
+    """
+    The In order / Structure switch stays at the top of the Grammar tab, with
+    In order's column heads under it, and a word's row scrolled into view
+    stops below both. A phone in landscape has room for the heads only: the
+    switch scrolls away with the words.
+    """
+    context, page, errors, blocked = _open(browser, long_reader, width, height, touch)
+    try:
+        page.goto(long_reader)
+        _all_words(page, touch)
+        _scroll_words(page, 400)
+        assert _words_top(page) == 400
+        panel = _top(page, "#panel-words")
+        if height <= 500:
+            # a phone in landscape: the switch has scrolled away
+            assert _bottom(page, ".st-bar") <= panel
+            assert abs(_top(page, ".wt-head") - panel) < 1
+        else:
+            assert abs(_top(page, ".st-bar") - panel) < 1
+            assert abs(_top(page, ".wt-head") - _bottom(page, ".st-bar")) < 1
+            # a click on the switch there shows the other view
+            switch = page.locator("[data-words-view='sentence']")
+            switch.tap() if touch else switch.click()
+            pw.expect(page.locator(".st-outline")).to_be_visible()
+            _scroll_words(page, 400)
+            assert abs(_top(page, ".st-bar") - panel) < 1
+            _in_order(page)
+        if not touch:  # a tablet's or phone's word opens the Word tab instead
+            # a word whose row is above: the row comes in below the heads
+            _scroll_words(page, 10_000)
+            _word(page, 5, 0).click()
+            pw.expect(page.locator(".wt-row.is-active")).to_have_count(1)
+            gap = _top(page, ".wt-row.is-active") - _bottom(page, ".wt-head")
+            assert -1 < gap < 2
+        assert errors == [] and blocked == []
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("width, height, touch", layouts.VIEWPORTS)
+def test_parsing_names_the_role_where_it_sits_under_it(
+    browser, outline_reader, width, height, touch
+):
+    """Below a monitor, In order puts the role and use under the parsing."""
+    context, page, errors, blocked = _open(
+        browser, outline_reader, width, height, touch
+    )
+    try:
+        page.goto(outline_reader)
+        _all_words(page, touch)
+        heads = page.locator(".wt-head [role='columnheader']")
+        if width > 2100:
+            pw.expect(heads.nth(2)).to_have_text("Parsing", use_inner_text=True)
+            pw.expect(heads.nth(3)).to_have_text("Role · use")
+        else:
+            pw.expect(heads.nth(2)).to_have_text("Parsing · role", use_inner_text=True)
+            pw.expect(heads.nth(3)).to_be_hidden()
         assert errors == [] and blocked == []
     finally:
         context.close()
