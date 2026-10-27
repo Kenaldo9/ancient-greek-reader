@@ -81,7 +81,9 @@ def test_tablet_all_words_without_study_data(browser, study_reader):
         )
         # A word from the table opens the Word tab with the treebank parse
         page.locator('.wt-row[data-line="4"]').first.click()
-        pw.expect(page.locator("#word-strip")).to_contain_text("Perseus treebank")
+        pw.expect(page.locator("#word-strip .ws-parse > .label")).to_have_text(
+            "Parsing source: Perseus"
+        )
         pw.expect(page.locator("#passage-box")).to_be_hidden()
         assert errors == [] and blocked == []
     finally:
@@ -120,8 +122,10 @@ def test_monitor_word_strip_shows_the_full_lsj_entry(browser, study_reader):
         page.goto(study_reader + "&lines=1.4-1.5")
         page.locator('.line[data-line="5"] .w').first.click()
         strip = page.locator("#word-strip.has-word")
-        pw.expect(strip).to_contain_text("Parsing · Perseus treebank")
-        pw.expect(strip.locator(".ws-dict-line")).to_have_text("LSJ λόγος word")
+        pw.expect(strip.locator(".ws-parse > .label")).to_have_text(
+            "Parsing source: Perseus"
+        )
+        pw.expect(strip.locator(".ws-dict-line")).to_have_text("source: LSJ λόγος word")
         # A monitor has room for the entry beside the word, without a click
         pw.expect(strip.locator(".lsj-entry")).to_be_visible()
         pw.expect(strip.locator(".lsj-entry")).to_contain_text("word, speech")

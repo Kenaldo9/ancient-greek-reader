@@ -3,6 +3,8 @@ Grammar's In order table with each word's role and use, and its Structure
 view, the outline of every treebank sentence a selection touches, read from
 the saved trees with GET only."""
 
+import re
+
 import pytest
 
 from greek.db.repos.lexicon import save_lexicon
@@ -17,8 +19,9 @@ from greek.models import (
     WordUse,
 )
 from greek.web import reader_data
-from greek.web.reader_data import passage_view
+from greek.web.reader_data import PERSEUS_CREDIT, passage_view
 from tests.integration.test_glaux_import import _add_text, _import
+from tests.integration.test_web_study import _sources, tag
 from tests.integration.test_word_details import _import_excerpt
 
 OPUS = "claude-opus-5-5"
@@ -108,7 +111,7 @@ def test_a_selection_shows_each_sentence_it_touches_whole(iliad):
     view = _view(db, text_id, 2, 2)  # 1.2, the middle of sentence 100
     [outline] = view.outline
     assert (outline.ref_start, outline.ref_end) == ("1.1", "1.3")
-    assert outline.credit.label == "Perseus treebank"
+    assert outline.credit.label == "Perseus"
     assert not outline.credit.automatic
     # the sentence's words as printed, those outside the selection marked
     assert outline.text[:6] == [
@@ -197,7 +200,7 @@ def test_glaux_sentences_credit_the_parser_and_gloss_the_article(thucydides):
     assert [o.sentence_id for o in view.outline] == [1, 2]
     by_hand, auto = view.outline
     assert (by_hand.ref_start, by_hand.ref_end) == ("1.1.1", "1.1.2")
-    assert by_hand.credit.label == "GLAUx treebank" and not by_hand.credit.automatic
+    assert by_hand.credit.label == "GLAUx" and not by_hand.credit.automatic
     assert auto.credit.automatic
     # the article reads "the", not LSJ's "the following"
     save_lexicon(
@@ -237,13 +240,12 @@ def test_all_words_has_a_switch_roles_and_an_outline(client, iliad):
         db, text_id, OPUS, 1, 2, [_use(text_id, 2, 3, "dative of disadvantage")]
     )
     html = _passage(client, text_id, "1-3")
-    flat = " ".join(html.split())
     assert (
         '<div class="st-switch" role="radiogroup" aria-label="Show the words">' in html
     )
     assert 'aria-checked="true" data-words-view="order">In order</button>' in html
     assert 'data-words-view="sentence">Structure</button>' in html
-    assert "Role: the treebank.</span> <span>Use: Claude Opus 5.5.</span>" in flat
+    assert _sources(html).endswith("uses · Perseus parsing, roles")
     # In order: a Role · use column, the role's words in Greek, the use; where
     # they sit under the parsing (the stylesheet), the Parsing column names the role
     assert '<div class="words-table has-roles"' in html
@@ -261,9 +263,8 @@ def test_all_words_has_a_switch_roles_and_an_outline(client, iliad):
     # Structure: hidden until chosen, a tree per sentence
     assert '<div class="st-outline" data-view="sentence" hidden>' in html
     assert (
-        '<h3 class="st-head"><span class="ref">1.1–1.3</span><span title="Ancient '
-        'Greek Dependency Treebank 2.1, Perseus Digital Library (CC BY-SA 3.0)">'
-        "Perseus treebank, by hand</span>" in html
+        '<h3 class="st-head"><span class="ref">1.1–1.3</span>'
+        f"{tag('Perseus', PERSEUS_CREDIT.title)}<button" in html
     )
     assert '<ul class="st-rows" role="tree" aria-label="Structure of 1.1–1.3">' in html
     # the first row is the tree's tab stop; a row names its word and words
@@ -283,10 +284,10 @@ def test_all_words_has_a_switch_roles_and_an_outline(client, iliad):
 def test_an_automatic_sentence_says_so(client, thucydides):
     _, text_id = thucydides
     html = _passage(client, text_id, "2-2")
-    assert ">GLAUx, automatic parse: roles may be wrong</span>" in html
-    assert ">GLAUx treebank, by hand</span>" in html
+    heads = re.findall(r'<h3 class="st-head">.*?source: </span>([^<]*)</span>', html)
+    assert heads == ["GLAUx", "GLAUx auto"]
     # the In order role of a word in it is marked too
-    assert '<span class="wt-auto" title="GLAUx corpus' in html
+    assert '<span class="wt-role-text"><span class="src is-auto" title="GLAUx' in html
     # words of 1.1.1 in the hand-annotated sentence are dimmed
     assert '<span class="st-out">Θουκυδίδης</span>' in html
     assert 'class="st-row is-clause is-top is-out"' in html  # ξυνέγραψε, in 1.1.1

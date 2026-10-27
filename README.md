@@ -12,7 +12,9 @@ account, and keeps nothing about you on the server (where you stopped
 reading stays in your browser). It works on a monitor, a laptop, a tablet
 and a phone. The glosses, notes and translations were written once by
 Claude Opus 5.5, Anthropic's model: **they can be wrong**, so check them
-against the parsing and the dictionary.
+against the parsing and the dictionary. The reader tags them **AI**, and
+the treebanks' parsing and LSJ's definitions **Perseus**, **GLAUx** and
+**LSJ**.
 
 More screens: [the Library](docs/screens/library-laptop.png),
 [an iPad](docs/screens/reader-ipad.png), [a phone](docs/screens/reader-phone-word.png).

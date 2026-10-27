@@ -52,7 +52,7 @@ def test_laptop_passage_fills_the_column(browser, dict_reader):
         pw.expect(strip.locator(".ws-parse")).to_be_hidden()
         pw.expect(strip.locator(".ws-dict-col")).to_be_hidden()
         pw.expect(strip.locator(".ws-summary")).to_have_text(
-            "1st person · singular · present · indicative · active"
+            "source: Perseus 1st person · singular · present · indicative · active"
         )
         pw.expect(unfold).to_be_visible()
         button = unfold.bounding_box()

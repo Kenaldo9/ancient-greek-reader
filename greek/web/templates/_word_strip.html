@@ -14,36 +14,32 @@
     </div>
 {%- endif %}
 {%- endmacro %}
-{#- the parsing's source, under it while Parsing is a tab #}
-{%- macro panel_source(has_syntax, source) %}
-{%- if has_syntax %}
-    <p class="ws-source ws-ppanel-source">{{ source }}</p>
-{%- endif %}
+{#- a tab's source tag, under its content while Parsing and Syntax are
+    tabs (their headings, which carry it otherwise, are hidden then) #}
+{%- macro panel_tag(tag) %}
+    <p class="ws-panel-tag">{{ tag }}</p>
 {%- endmacro %}
 {#- the role (treebank) and the use (a model's label) #}
 {%- macro syntax(role, use, credit) %}
 {%- if role or use %}
     <div class="ws-syntax" id="ws-spanel">
-      <h3 class="label">Syntax</h3>
+      <h3 class="label">Syntax{% if role %}&nbsp;{{ m.credit(credit) }}{% endif %}</h3>
       <dl class="syn-grid">
         {% if role %}{% for row in role.rows %}<dt>{{ row.label }}</dt><dd>{{ m.phrase(row.phrase) }}</dd>{% endfor %}{% endif %}
-        {% if use %}<dt class="syn-use">Use</dt><dd>{{ use.use_label | greek_spans }}</dd>{% endif %}
+        {% if use %}<dt class="syn-use">Use</dt><dd>{{ m.ai(use.model_used) }} {{ use.use_label | greek_spans }}</dd>{% endif %}
       </dl>
-      <p class="ws-source">
-        {%- if role %}<span title="{{ credit.title }}">{% if use %}Role: {% endif %}{{ credit.label }}</span>{% if credit.automatic %} · may be wrong{% endif %}{% endif %}
-        {%- if role and use %} · {% endif %}
-        {%- if use %}Use: {{ use.model_used | model_label }}{% endif -%}
-      </p>
+      {%- if role %}{{ panel_tag(m.credit(credit)) }}{% endif %}
     </div>
 {%- endif %}
 {%- endmacro %}
-{#- a lemma's saved dictionary form: its forms in the dialect and comparison;
-    the dialect is named when it isn't the work's (Homeric, for Herodotus) #}
+{#- a lemma's saved dictionary form (the headword above it): its forms in
+    the dialect and comparison; the dialect is named when it isn't the
+    work's (Homeric, for Herodotus) #}
 {%- macro dict_forms(form, other) %}
 {%- if form %}
-      <p class="ws-dict-forms">
-        {%- for note in [form.forms, "comparison: " ~ form.comparison if form.comparison else ""] if note %}{{ note }} · {% endfor -%}
-        <span class="by">form: {{ form.model_used | model_label }}{% if other %} · {{ other }}{% endif %}</span></p>
+      <p class="ws-dict-forms">{{ m.ai(form.model_used) }} dictionary form
+        {%- for note in [other, form.forms, "comparison: " ~ form.comparison if form.comparison else ""] if note %} · {{ note }}{% endfor -%}
+      </p>
 {%- endif %}
 {%- endmacro %}
 {% set has_dict = study and study.dictionary %}
@@ -51,12 +47,15 @@
 {% set use = study.use if study else none %}
 {% set has_syntax = role or use %}
 {% set freq = study.frequency if study else none %}
+{#- the parsing's source: the treebank, or a model for a word it lacks #}
+{% set by_model = study.parts | selectattr("source", "equalto", "model") | list if study else [] %}
+{% set parse_tag = m.ai(by_model[0].model_used) if by_model else m.credit(study.credit) if study else "" %}
 <section id="word-strip" class="panel word-strip{% if token %} has-word{% endif %}{% if has_dict %} has-dict{% endif %}" aria-label="Word{% if token %} {{ display_word }}{% endif %}"{% if token %} data-line="{{ line_number }}" data-i="{{ index }}"{% endif %}>
   {% if token %}
   <div class="ws-col ws-word">
     <h2 class="label">Word · {{ unit }} {{ line_ref }}</h2>
     <div class="ws-greek" lang="grc">{{ display_word }}</div>
-    {% if gloss or not missing %}<div class="ws-meaning">{{ gloss or "—" }}</div>{% endif %}
+    {% if gloss or not missing %}<div class="ws-meaning">{% if gloss %}{{ m.ai(study.studied) }} {% endif %}{{ gloss or "—" }}</div>{% endif %}
     {% if pos or (lemma and lemma != display_word) %}
     <div class="ws-tags">
       {% if pos %}<span class="chip">{{ pos }}</span>{% endif %}
@@ -69,17 +68,14 @@
       {%- else %}<span class="ws-freq-n">{{ "{:,}".format(freq.total) }}×</span> in {{ freq.work }} · <span class="ws-freq-n">{{ "{:,}".format(freq.in_book) }}×</span> in Book {{ freq.book }}{% endif -%}
     </p>
     {% endif %}
-    {% if study and study.parsed %}<p class="ws-summary">{{ study.parse_summary }}</p>{% endif %}
-    {% if source %}<p class="ws-source">{{ source }}</p>{% endif %}
+    {% if study and study.parsed %}<p class="ws-summary">{{ parse_tag }} {{ study.parse_summary }}</p>{% endif %}
   </div>
   <div class="ws-col ws-parse{% if has_syntax %} has-syntax{% endif %}">
     {% if study and study.parsed %}
-    {% set by_model = study.parts | selectattr("source", "equalto", "model") | list %}
-    {% set parse_source = by_model[0].model_used | model_label if by_model else study.credit.label %}
-    <h3 class="label">Parsing · {% if by_model %}{{ parse_source }}{% else %}<span title="{{ study.credit.title }}">{{ study.credit.label }}</span>{% endif %}</h3>
+    <h3 class="label">Parsing&nbsp;{{ parse_tag }}</h3>
     {{ parse_tabs(has_syntax) }}
     <div class="ws-ppanel" id="ws-ppanel">
-    {% if by_model %}<p class="ws-source ws-source-top">Not in the treebank; parsed by {{ parse_source }}.</p>{% endif %}
+    {% if by_model %}<p class="ws-source ws-source-top">Not in the treebank.</p>{% endif %}
     {% for part in study.parts %}
     {% set items = parse_items(part.morphology) %}
     <div class="ws-part">
@@ -95,13 +91,13 @@
       {% endif %}
     </div>
     {% endfor %}
+    {% if has_syntax %}{{ panel_tag(parse_tag) }}{% endif %}
     {% if study.check and not by_model %}
     <div class="ws-check">
-      <h4 class="label">Parse check · {{ study.studied | model_label }}</h4>
+      <h4 class="label">Parse check&nbsp;{{ m.ai(study.studied) }}</h4>
       <p>{{ study.check }}</p>
     </div>
     {% endif %}
-    {{ panel_source(has_syntax, parse_source) }}
     </div>
     {{ syntax(role, use, study.credit) }}
     {% elif study %}
@@ -117,7 +113,7 @@
     {% endif %}
   </div>
   <div class="ws-col ws-note">
-    <h3 class="label">Note</h3>
+    <h3 class="label">Note{% if note %}&nbsp;{{ m.ai(study.studied) }}{% endif %}</h3>
     {% if note %}
     <p class="ws-note-text">{{ note }}</p>
     {% elif study and study.studied %}
@@ -143,12 +139,12 @@
     {% set form = study.headwords.get(lemma_) %}
     <div class="ws-dict">
       {% if found and found.entry %}
-      <p class="ws-dict-line"><span class="ws-dict-src" title="Liddell, Scott, Jones · Perseus">LSJ</span> <span class="greek" lang="grc">{{ form.headword if form else found.entry.headword }}</span> {{ found.entry.short_def }}</p>
+      <p class="ws-dict-line">{{ m.lsj() }} <span class="greek" lang="grc">{{ form.headword if form else found.entry.headword }}</span> {{ found.entry.short_def }}</p>
       {{ dict_forms(form, study.other_dialect(form)) }}
       {% elif found and found.model_def %}
-      <p class="ws-dict-line"><span class="greek" lang="grc">{{ form.headword if form else lemma_ }}</span> {{ found.model_def }}</p>
+      <p class="ws-dict-line">{{ m.ai(found.model_used) }} <span class="greek" lang="grc">{{ form.headword if form else lemma_ }}</span> {{ found.model_def }}</p>
       {{ dict_forms(form, study.other_dialect(form)) }}
-      <p class="ws-source">Not in LSJ; {{ found.model_used | model_label }}.</p>
+      <p class="ws-source">Not in LSJ.</p>
       {% else %}
       <p class="ws-muted"><span class="greek" lang="grc">{{ form.headword if form else lemma_ }}</span> is not in LSJ.</p>
       {{ dict_forms(form, study.other_dialect(form)) }}
@@ -158,8 +154,8 @@
     {% if principal_parts %}
     <div class="ws-parts">
       <div class="ws-parts-head">
-        <h3 class="label">Principal parts</h3>
-        <span class="ws-parts-source">{{ principal_parts.model_used | model_label }}{% if principal_parts.other_dialect %} · {{ principal_parts.other_dialect }}{% endif %}</span>
+        <h3 class="label">Principal parts&nbsp;{{ m.ai(principal_parts.model_used) }}</h3>
+        {% if principal_parts.other_dialect %}<span class="ws-parts-source">{{ principal_parts.other_dialect }}</span>{% endif %}
       </div>
       <ol class="pp-list" aria-label="Principal parts of {{ verb_link }}">
         {% for p in principal_parts.parts %}
@@ -167,7 +163,7 @@
         <li class="pp{% if current %} is-current{% endif %}"><span class="pp-name">{{ p.name }}{% if current %}<span class="pp-this">this form</span>{% endif %}</span><span class="pp-value"><span class="pp-form" lang="grc">{{ p.form }}</span>{% if p.note %} <span class="pp-note">{{ p.note }}</span>{% endif %}</span></li>
         {% endfor %}
       </ol>
-      <p class="pp-summary"><span class="pp-summary-label">Principal parts{% if principal_parts.other_dialect %} · {{ principal_parts.other_dialect }}{% endif %}</span> <span class="greek" lang="grc">
+      <p class="pp-summary"><span class="pp-summary-label">Principal parts&nbsp;{{ m.ai(principal_parts.model_used) }}{% if principal_parts.other_dialect %} · {{ principal_parts.other_dialect }}{% endif %}</span> <span class="greek" lang="grc">
         {%- for p in principal_parts.parts %}{% if not loop.first %}, {% endif %}{% if loop.index == principal_parts.current %}<mark class="pp-cur">{{ p.form }}</mark>{% else %}{{ p.form }}{% endif %}{% endfor -%}
       </span></p>
     </div>
@@ -175,15 +171,14 @@
     {% set constructions = study.constructions %}
     {% for form in constructions %}
     <div class="ws-constr">
-      <h3 class="label">Construction · {{ form.model_used | model_label }}{% set other = study.other_dialect(form) %}{% if other %} · {{ other }}{% endif %}</h3>
+      <h3 class="label">Construction&nbsp;{{ m.ai(form.model_used) }}{% set other = study.other_dialect(form) %}{% if other %} · {{ other }}{% endif %}</h3>
       <p>{% if constructions | length > 1 %}<span lang="grc">{{ form.lemma }}</span>: {% endif %}{{ form.construction | greek_spans }}</p>
     </div>
     {% endfor %}
     {% set entries = study.lsj_entries %}
     {% if entries %}
     <div class="ws-lsj-head">
-      <h3 class="label">LSJ entry</h3>
-      <span class="ws-lsj-credit">Liddell, Scott, Jones · Perseus</span>
+      <h3 class="label">Full entry&nbsp;{{ m.lsj() }}</h3>
       <button type="button" class="btn btn-small ws-lsj-toggle" data-action="toggle-dict" aria-expanded="false" aria-controls="ws-lsj">
         {{ m.icon("chevron") }}
         <span class="t-open">Full LSJ entry</span>

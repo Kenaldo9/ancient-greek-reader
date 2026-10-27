@@ -22,6 +22,24 @@ LINES = [
 ]
 OPUS = "claude-opus-5-5"
 
+# The titles of the tags for the study model and LSJ, as a page has them
+AI_TITLE = (
+    "Claude Opus 5.5, Anthropic&#39;s model: made once and saved; it can be wrong"
+)
+LSJ_TITLE = "Liddell, Scott, Jones, A Greek-English Lexicon · Perseus Digital Library"
+
+
+def tag(name, title=AI_TITLE, automatic=False):
+    """A source's tag as the reader draws it (_macros.html src)."""
+    cls = "src is-auto" if automatic else "src"
+    return (
+        f'<span class="{cls}" title="{title}">'
+        f'<span class="visually-hidden">source: </span>{name}</span>'
+    )
+
+
+PERSEUS = tag("Perseus", reader_data.PERSEUS_CREDIT.title)
+
 
 def _parse(tid, line, token, form, lemma, postag, part=0, **extra):
     return WordParse(tid, line, token, part, form, lemma, postag, 100, **extra)
@@ -97,7 +115,7 @@ def _passage(client, tid, lines):
 def test_word_strip_shows_treebank_parsing(client, iliad):
     _, tid = iliad
     html = _word(client, tid, 1, 0)
-    assert "Parsing · <span" in html and ">Perseus treebank</span>" in html
+    assert f'<h3 class="label">Parsing&nbsp;{PERSEUS}</h3>' in html
     assert "<dt>Case</dt><dd>accusative</dd>" in html
     assert "<dt>Gender</dt><dd>feminine</dd>" in html
     assert '<span class="chip">noun</span>' in html
@@ -110,7 +128,10 @@ def test_word_strip_shows_the_lsj_entry(client, iliad):
     assert "word-strip has-word has-dict" in html
     assert '<h2 class="label">Dictionary</h2>' in html
     assert '<span class="greek" lang="grc">μῆνις</span> wrath</p>' in html
-    assert '>LSJ</span> <span class="greek" lang="grc">μῆνις</span>' in html
+    assert (
+        f'{tag("LSJ", LSJ_TITLE)} <span class="greek" lang="grc">μῆνις</span>' in html
+    )
+    assert f'<h3 class="label">Full entry&nbsp;{tag("LSJ", LSJ_TITLE)}</h3>' in html
     # one button opens the full entry, however the layout shows it
     assert (
         'data-action="toggle-dict" aria-expanded="false" aria-controls="ws-lsj"' in html
@@ -136,8 +157,8 @@ def test_word_strip_parse_summary(client, iliad):
     _, tid = iliad
     html = _word(client, tid, 1, 1)
     assert (
-        '<p class="ws-summary">2nd person · singular · present · imperative · '
-        "active</p>" in html
+        f'<p class="ws-summary">{PERSEUS} 2nd person · singular · present · '
+        "imperative · active</p>" in html
     )
 
 
@@ -177,7 +198,9 @@ def test_word_strip_shows_saved_principal_parts(client, iliad):
     )
     assert '<span class="pp-form" lang="grc">—</span></span>' in html  # no note
     assert '<mark class="pp-cur">ἀείδω</mark>, ἀείσομαι, ἤεισα, —, ᾖσμαι, ᾔσθην' in html
-    assert '<span class="ws-parts-source">Claude Opus 5.5</span>' in html
+    assert f'<h3 class="label">Principal parts&nbsp;{tag("AI")}</h3>' in html
+    assert f"Principal parts&nbsp;{tag('AI')}</span>" in html  # the summary's
+    assert "ws-parts-source" not in html  # in the work's own dialect
     assert "/verbs" not in html
 
 
@@ -254,10 +277,10 @@ def test_word_strip_model_identification(client, iliad):
     _, tid = iliad
     html = _word(client, tid, 2, 2)
     assert (
-        '<span class="greek" lang="grc">Ἑλένη</span> Helen, wife of Menelaus</p>'
-        in html
+        f'<p class="ws-dict-line">{tag("AI")} <span class="greek" lang="grc">Ἑλένη'
+        "</span> Helen, wife of Menelaus</p>" in html
     )
-    assert "Not in LSJ; Claude Opus 5.5." in html
+    assert '<p class="ws-source">Not in LSJ.</p>' in html
     assert ">LSJ</span>" not in html  # a model's definition isn't labelled LSJ
 
 
@@ -270,8 +293,9 @@ def test_word_strip_model_parse_is_labelled(client, iliad):
     )
     db.commit()
     html = _word(client, tid, 2, 1)
-    assert "Parsing · Claude Opus 5.5" in html
-    assert "Not in the treebank; parsed by Claude Opus 5.5." in html
+    assert f'<h3 class="label">Parsing&nbsp;{tag("AI")}</h3>' in html
+    assert '<p class="ws-source ws-source-top">Not in the treebank.</p>' in html
+    assert "Perseus" not in html
     assert "<dt>Case</dt><dd>dative</dd>" in html
 
 
@@ -311,18 +335,32 @@ def test_all_words_rows_from_the_treebank_and_lsj(client, iliad):
 
 
 def _sources(html):
-    found = re.search(r'<p class="wt-sources">(.*?)</p>', html)
-    return re.sub(r"<[^>]+>", "", found[1]) if found else None
+    """Grammar's legend as it reads: "AI meanings · Perseus parsing"."""
+    found = re.search(r'<p class="wt-sources">(.*?)</p>', html, re.S)
+    if not found:
+        return None
+    items = re.findall(
+        r'<span class="wt-source">(.*?) ([^<>]*)</span>(?=<|$)', found[1]
+    )
+    return " · ".join(
+        f"{re.sub(r'<[^>]+>|source: ', '', t)} {gives}" for t, gives in items
+    )
+
+
+def _parse_tags(html):
+    """The tags at the start of Grammar's parse cells."""
+    return re.findall(
+        r'<span class="wt-parse" role="cell">(<span class="src[^>]*>'
+        r'<span class="visually-hidden">source: </span>[^<]*</span>)',
+        html,
+    )
 
 
 def test_all_words_names_lsj_and_the_treebank(client, iliad):
     _, tid = iliad
     html = _passage(client, tid, "1.1-1.2")
-    assert _sources(html) == (
-        "Meaning: LSJ, or Claude Opus 5.5 where LSJ lacks the word. "
-        "Parsing: Perseus treebank."
-    )
-    assert 'class="wt-by"' not in html
+    assert _sources(html) == ("AI meanings LSJ lacks · Perseus parsing · LSJ meanings")
+    assert _parse_tags(html) == []  # every parse is the treebank's
 
 
 def test_all_words_labels_a_models_parse(client, iliad):
@@ -334,13 +372,12 @@ def test_all_words_labels_a_models_parse(client, iliad):
     )
     db.commit()
     html = _passage(client, tid, "1.1-1.2")
-    assert _sources(html).endswith(
-        "Parsing: Perseus treebank; where it has none, Claude Opus 5.5 (labelled)."
-    )
+    # the legend names the treebank; the model's parse carries its own tag
+    assert _sources(html).endswith("Perseus parsing · LSJ meanings")
     row = html[html.index('data-line="2" data-i="1"') :]
     row = row[: row.index('<span class="wt-note"')]
-    assert '<span class="wt-by">Claude Opus 5.5</span>' in row
-    assert html.count('class="wt-by"') == 1
+    assert f'<span class="wt-parse" role="cell">{tag("AI")} noun' in row
+    assert _parse_tags(html) == [tag("AI")]
 
 
 def test_long_selection_is_cut_with_a_count(client, iliad, monkeypatch):

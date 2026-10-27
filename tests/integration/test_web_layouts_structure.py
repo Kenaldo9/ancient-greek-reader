@@ -156,7 +156,7 @@ def test_the_switch_shows_the_outline_and_is_remembered(
         )
         head = page.locator(".st-head")
         pw.expect(head).to_contain_text("1.4–1.7")
-        pw.expect(head).to_contain_text("Perseus treebank, by hand")
+        pw.expect(head.locator(".src")).to_have_text("source: Perseus")
         # the rows of 1.6 and 1.7 are outside the selection
         pw.expect(_item(page, 3).locator(":scope > .st-row")).not_to_have_class(
             "st-row is-out"

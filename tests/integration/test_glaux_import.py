@@ -24,8 +24,10 @@ from greek.db.repos.texts import get_text, insert_text
 from greek.fetch.treebank import WORKS, align_text, read_treebank
 from greek.models import TreebankSource
 from greek.search import plain
+from tests.integration.test_web_study import _sources
 from greek.web.reader_data import (
     PERSEUS_CREDIT,
+    WordsSources,
     study_word,
     treebank_credit,
     work_name,
@@ -258,11 +260,16 @@ def test_credits_and_names():
         PERSEUS_CREDIT
     )
     manual = treebank_credit(glaux, "manual")
-    assert manual.label == "GLAUx treebank" and not manual.automatic
+    assert manual.label == "GLAUx" and not manual.automatic
     assert "Gorman" in manual.title
     auto = treebank_credit(glaux, "auto")
-    assert auto.label == "GLAUx, automatic" and auto.automatic
+    assert auto.label == "GLAUx auto" and auto.automatic
     assert "80%" in auto.title
+    # Grammar's legend says GLAUx auto only when every word is the parser's
+    # (its rows then needn't), and names no treebank without its parses
+    assert WordsSources([], False, [], [], [auto]).treebank == auto
+    assert WordsSources([], False, [], [], [auto, manual]).treebank == manual
+    assert WordsSources([], False, [], [], []).treebank is None
 
 
 def test_work_name_falls_back_to_the_title(db):
@@ -277,7 +284,7 @@ def test_study_word_carries_the_sentence_credit(thucydides):
     db, text_id = thucydides
     text = get_text(db, text_id)
     by_hand = study_word(db, text, 1, 0, "Θουκυδίδης")
-    assert by_hand.credit.label == "GLAUx treebank"
+    assert by_hand.credit.label == "GLAUx"
     assert by_hand.frequency.work == "Thucydides"
     assert by_hand.role.text == "Role: subject of ξυνέγραψε"
     parser = study_word(db, text, 2, 2, "κίνησις")
@@ -296,27 +303,38 @@ def test_word_strip_labels_a_glaux_word(client, web_db):
     text_id = _add_text(web_db)
     _import(web_db, text_id)
     html = _strip(client, text_id, 1, 0)  # Θουκυδίδης, by hand
-    assert "Parsing · <span title=" in html and ">GLAUx treebank</span>" in html
-    assert "Vanessa Gorman" in html
+    assert 'Parsing&nbsp;<span class="src" title="GLAUx corpus' in html
+    assert "source: </span>GLAUx</span></h3>" in html
+    assert "Vanessa Gorman" in html  # the tag's title
     assert "in Thucydides ·" in html or "only here in Thucydides" in html
-    assert "may be wrong" not in html
+    assert "is-auto" not in html and "80%" not in html
     html = _strip(client, text_id, 2, 2)  # κίνησις, by GLAUx's parser
-    assert ">GLAUx, automatic</span>" in html
-    assert "may be wrong" in html
-    assert "Perseus treebank" not in html
+    assert 'Parsing&nbsp;<span class="src is-auto" title="GLAUx corpus' in html
+    assert "source: </span>GLAUx auto</span></h3>" in html
+    assert "only about 80% of the syntax" in html  # the warning, on hover
+    assert "Perseus" not in html
 
 
 def test_all_words_names_a_partly_automatic_selection(client, web_db):
     text_id = _add_text(web_db)
     _import(web_db, text_id)
 
-    def sources(lines):
+    def passage(lines):
         resp = client.get(f"/texts/{text_id}/passage", params={"lines": lines})
         assert resp.status_code == 200
-        return " ".join(resp.text.split())
+        return resp.text
 
-    assert "Parsing: GLAUx treebank, partly automatic." in sources("1-2")
-    assert "Parsing: GLAUx treebank." in sources("3-3")
+    def auto_rows(html):
+        return html.count('<span class="wt-role-text"><span class="src is-auto"')
+
+    # by hand and by the parser: the legend says GLAUx, and the parser's
+    # words say GLAUx auto in their rows
+    html = passage("1-2")
+    assert _sources(html).startswith("GLAUx parsing, roles")
+    assert auto_rows(html) > 0
+    html = passage("3-3")  # by hand
+    assert _sources(html).startswith("GLAUx parsing, roles")
+    assert auto_rows(html) == 0
 
 
 def test_an_iliad_imported_before_018_reads_as_before(client, web_db):
@@ -326,6 +344,6 @@ def test_an_iliad_imported_before_018_reads_as_before(client, web_db):
     nodes = [replace(n, text_id=text_id) for n in treebank.nodes]
     save_treebank(web_db, text_id, result.sentences, result.parses, nodes)
     html = _strip(client, text_id, 1, 0)  # Μῆνιν
-    assert ">Perseus treebank</span>" in html
+    assert "source: </span>Perseus</span></h3>" in html
     assert "in the Iliad" in html
     assert "GLAUx" not in html

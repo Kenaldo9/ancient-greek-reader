@@ -47,6 +47,28 @@ href="{{ url }}" hx-get="{{ url }}" hx-select="#text-pane" hx-target="#text-pane
 {%- endfor -%}
 {%- endmacro %}
 
+{# A source's tag, boxed: "AI", "Perseus", "GLAUx", "GLAUx auto" (amber) or
+   "LSJ", its full name on hover; a screen reader reads "source: AI". A
+   heading puts it after a no-break space, so it stays on the heading's last
+   line. #}
+{% macro src(name, title, auto=false) -%}
+<span class="src{% if auto %} is-auto{% endif %}" title="{{ title }}"><span class="visually-hidden">source: </span>{{ name }}</span>
+{%- endmacro %}
+
+{# what a study model made: glosses, notes, translations, word details #}
+{% macro ai(model) -%}
+{{ src("AI", (model | model_label) ~ ", Anthropic's model: made once and saved; it can be wrong") }}
+{%- endmacro %}
+
+{# a word's treebank (TreebankCredit) #}
+{% macro credit(c) -%}
+{{ src(c.label, c.title, c.automatic) }}
+{%- endmacro %}
+
+{% macro lsj() -%}
+{{ src("LSJ", "Liddell, Scott, Jones, A Greek-English Lexicon · Perseus Digital Library") }}
+{%- endmacro %}
+
 {# The code's commit and the database's last migration (greek/version.py) #}
 {% macro version_line() -%}
 {%- set v = versions() -%}

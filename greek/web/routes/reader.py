@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from greek.api.models import model_label
+from greek.api.study import MODEL as STUDY_MODEL
 from greek.db.repos.lines import (
     get_lines,
     line_lengths,
@@ -164,6 +164,7 @@ def read(
             "hit_ref": hit,
             "interlinear": interlinear_on(request, interlinear),
             "glossless": glossless,
+            "study_model": STUDY_MODEL,  # the glosses' model, for Interlinear's tag
             "goto_error": goto_error,
             # the page as the Library and the contents open it: one URL for
             # search engines however it was opened (routes/site.py)
@@ -198,11 +199,10 @@ def word(request: Request, text_id: int, line: int, i: int, db=Depends(get_db)):
 
     display_word = toks[i].strip(_PUNCT_STRIP)
     line_ref = references(db, text_id, [line])[line]
-    gloss = note = source = ""
+    gloss = note = ""
     missing = None  # in a book without study data, what has none yet
     if study and study.studied:
         gloss, note = study.gloss, study.note
-        source = f"Gloss and note · {model_label(study.studied)}"
     else:
         missing = text_study(db, text).missing(line)
 
@@ -218,7 +218,6 @@ def word(request: Request, text_id: int, line: int, i: int, db=Depends(get_db)):
             "line_ref": line_ref,
             "line_number": line,
             "index": i,
-            "source": source,
             "gloss": gloss,
             "lemma": lemma,
             "pos": pos,

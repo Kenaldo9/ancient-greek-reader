@@ -30,6 +30,7 @@
   --error-border: #E8C3BC;
   --warn: #6E4A0E;
   --warn-bg: #FDF4E4;
+  --warn-border: #E2C48F;
 
   --table-head: #FAFBFC;
   --row-group: #F7F9FA;
@@ -400,6 +401,32 @@ code {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* A source's tag (_macros.html src): the boxed name of where something
+   comes from. Inline, so that after a no-break space it stays on a
+   heading's last line; it keeps its own case and spacing in a label. */
+.src {
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--muted);
+  vertical-align: 1px;
+}
+
+/* GLAUx auto: a sentence GLAUx's parser annotated */
+.src.is-auto { border-color: var(--warn-border); background: var(--warn-bg); color: var(--warn); }
+
+/* a tag that starts its line keeps a little more room before the text */
+:is(.ws-meaning, .ws-dict-line, .ws-dict-forms, .syn-grid dd, .ws-summary,
+  .wt-parse, .wt-check, .wt-role-text, .wt-source) > .src { margin-right: 4px; }
 
 /* A scroll box holds what is positioned inside it. Otherwise a hidden label
    below the fold takes the page as its containing block and the page itself
@@ -784,6 +811,8 @@ code {
 .line > .line-words { grid-row: 1; grid-column: 2; }
 
 .interlinear-control { display: flex; align-items: center; gap: 14px; }
+/* the glosses' AI tag, on the header's teal */
+.app-header .interlinear-control .src { border-color: rgba(169, 208, 212, 0.55); color: var(--header-muted); }
 
 /* A book without study data: Interlinear is off and says why */
 .interlinear-control.is-unavailable .header-check { cursor: default; color: var(--header-muted); }
@@ -1002,6 +1031,7 @@ code {
 .ws-freq { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
 .ws-freq-n { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
 .ws-source { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.ws-meaning > .src { vertical-align: 3px; }
 /* the parsing on one line, for a laptop's open LSJ entry */
 .ws-summary { display: none; }
 
@@ -1077,7 +1107,6 @@ code {
    laptop or tablet, Parsing and Syntax are tabs instead (reader.js). */
 .ws-syntax { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--divider); }
 .ws-syntax > .label { margin-bottom: 8px; }
-.ws-syntax .ws-source { margin-top: 8px; }
 
 .syn-grid {
   display: grid;
@@ -1118,7 +1147,7 @@ code {
 
 .syn-ref:hover { color: var(--accent-dark); }
 
-.ws-ptabs, .ws-ppanel-source { display: none; }
+.ws-ptabs, .ws-panel-tag { display: none; }
 
 .ws-ptab {
   height: 30px;
@@ -1142,7 +1171,7 @@ code {
 @media (max-width: 2100px) {
   .ws-ptabs { display: flex; gap: 20px; margin: 0 0 12px; border-bottom: 1px solid var(--divider); }
   .has-syntax > .label, .has-syntax .ws-syntax > .label { display: none; }
-  .has-syntax .ws-ppanel-source { display: block; margin-top: 10px; }
+  .has-syntax .ws-panel-tag { display: block; margin: 12px 0 0; line-height: 1; }
   .has-syntax .ws-syntax { margin-top: 0; padding-top: 0; border-top: 0; }
   .has-syntax:not(.show-syntax) .ws-syntax, .has-syntax.show-syntax .ws-ppanel { display: none; }
 }
@@ -1175,20 +1204,7 @@ code {
 .ws-dict-line { max-width: 720px; margin: 0; font-size: 16px; line-height: 1.5; }
 .ws-dict-line .greek { margin-right: 8px; font-size: 21px; font-weight: 700; }
 /* a model's dictionary form replaces LSJ's headword; its Homeric forms */
-.ws-dict-forms { max-width: 720px; margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
-.ws-dict-forms .by { white-space: nowrap; }
-
-.ws-dict-src {
-  margin-right: 6px;
-  padding: 1px 5px;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  vertical-align: 3px;
-}
+.ws-dict-forms { max-width: 720px; margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
 
 .ws-parts { margin-top: 16px; }
 
@@ -1277,7 +1293,6 @@ code {
 }
 
 .ws-lsj-head .label { margin: 0; }
-.ws-lsj-credit { font-size: 13px; color: var(--muted); }
 .ws-lsj-toggle { gap: 6px; margin-left: auto; }
 .ws-lsj-toggle .t-open, .ws-lsj-toggle .t-close, .ws-lsj-toggle .t-collapse { display: none; }
 .ws-lsj-toggle .chevron { transition: transform 0.15s; }
@@ -1537,9 +1552,9 @@ code {
   line-height: 1.4;
 }
 .wt-more { margin: 0; padding: 12px 20px; font-size: 14px; color: var(--muted); }
-/* where the meanings and parsings come from; a parse the treebank lacks names its model */
-.wt-sources { margin: 0; padding: 10px 20px; font-size: 13px; line-height: 1.5; color: var(--muted); text-wrap: pretty; }
-.wt-by { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+/* where the meanings and parsings come from, each source with its tag */
+.wt-sources { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; padding: 10px 20px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.wt-source { white-space: nowrap; }
 
 /* sentence structure: In order adds each word's role and use; Structure
    shows each treebank sentence as an outline (reader.js switches them) */
@@ -1601,7 +1616,6 @@ code {
 }
 .wt-use [lang="grc"], .st-use [lang="grc"] { font-family: var(--font-greek); font-size: 15px; }
 .wt-use { display: block; width: fit-content; margin-top: 4px; }
-.wt-auto { display: block; margin-top: 2px; font-size: 12px; color: var(--warn); }
 
 .st-sentence + .st-sentence { border-top: 1px solid var(--border); }
 .st-head {
@@ -1617,7 +1631,6 @@ code {
   color: var(--muted);
 }
 .st-head .ref { font-family: var(--font-mono); color: var(--accent); }
-.st-auto { padding: 1px 8px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); }
 .st-text-toggle { display: none; margin-left: auto; font-size: 13px; }
 .st-text {
   margin: 0;
@@ -1771,7 +1784,7 @@ code {
   .pp-form { font-size: 18px; }
   .pp-note { font-size: 12.5px; color: var(--muted); }
   /* the entry is closed: only its button shows */
-  .ws-lsj, .ws-lsj-head .label, .ws-lsj-credit { display: none; }
+  .ws-lsj, .ws-lsj-head .label { display: none; }
   .ws-lsj-head { margin-top: 14px; }
   .ws-lsj-toggle { margin-left: 0; color: var(--accent); }
   .ws-lsj-toggle .t-expand { display: none; }
@@ -1824,7 +1837,7 @@ code {
       "word"
       "dict";
   }
-  .reader.dict-open .ws-parse, .reader.dict-open .ws-note, .reader.dict-open .ws-source { display: none; }
+  .reader.dict-open .ws-parse, .reader.dict-open .ws-note { display: none; }
   .reader.dict-open .ws-word {
     display: flex;
     flex-wrap: wrap;
@@ -1842,7 +1855,7 @@ code {
   .reader.dict-open .pp-summary { display: block; }
   .reader.dict-open .ws-parts { margin-top: 8px; }
   .reader.dict-open .ws-lsj { display: block; }
-  .reader.dict-open .ws-lsj-head .label, .reader.dict-open .ws-lsj-credit { display: inline; }
+  .reader.dict-open .ws-lsj-head .label { display: inline; }
   .reader.dict-open .ws-lsj-toggle { margin-left: auto; color: var(--text); }
   .reader.dict-open .ws-lsj-toggle .t-open { display: none; }
   .reader.dict-open .ws-lsj-toggle .t-close { display: inline; }
@@ -1866,8 +1879,7 @@ code {
   .reader.passage-expanded .ws-parse,
   .reader.passage-expanded .ws-note,
   .reader.passage-expanded .ws-dict-col,
-  .reader.passage-expanded .ws-freq,
-  .reader.passage-expanded .ws-word .ws-source { display: none; }
+  .reader.passage-expanded .ws-freq { display: none; }
   .reader.passage-expanded .ws-word {
     display: flex;
     flex-wrap: wrap;
@@ -1967,7 +1979,7 @@ code {
   .reader.dict-open .ws-dict-for, .reader.dict-open .pp-summary { display: block; }
   .reader.dict-open .ws-parts { margin-top: 6px; }
   .reader.dict-open .ws-lsj-head { margin-top: 0; padding: 14px 0 8px; border-bottom: 1px solid var(--divider); }
-  .reader.dict-open .ws-lsj-head .label, .reader.dict-open .ws-lsj-credit { display: inline; }
+  .reader.dict-open .ws-lsj-head .label { display: inline; }
   .reader.dict-open .ws-lsj-toggle { display: none; }
   .reader.dict-open .ws-lsj { display: block; position: static; min-height: 0; margin-top: 12px; }
   .reader.dict-open .ws-lsj-scroll { position: static; overflow: visible; padding: 0; border: 0; background: none; }
@@ -2019,7 +2031,7 @@ code {
   html, body { overscroll-behavior: none; }
   .reader-word { overscroll-behavior: contain; }
 
-  .app { --bar-end: 112px; } /* the Interlinear control */
+  .app { --bar-end: 144px; } /* the Interlinear control and its tag */
   .app-header:has(.reader-menu) {
     display: flex;
     flex: 0 0 60px;

@@ -143,8 +143,9 @@ def test_laptop_entry_fills_the_column(browser, dict_reader):
         # The word shrinks to a summary; the passage box to a bar
         pw.expect(strip.locator(".ws-parse")).to_be_hidden()
         pw.expect(strip.locator(".ws-summary")).to_have_text(
-            "1st person · singular · present · indicative · active"
+            "source: Perseus 1st person · singular · present · indicative · active"
         )
+        pw.expect(strip.locator(".ws-summary .src")).to_be_visible()
         pw.expect(strip.locator(".pp-summary")).to_contain_text(
             "λέγω, λέξω, ἔλεξα, εἴρηκα, λέλεγμαι, ἐλέχθην"
         )
@@ -156,7 +157,7 @@ def test_laptop_entry_fills_the_column(browser, dict_reader):
         # Another word keeps the entry open; Show passage brings the box back
         page.locator('.line[data-line="4"] .w').first.click()
         pw.expect(page.locator("#word-strip .ws-dict-line")).to_have_text(
-            "LSJ λόγος word"
+            "source: LSJ λόγος word"
         )
         pw.expect(page.locator("#word-strip .ws-lsj-scroll")).to_be_visible()
         bar.get_by_role("button", name="Show passage").click()
@@ -203,7 +204,7 @@ def test_tablet_dictionary_tab(browser, dict_reader):
         # Another word with an entry stays in the Dictionary tab…
         page.locator('.line[data-line="5"] .w').first.tap()
         pw.expect(page.locator("#word-strip .ws-dict-line")).to_have_text(
-            "LSJ λόγος word"
+            "source: LSJ λόγος word"
         )
         pw.expect(tab).to_have_attribute("aria-selected", "true")
         # …and one without falls back to the Word tab

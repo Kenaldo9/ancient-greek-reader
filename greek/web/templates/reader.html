@@ -21,7 +21,8 @@
 
 {% block header_controls %}
 {# Pane links swap it with the text (out of band): a book without study data
-   has no glosses, so Interlinear is off there and says why #}
+   has no glosses, so Interlinear is off there and says why; otherwise the
+   glosses' AI tag follows its name #}
 <div class="interlinear-control{% if glossless %} is-unavailable{% endif %}" id="interlinear-control">
   <label class="header-check">
     {% if glossless %}
@@ -29,7 +30,7 @@
     <span class="header-check-text">Interlinear <span class="interlinear-note" id="interlinear-note">No glosses yet</span></span>
     {% else %}
     <input type="checkbox" id="interlinear-toggle"{% if interlinear %} checked{% endif %}>
-    Interlinear
+    Interlinear {{ m.ai(study_model) }}
     {% endif %}
   </label>
 </div>

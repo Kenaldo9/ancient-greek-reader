@@ -10,11 +10,20 @@ import re
 import pytest
 
 from greek.api.study import MODEL as STUDY_MODEL
+from greek.db.repos.lexicon import save_lexicon
 from greek.db.repos.lines import insert_lines
 from greek.db.repos.parses import save_treebank
 from greek.db.repos.study import save_study_result
 from greek.db.repos.texts import insert_text
-from greek.models import LineTranslation, TranslationUnit, WordParse, WordStudy
+from greek.models import (
+    LexiconEntry,
+    LineTranslation,
+    TranslationUnit,
+    WordParse,
+    WordStudy,
+)
+from greek.web.reader_data import PERSEUS_CREDIT
+from tests.integration.test_web_study import _sources, tag
 
 LINES = [
     ("1.1", "μῆνιν ἄειδε θεὰ"),
@@ -163,10 +172,12 @@ def test_another_models_study_data_is_not_used(client, iliad):
 def test_word_strip_shows_the_study_gloss_and_note(client, studied):
     _, tid = studied
     html = _word(client, tid, 1, 0)
-    assert '<div class="ws-meaning">wrath</div>' in html
+    assert f'<div class="ws-meaning">{tag("AI")} wrath</div>' in html
     assert '<p class="ws-note-text">The first word of the poem.</p>' in html
-    assert "Gloss and note · Claude Opus 5.5" in html
-    assert ">Perseus treebank</span>" in html  # the parsing is the treebank's
+    assert f'<h3 class="label">Note&nbsp;{tag("AI")}</h3>' in html
+    # the parsing is the treebank's
+    assert f"Parsing&nbsp;{tag('Perseus', PERSEUS_CREDIT.title)}</h3>" in html
+    assert "Claude Opus" not in html.replace("Claude Opus 5.5, Anthropic", "")
     assert "Parse check" not in html
 
 
@@ -176,17 +187,18 @@ def test_word_strip_shows_the_parse_check_under_the_parse(client, studied):
     assert "<dt>Mood</dt><dd>indicative</dd>" in html  # the treebank's parse
     check = html.index('<div class="ws-check">')
     assert html.index("<dt>Mood</dt>") < check < html.index('class="ws-col ws-note"')
-    assert '<h4 class="label">Parse check · Claude Opus 5.5</h4>' in html
+    assert f'<h4 class="label">Parse check&nbsp;{tag("AI")}</h4>' in html
     assert "<p>imperative, not indicative: addressed to the Muses</p>" in html
-    # an empty note
+    # an empty note, and no tag for it
     assert "No note for this word." in html
+    assert '<h3 class="label">Note</h3>' in html
     assert "No gloss or note is saved" not in html
 
 
 def test_word_strip_split_word_has_one_gloss(client, studied):
     _, tid = studied
     html = _word(client, tid, 2, 0)
-    assert '<div class="ws-meaning">nor</div>' in html
+    assert f'<div class="ws-meaning">{tag("AI")} nor</div>' in html
     assert html.count('<div class="ws-part">') == 2
 
 
@@ -197,11 +209,15 @@ def test_selection_shows_the_study_translations(client, studied):
     _, tid = studied
     html = _passage(client, tid, "1.1-1.2")
     assert "passage-box is-study has-tabs" in html
-    assert "Claude Opus 5.5 · study data" in html
+    assert "study data" not in html  # the translations' headings carry the tag
     assert 'data-tab="literal" disabled' not in html
     assert (
-        'Fluent translation of <span class="ref">1.1–1.2</span></h3>\n'
-        "        <p>Sing of the wrath, goddess; tell it now.</p>" in html
+        f'Fluent translation of <span class="ref">1.1–1.2</span>&nbsp;{tag("AI")}'
+        "</h3>\n        <p>Sing of the wrath, goddess; tell it now.</p>" in html
+    )
+    assert (
+        f'Literal translation of <span class="ref">1.1–1.2</span>&nbsp;{tag("AI")}'
+        "</h3>" in html
     )
     assert (
         '<li><span class="ref">1.1</span><span class="literal-text">literal 1.1</span>'
@@ -240,10 +256,33 @@ def test_all_words_from_the_study_data(client, studied):
         '<span class="wt-note" role="cell">The first word of the poem.</span>' in html
     )
     assert (
-        '<span class="wt-check"><span class="visually-hidden">Parse check by Claude '
-        "Opus 5.5: </span>imperative, not indicative: addressed to the Muses</span>"
-        in html
+        '<span class="wt-check"><span class="visually-hidden">Parse check: </span>'
+        f"{tag('AI')} imperative, not indicative: addressed to the Muses</span>" in html
     )
+
+
+def test_grammar_names_its_sources_by_their_tags(client, iliad):
+    db, tid = iliad
+    # no study data: the treebank's parsing alone
+    assert _sources(_passage(client, tid, "1.1-1.3")) == "Perseus parsing"
+    _save_unit(db, tid, 1, 2)
+    assert _sources(_passage(client, tid, "1.1-1.2")) == (
+        "AI meanings, notes · Perseus parsing"
+    )
+    # LSJ's meaning of a word the study data hasn't glossed, in grey
+    save_lexicon(
+        db,
+        "LSJ",
+        [LexiconEntry("LSJ", "fhmi/", "φημί", "say", "<p>say</p>")],
+        {"φημί": ("fhmi/", "headword")},
+    )
+    html = _passage(client, tid, "1.2-1.3")
+    assert _sources(html) == (
+        "AI meanings, notes · Perseus parsing · LSJ meanings in grey"
+    )
+    # the In order table's only other tag is ἔσπετε's parse check
+    assert html.count('class="src') == 4
+    assert f'<span class="visually-hidden">Parse check: </span>{tag("AI")}' in html
 
 
 def test_partly_covered_selection_has_no_translation(client, iliad):

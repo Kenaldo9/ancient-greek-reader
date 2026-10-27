@@ -10,6 +10,7 @@ from greek.db.repos.study import save_study_result
 from greek.db.repos.texts import insert_text
 from greek.models import LineTranslation, TranslationUnit, WordStudy
 from greek.web.reader_data import MAX_SELECTION_LINES
+from tests.integration.test_web_study import tag
 
 # Book 1 has 45 lines, book 2 has 3; each book is one page. Every line has 2 words.
 BOOK1 = [(f"1.{i}", f"λόγος{i} ἔργον{i}") for i in range(1, 46)]
@@ -204,7 +205,7 @@ def test_reader_selection_shows_the_study_data(client, web_db, text_id):
     html = client.get(f"/texts/{text_id}/read?lines=1.1-1.2").text
     assert 'data-start="1" data-end="2"' in html
     assert "passage-box is-study" in html
-    assert "Claude Opus 5.5 · study data" in html
+    assert f'<span class="ref">1.1–1.2</span>&nbsp;{tag("AI")}</h3>' in html
     assert "Fluent 1–2." in html
     assert '<span class="literal-text">literal 2</span>' in html
     assert "pb-ask" not in html and "Analyze" not in html
@@ -226,8 +227,12 @@ def test_a_book_without_study_data_turns_interlinear_off(client, web_db, text_id
     book1 = client.get(f"/texts/{text_id}/read", params={"at": "1.1"}).text
     assert 'id="interlinear-toggle" checked' in book1
     assert "No glosses yet" not in book1
+    # the glosses are the study model's: its tag follows Interlinear
+    control = book1[book1.index('id="interlinear-control"') :].split("</div>")[0]
+    assert f"Interlinear {tag('AI')}\n" in control
     book2 = client.get(f"/texts/{text_id}/read", params={"at": "2.1"}).text
     control = book2[book2.index('id="interlinear-control"') :].split("</div>")[0]
+    assert 'class="src' not in control  # no glosses, no tag
     assert "is-unavailable" in book2[: book2.index('id="interlinear-control"')][-60:]
     assert (
         '<input type="checkbox" id="interlinear-toggle" disabled '
@@ -388,7 +393,8 @@ def test_passage_box_study_data_covers_only_whole_selections(client, web_db, tex
 def test_passage_box_ignores_a_model_parameter(client, web_db, text_id):
     _study(web_db, text_id, 1, 2)
     html = _passage_box(client, text_id, "1-2", model="claude-sonnet-5-5")
-    assert "Claude Opus 5.5 · study data" in html
+    assert f"1.1–1.2</span>&nbsp;{tag('AI')}</h3>" in html  # Opus's
+    assert "Sonnet" not in html
 
 
 # ---------------------------------------------------------------------------
