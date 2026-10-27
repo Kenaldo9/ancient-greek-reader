@@ -119,7 +119,8 @@ asked again. The prompts are in [greek/api/works.py](greek/api/works.py);
 - **Typefaces:** Gentium Book Plus (SIL International), IBM Plex Sans and
   IBM Plex Mono, under the SIL Open Font License
   ([greek/web/static/fonts/](greek/web/static/fonts/)).
-- **[htmx](https://htmx.org)** 1.9.12 (BSD 2-Clause), served from
+- **[htmx](https://htmx.org)** 1.9.12, under the Zero-Clause BSD licence
+  ([htmx-LICENSE.txt](greek/web/static/htmx-LICENSE.txt)), served from
   `greek/web/static/`.
 
 ## Licences
