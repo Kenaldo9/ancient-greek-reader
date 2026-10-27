@@ -5,6 +5,8 @@ Herodotus and Thucydides, with every word's parsing, its role in the
 sentence and its dictionary entry, and, in the books that have them, a
 gloss and a note on every word and translations of every line.
 
+**Read it online: [greek.kenaldo.dev](https://greek.kenaldo.dev)**
+
 ![The Iliad's first lines with glosses under each word; beside them the word μῆνιν, its parsing, LSJ's entry and a note, and the passage's fluent translation, each tagged with its source](docs/screens/reader-laptop.png)
 
 The reader only reads saved data: it asks no model anything, needs no
@@ -49,8 +51,10 @@ book with what it has.
 
 ## Running it yourself
 
-You need Docker, or Python 3.12 or newer, and about 600 MB of disk for
-the data.
+To read the texts, you don't need to: they are at
+[greek.kenaldo.dev](https://greek.kenaldo.dev), with everything the
+reader's database holds. To run the reader on your own computer, you need Docker, or Python 3.12 or
+newer, and about 600 MB of disk for the data.
 
 1. The code:
    ```bash

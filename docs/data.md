@@ -10,8 +10,10 @@ the one that counts.
 The reader's database is not offered for download for now. It may be
 published later, perhaps once every text has its glosses, notes and
 translations, as the assets of a GitHub Release of this repository; that is
-not decided. The [README](../README.md#running-it-yourself) says how to
-build one of your own from the open sources.
+not decided. Until then, everything in it can be read at
+[greek.kenaldo.dev](https://greek.kenaldo.dev), and the
+[README](../README.md#running-it-yourself) says how to build one of your own
+from the open sources.
 
 [greek export-data](cli.md#greek-export-data) writes the database as it is
 shared: the public site runs on its copy, and a release would be the same
