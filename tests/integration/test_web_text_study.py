@@ -140,32 +140,60 @@ def _text(*states, treebank=True, numbers=None):
     return TextStudy("the Odyssey", books, treebank)
 
 
+NOT_YET = ("none", "Translations, glosses and notes: not yet")
+GRAMMAR = ("translated", "Grammar and dictionary")
+
+
+@pytest.mark.parametrize(
+    "states, status",
+    [
+        (
+            ["translated"] * 3,
+            [
+                (
+                    "translated",
+                    "Complete: grammar, dictionary, translations, glosses and notes",
+                )
+            ],
+        ),
+        (["none"] * 3, [GRAMMAR, NOT_YET]),
+        (
+            ["translated", "translated", "translated", "none"],
+            [GRAMMAR, ("partly", "Translations, glosses and notes: Books 1–3")],
+        ),
+        (
+            ["translated", "partly", "none"],
+            [
+                GRAMMAR,
+                ("partly", "Translations, glosses and notes: Book 1 · Book 2 in part"),
+            ],
+        ),
+    ],
+)
+def test_a_texts_status_says_what_it_has_and_lacks(states, status):
+    assert _text(*states).status == status
+
+
 @pytest.mark.parametrize(
     "states, label",
     [
-        (["translated"] * 3, "Complete"),
-        (["none"] * 3, "Grammar and dictionary · translations coming"),
-        (
-            ["translated", "translated", "translated", "none"],
-            "Books 1–3 with translations",
-        ),
-        (["translated", "none", "translated"], "Books 1, 3 with translations"),
-        (["translated", "partly", "none"], "Book 1 with translations · Book 2 in part"),
+        (["translated", "none", "translated"], "Books 1, 3"),
+        (["translated", "partly", "none"], "Book 1 · Book 2 in part"),
         (["none", "partly", "partly"], "Books 2–3 in part"),
     ],
 )
-def test_a_texts_label(states, label):
-    assert _text(*states).label == label
+def test_the_books_with_study_data(states, label):
+    assert _text(*states).books_label == label
 
 
 def test_a_text_without_a_treebank_has_the_greek_text_only():
-    assert _text("none", treebank=False).label == "Greek text only"
-    assert _text("partly", treebank=False, numbers=[""]).label == "Translations in part"
-
-
-def test_the_key_lists_the_states_a_text_has_in_order():
-    assert _text("none", "translated").states == ["translated", "none"]
-    assert _text("partly", "partly").states == ["partly"]
+    assert _text("none", treebank=False).status == [("none", "Greek text only")]
+    assert _text("partly", treebank=False, numbers=[""]).status == [
+        ("partly", "Translations, glosses and notes: in part")
+    ]
+    assert _text("translated", treebank=False).status == [
+        ("translated", "Translations, glosses and notes")
+    ]
 
 
 def test_what_a_note_says_is_missing():
@@ -186,48 +214,48 @@ def _card(html, title):
     return html[start : html.index("</article>", start)]
 
 
-def test_library_labels_a_text_without_study_data(client, iliad):
-    html = client.get("/library").text
-    card = _card(html, "Iliad")
-    assert (
-        '<p class="text-status is-none">Grammar and dictionary · translations coming</p>'
-        in card
-    )
+def _status(card):
+    row = card[card.index('<ul class="text-status"') :].split("</ul>")[0]
+    return re.findall(r'<li class="is-(\w+)">([^<]+)</li>', row)
+
+
+def test_library_says_what_a_text_without_study_data_lacks(client, iliad):
+    card = _card(client.get("/library").text, "Iliad")
+    assert _status(card) == [GRAMMAR, NOT_YET]
     assert card.count('<a class="is-none" href=') == 2
     assert 'aria-label="Book 1, 1.1–1.5, grammar and dictionary"' in card
-    key = card[card.index('<ul class="book-key"') :].split("</ul>")[0]
-    assert re.findall(r"</span>([^<]+)</li>", key) == ["Grammar and dictionary"]
+    assert "book-key" not in card  # the status row is the only key
 
 
 def test_library_marks_the_books_with_translations(client, iliad):
     db, text_id = iliad
     _save_study(db, text_id, [(1, 5)])
     card = _card(client.get("/library").text, "Iliad")
-    assert '<p class="text-status is-partly">Book 1 with translations</p>' in card
+    assert _status(card) == [
+        GRAMMAR,
+        ("partly", "Translations, glosses and notes: Book 1"),
+    ]
     assert (
         f'<a class="is-translated" href="/texts/{text_id}/read?at=1.1" '
         'aria-label="Book 1, 1.1–1.5, with translations, glosses and notes">1</a>'
         in card
     )
     assert f'<a class="is-none" href="/texts/{text_id}/read?at=2.1"' in card
-    key = card[card.index('<ul class="book-key"') :].split("</ul>")[0]
-    assert re.findall(r"</span>([^<]+)</li>", key) == [
-        "With translations, glosses and notes",
-        "Grammar and dictionary",
-    ]
 
 
 def test_library_calls_a_text_with_every_book_translated_complete(client, iliad):
     db, text_id = iliad
     _save_study(db, text_id)
     card = _card(client.get("/library").text, "Iliad")
-    assert '<p class="text-status is-translated">Complete</p>' in card
+    assert _status(card) == [
+        ("translated", "Complete: grammar, dictionary, translations, glosses and notes")
+    ]
     assert card.count('<a class="is-translated"') == 2
 
 
 def test_library_without_a_treebank_has_the_greek_text_only(client, db_text):
     card = _card(client.get("/library").text, "Iliad")
-    assert '<p class="text-status is-none">Greek text only</p>' in card
+    assert _status(card) == [("none", "Greek text only")]
     assert 'aria-label="Book 1, 1.1–1.5, Greek text"' in card
 
 
@@ -303,6 +331,13 @@ def test_about_says_what_each_text_has(client, iliad, web_db):
         "by GLAUx's parser" in rows["Histories"]
     )
     assert "<td>Not yet</td>" in rows["Histories"]
+
+
+def test_about_names_the_books_of_a_partly_translated_text(client, iliad):
+    db, text_id = iliad
+    _save_study(db, text_id, [(1, 5)])
+    row = client.get("/about").text.split('<th scope="row">Iliad')[1].split("</tr>")[0]
+    assert "<td>Book 1</td>" in row
 
 
 @pytest.mark.parametrize("path", ["/library", "/about", "/texts/{text_id}/read"])

@@ -214,12 +214,15 @@ def work_name(text: TextMeta, source: Optional[TreebankSource]) -> str:
 
 # ------------------------------------------------------------ what a text has
 
+# What a unit's study data gives (save_study_result saves them together)
+STUDY_PARTS = "translations, glosses and notes"
+
 
 @dataclass
 class TextStudy:
     """
     What a text has: its study data book by book (book_study) and whether it
-    has treebank data. The Library's labels and book chips, and the reader's
+    has treebank data. The Library's status row and book chips, and the reader's
     notes in a book without study data, which name the text as `name` does
     ("the Odyssey", "Herodotus").
     """
@@ -248,34 +251,41 @@ class TextStudy:
         return "partly" if states - {"none"} else "none"
 
     @property
-    def states(self) -> List[str]:
-        """The book states the text has, in the key's order."""
-        found = {b.state for b in self.books}
-        return [s for s in ("translated", "partly", "none") if s in found]
+    def status(self) -> List[Tuple[str, str]]:
+        """
+        The Library's row of what the text has and lacks, as (state, words)
+        items: "Complete: grammar, dictionary, …" as one item, else the
+        grammar and dictionary and the study data apart ("Translations,
+        glosses and notes: not yet", "…: Books 1–3").
+        """
+        state = self.state
+        if not self.treebank and state == "none":
+            return [("none", "Greek text only")]
+        if self.treebank and state == "translated":
+            return [("translated", f"Complete: grammar, dictionary, {STUDY_PARTS}")]
+        items = [("translated", "Grammar and dictionary")] if self.treebank else []
+        study = STUDY_PARTS.capitalize()
+        if state == "translated":
+            items.append(("translated", study))
+        elif state == "partly":
+            items.append(("partly", f"{study}: {self.books_label}"))
+        else:
+            items.append(("none", f"{study}: not yet"))
+        return items
 
     @property
-    def label(self) -> str:
-        """'Complete', 'Books 1–3 with translations', or what the text has without them."""
-        state = self.state
-        if state == "translated":
-            return "Complete"
-        if state == "none":
-            if not self.treebank:
-                return "Greek text only"
-            return "Grammar and dictionary · translations coming"
+    def books_label(self) -> str:
+        """The books with study data: 'Books 1–3 · Book 4 in part'."""
         parts = []
-        for which, words in (
-            ("translated", "with translations"),
-            ("partly", "in part"),
-        ):
+        for which, words in (("translated", ""), ("partly", " in part")):
             numbers = [b.number for b in self.books if b.state == which]
             if not numbers:
                 continue
             if numbers == [""]:  # a text without books, partly translated
-                parts.append("Translations in part")
+                parts.append("in part")
                 continue
             noun = "Book" if len(numbers) == 1 else "Books"
-            parts.append(f"{noun} {number_ranges(numbers)} {words}")
+            parts.append(f"{noun} {number_ranges(numbers)}{words}")
         return " · ".join(parts)
 
     def missing(self, line_number: int) -> Optional[str]:

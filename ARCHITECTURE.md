@@ -121,8 +121,9 @@ words.
   inside a saved unit, glossed words): a unit's results are saved in one
   transaction, so a book whose every line is in a saved unit is complete as
   `greek study coverage` counts it (a test checks they agree). `TextStudy`
-  in `reader_data.py` turns it into the Library's labels and book chips, the
-  About page's table, and the reader's notes in a book without study data.
+  in `reader_data.py` turns it into the Library's status row and book
+  chips, the About page's table, and the reader's notes in a book without
+  study data.
 - `lemma_forms` holds a lemma's dictionary form (nouns and adjectives) or
   construction (verbs), keyed by model and dialect (Homeric for the Iliad
   and the Odyssey, which share them, Ionic for Herodotus, Attic for

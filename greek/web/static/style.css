@@ -325,63 +325,55 @@ code {
 
 .book-grid a:hover { background: var(--accent-tint); color: var(--accent-dark); }
 
-/* What a text has (TextStudy): a label, and each book chip by its study
-   data: translated books tinted and underlined, partly translated ones half
-   underlined, the others plain. The key names the kinds a card has. */
+/* What a text has (TextStudy): a row of what it has (a tinted pill with a
+   dot), has in some books (a half dot) and lacks (grey, a ring), and each
+   book chip by its study data: translated books tinted and underlined,
+   partly translated ones half underlined, the others plain. */
 .text-status {
   align-self: start;
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.text-status li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   padding: 4px 12px 4px 10px;
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--accent-tint);
   color: var(--accent-dark);
   font-size: 14px;
   font-weight: 600;
+  line-height: 20px;
+  text-wrap: balance;
 }
-.text-status::before {
+.text-status li::before {
   content: "";
   flex: 0 0 auto;
   width: 8px;
   height: 8px;
+  margin-top: 6px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--accent);
   border-radius: 50%;
   background: var(--accent);
 }
-.text-status.is-none { background: var(--page); color: var(--text-2); font-weight: 500; }
-.text-status.is-none::before { background: var(--border-strong); }
+.text-status li.is-partly::before { background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); }
+.text-status li.is-none { background: var(--page); color: var(--text-2); font-weight: 500; }
+.text-status li.is-none::before { border-color: var(--muted); background: none; }
 
-.book-grid a.is-translated,
-.book-key-chip.is-translated {
+.book-grid a.is-translated {
   background: var(--accent-tint);
   color: var(--accent-dark);
   box-shadow: inset 0 -3px 0 var(--accent);
 }
 .book-grid a.is-translated:hover { background: var(--focus); }
-.book-grid a.is-partly,
-.book-key-chip.is-partly {
+.book-grid a.is-partly {
   background: linear-gradient(var(--accent), var(--accent)) left bottom / 50% 3px no-repeat, var(--page);
-}
-
-.book-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 13px;
-  color: var(--muted);
-}
-.book-key li { display: flex; align-items: center; gap: 6px; }
-.book-key-chip {
-  flex: 0 0 auto;
-  width: 18px;
-  height: 14px;
-  border-radius: 3px;
-  background: var(--page);
 }
 
 .text-card-actions {
