@@ -6,7 +6,10 @@ serves it at http://127.0.0.1:8000.
 
 ## Library and navigation
 
-Library cards show the first line, what the text has, the books, and **Start
+The texts are in the order they were written (the Iliad, the Odyssey,
+Herodotus, Thucydides) in the Library, on About and in the reader's list of
+texts; a text without a treebank comes after them, in the order it was
+imported. Library cards show the first line, what the text has, the books, and **Start
 reading**, which reads **Continue at …** once you have read the text in this
 browser. A row says what the text has and lacks: **Complete: grammar,
 dictionary, translations, glosses and notes**, or **Grammar and dictionary**

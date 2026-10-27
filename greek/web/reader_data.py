@@ -38,6 +38,7 @@ from greek.db.repos.study import (
     saved_word_uses,
     study_line_glosses,
 )
+from greek.db.repos.texts import list_texts
 from greek.db.repos.verbs import get_verb_parts, list_verb_parts
 from greek.display.analysis import _PUNCT_STRIP
 from greek.api.works import DIALECTS, work_profile
@@ -309,6 +310,20 @@ def text_study(conn: sqlite3.Connection, text: TextMeta) -> TextStudy:
         book_study(conn, text.id, STUDY_MODEL),
         has_word_parses(conn, text.id, 1, text.line_count),
     )
+
+
+def texts_in_order(conn: sqlite3.Connection) -> List[TextMeta]:
+    """
+    The texts in the order their works were written (WORKS' order: Homer,
+    Herodotus, Thucydides), then any without a treebank, as imported.
+    """
+    order = {key: i for i, key in enumerate(WORKS)}
+
+    def written(text: TextMeta) -> Tuple[int, int]:
+        source = get_tb_source(conn, text.id)
+        return (order.get(source.work, len(order)) if source else len(order), text.id)
+
+    return sorted(list_texts(conn), key=written)
 
 
 @dataclass

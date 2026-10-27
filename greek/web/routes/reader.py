@@ -31,6 +31,7 @@ from greek.web.reader_data import (
     study_glosses,
     study_word,
     text_study,
+    texts_in_order,
 )
 from greek.web.reading import (
     LEGACY_PAGE_SIZE,
@@ -145,7 +146,7 @@ def read(
     page_book = text_study(db, text).book_at(pg.start)
     glossless = page_book is None or page_book.state == "none"
 
-    texts = list_texts(db)
+    texts = texts_in_order(db)
     return templates.TemplateResponse(
         request,
         "reader.html",

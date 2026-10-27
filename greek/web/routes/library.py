@@ -5,11 +5,10 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
 from greek.db.repos.lines import get_lines, list_books
-from greek.db.repos.texts import list_texts
 from greek.models import Book, Line, TextMeta
 from greek.web.deps import get_db
 from greek.web.formatting import line_unit
-from greek.web.reader_data import TextStudy, text_study
+from greek.web.reader_data import TextStudy, text_study, texts_in_order
 from greek.web.templates_config import templates
 
 router = APIRouter()
@@ -32,7 +31,7 @@ def library(request: Request, db=Depends(get_db)):
     (positions.js).
     """
     cards = []
-    for text in list_texts(db):
+    for text in texts_in_order(db):
         first = get_lines(db, text.id, 1, 1)
         first_line = first[0] if first else None
         cards.append(
