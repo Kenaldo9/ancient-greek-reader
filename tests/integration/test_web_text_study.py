@@ -18,7 +18,7 @@ from greek.db.repos.parses import list_word_parses, save_tb_source
 from greek.db.repos.study import book_study, covered_units
 from greek.db.repos.texts import insert_text
 from greek.models import BookStudy, TreebankSource
-from greek.web.reader_data import TextStudy
+from greek.web.reader_data import TextStudy, texts_in_order
 from tests.integration.test_notes_batch import _save_study
 from tests.integration.test_word_details import _import_excerpt
 
@@ -340,6 +340,54 @@ def test_about_names_the_books_of_a_partly_translated_text(client, iliad):
     _save_study(db, text_id, [(1, 5)])
     row = client.get("/about").text.split('<th scope="row">Iliad')[1].split("</tr>")[0]
     assert "<td>Book 1</td>" in row
+
+
+# --- the texts' order ---------------------------------------------------------------
+
+# The order the works were written, then a text without a treebank
+WRITTEN = ["Iliad", "Histories", "History of the Peloponnesian War", "Anabasis"]
+
+
+def _import_out_of_order(db):
+    """A text without a treebank first, Thucydides before Herodotus, the Iliad last."""
+    ids = {}
+    for title, author, work, reference in [
+        ("Anabasis", "Xenophon", None, "1.1.1"),
+        ("History of the Peloponnesian War", "Thucydides", "thucydides", "1.1.1"),
+        ("Histories", "Herodotus", "herodotus", "1.0.0"),
+        ("Iliad", "Homer", "iliad", "1.1"),
+    ]:
+        name = work or "anabasis"
+        text_id = insert_text(db, title, author, f"{name}.txt", f"/d/{name}.txt", 1)
+        insert_lines(db, text_id, ["λόγος"], [reference])
+        if work:
+            corpus = "perseus" if work == "iliad" else "glaux"
+            save_tb_source(
+                db, TreebankSource(text_id, work, corpus, f"{name}.xml", "CC BY-SA 4.0")
+            )
+        ids[title] = text_id
+    return ids
+
+
+def test_texts_are_in_the_order_their_works_were_written(web_db):
+    _import_out_of_order(web_db)
+    assert [t.title for t in texts_in_order(web_db)] == WRITTEN
+
+
+@pytest.mark.parametrize(
+    "path, title",
+    [
+        ("/library", r'<h2 class="text-card-title"[^>]*>([^<]+)'),
+        ("/about", r'<th scope="row">([^<]+)'),
+        ("/texts/{text_id}/read", r'<span class="nav-item-title">([^<]+)'),
+    ],
+)
+def test_pages_list_the_texts_in_the_order_they_were_written(
+    client, web_db, path, title
+):
+    ids = _import_out_of_order(web_db)
+    html = client.get(path.format(text_id=ids["Anabasis"])).text
+    assert re.findall(title, html) == WRITTEN
 
 
 @pytest.mark.parametrize("path", ["/library", "/about", "/texts/{text_id}/read"])

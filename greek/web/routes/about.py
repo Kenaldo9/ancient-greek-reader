@@ -6,11 +6,16 @@ from fastapi.responses import HTMLResponse
 
 from greek.api.study import MODEL as STUDY_MODEL
 from greek.db.repos.parses import annotation_counts, get_tb_source
-from greek.db.repos.texts import list_texts
 from greek.fetch.treebank import WORKS, TreebankWork
 from greek.models import TextMeta
 from greek.web.deps import get_db
-from greek.web.reader_data import GLAUX, PERSEUS_CREDIT, TextStudy, text_study
+from greek.web.reader_data import (
+    GLAUX,
+    PERSEUS_CREDIT,
+    TextStudy,
+    text_study,
+    texts_in_order,
+)
 from greek.web.templates_config import templates
 
 router = APIRouter()
@@ -35,7 +40,7 @@ class AboutText:
 def about(request: Request, db=Depends(get_db)):
     """What the reader is, where each text's data comes from, and the licences."""
     texts: List[AboutText] = []
-    for text in list_texts(db):
+    for text in texts_in_order(db):
         source = get_tb_source(db, text.id)
         counts = annotation_counts(db, text.id)
         total = sum(counts.values())

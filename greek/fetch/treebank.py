@@ -69,6 +69,8 @@ class TreebankWork:
 
 
 _PERSEUS = "CC BY-SA 3.0"
+# In the order the works were written: the reader lists its texts so
+# (reader_data.texts_in_order)
 WORKS: Mapping[str, TreebankWork] = {
     w.key: w
     for w in (
