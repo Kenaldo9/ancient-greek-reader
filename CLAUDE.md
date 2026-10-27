@@ -19,7 +19,9 @@ gitignored `CLAUDE.local.md`.
 - The web app is a reading app: every route is a GET on saved data, it makes
   no model calls (no API key), and it keeps no one user's state on the
   server; reading positions are in the browser (`positions.js`). Model data
-  is made only by `greek study` batches.
+  is made only by `greek study` batches. The public site counts its visitors
+  in daily totals outside the database (`greek/web/visits.py`, `/visit`):
+  never anything that tells one visitor from another.
 - Greek typography is Gentium Book Plus (400/700), UI is IBM Plex Sans, and
   references are IBM Plex Mono. Fonts and OFL licenses are under
   `greek/web/static/fonts/`.

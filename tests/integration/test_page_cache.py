@@ -150,7 +150,9 @@ READS_THE_REQUEST = {
 def test_pages_read_only_the_parts_of_the_request_in_the_key():
     found = set()
     for file in [*WEB.rglob("*.py"), *WEB.rglob("*.html")]:
-        if file.name == "page_cache.py":
+        # The cache itself, and the visitor counts outside it, which change
+        # no page
+        if file.name in ("page_cache.py", "visits.py"):
             continue
         for read in re.findall(
             r"request\.(?:cookies|headers|client|query_params|scope|base_url"

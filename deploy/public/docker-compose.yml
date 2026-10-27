@@ -16,8 +16,10 @@ services:
     environment:
       HOME: /tmp
       PYTHONDONTWRITEBYTECODE: "1"
-    # It writes nothing: the code and the database are read-only, /tmp is in
-    # memory
+      # Its visitor counts, one file a day (greek/web/visits.py)
+      GREEK_VISITS_DIR: /visits
+    # It writes only its visitor counts: the code and the database are
+    # read-only, /tmp is in memory
     read_only: true
     tmpfs:
       - /tmp
@@ -27,6 +29,7 @@ services:
     mem_limit: 512m
     volumes:
       - ${PUBLIC_SITE:?}:/data:ro
+      - ${PUBLIC_ROOT:?}/visits:/visits
       - /etc/localtime:/etc/localtime:ro
     # No port on the Pi: cloudflared is the only way in, and the site network
     # has no way out

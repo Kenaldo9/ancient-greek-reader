@@ -45,6 +45,7 @@ def robots(request: Request, db=Depends(get_db)):
             "Disallow: /texts/*/search",
             "Disallow: /goto",
             "Disallow: /version",
+            "Disallow: /visit",
             "",
             f"Sitemap: {absolute_url(request, '/sitemap.xml')}",
             "",

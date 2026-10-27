@@ -11,7 +11,8 @@ gloss and a note on every word and translations of every line.
 
 The reader only reads saved data: it asks no model anything, needs no
 account, and keeps nothing about you on the server (where you stopped
-reading stays in your browser). It works on a monitor, a laptop, a tablet
+reading stays in your browser; the site counts visits by day, with nothing
+that tells one visitor from another). It works on a monitor, a laptop, a tablet
 and a phone. The glosses, notes and translations were written once by
 Claude Opus 5.5, Anthropic's model: **they can be wrong**, so check them
 against the parsing and the dictionary. The reader tags them **AI**, and

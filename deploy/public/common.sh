@@ -11,6 +11,8 @@ PUBLIC_DB="${PUBLIC_SITE}/greek.db"
 PUBLIC_PREVIOUS="${PUBLIC_ROOT}/greek.db.previous"
 PUBLIC_INCOMING="${PUBLIC_ROOT}/incoming"
 PUBLIC_RELEASES="${PUBLIC_ROOT}/releases"
+# The site's visitor counts, a file a day, which the Pi's dashboard reads
+PUBLIC_VISITS="${PUBLIC_ROOT}/visits"
 PUBLIC_COMPOSE_ENV="${PUBLIC_ROOT}/compose.env"
 PUBLIC_TUNNEL_ENV="${PUBLIC_ROOT}/tunnel.env"
 # Where deploy/tunnel.sh off sets the token aside (deploy_pi.sh reads it too)
@@ -51,7 +53,7 @@ ensure_public_site() {
       --shell /usr/sbin/nologin "${PUBLIC_USER}"
   fi
   install -d -m 755 -o root -g root "${PUBLIC_ROOT}" "${PUBLIC_RELEASES}"
-  install -d -m 755 -o "${PUBLIC_USER}" -g "${PUBLIC_USER}" "${PUBLIC_SITE}"
+  install -d -m 755 -o "${PUBLIC_USER}" -g "${PUBLIC_USER}" "${PUBLIC_SITE}" "${PUBLIC_VISITS}"
   install -d -m 700 -o "${PUBLIC_USER}" -g "${PUBLIC_USER}" "${PUBLIC_INCOMING}"
   local settings
   settings="$(mktemp)"

@@ -179,7 +179,8 @@ sheet, over half the screen.
 
 ## Routes
 
-Every route reads saved data (GET); none writes or calls a model.
+Every route reads saved data (GET); none calls a model, and only the public
+site's visitor counts are written (below).
 
 | Route | Description |
 |---|---|
@@ -192,6 +193,7 @@ Every route reads saved data (GET); none writes or calls a model.
 | `/texts/{id}/search` | Compatibility redirect to reader search |
 | `/texts/{id}/passage` | Passage box fragment (GET with `lines`) |
 | `/texts/{id}/word` | Word fragment (GET with `line`, zero-based token `i`) |
+| `/visit` | What `visit.js` asks for once a page has been read a moment (204); the public site counts it (below) |
 | `/robots.txt`, `/sitemap.xml` | What search engines may index: the Library, About, each text's contents and each page of its books (below) |
 
 ## On the open internet
@@ -215,6 +217,18 @@ Every route reads saved data (GET); none writes or calls a model.
   304 when unchanged). Pages have no cache lifetime, so Cloudflare doesn't
   keep them and a new publish shows at once.
 - FastAPI's `/docs`, `/redoc` and `/openapi.json` are off.
+- The public site counts its visitors in daily totals
+  ([visits.py](../greek/web/visits.py)): people's visits and page views,
+  the pages they read, the sites they came from (the host only), their
+  countries (Cloudflare's `CF-IPCountry`) and how often they open a word, a
+  passage or a search, with bots (by the User-Agent they send) and the
+  outside check counted apart. A person is a browser that runs the page's
+  script: `visit.js` asks for `/visit` once a page has been in view for 3
+  seconds or the reader clicks on it, and htmx's requests come only from
+  the page; a page loaded and never confirmed is "unconfirmed". Only
+  requests through Cloudflare count. No address, User-Agent string, cookie
+  or identifier is kept, so a returning reader counts again. The counts are
+  a file a day on the server, for 400 days ([deploy/README.md](../deploy/README.md)).
 - The app can serve a read-only database file, as the public site does: it
   reads it in place, without WAL. One that lacks a migration of the code is
   left as it is, and every page says so until a migrated copy takes its

@@ -168,6 +168,9 @@ first and on the public site when you publish it.
   published copy (read-only, owned by the system user `greekpublic`, which
   can't log in); `greek.db.previous`, the copy the last swap replaced (a
   publish, a `--restore`, or a deploy that migrated the published copy);
+  `visits/YYYY-MM-DD.json`, the site's visitor counts, a day's totals in each
+  ([visits.py](../greek/web/visits.py); kept 400 days, readable by any user
+  on the Pi, for a dashboard there);
   `releases/data-YYYY-MM-DD/`, the last three exports
   ([greek export-data](../docs/cli.md#greek-export-data)'s files); `incoming/`, where a new copy is checked (one that failed
   its checks is kept there as `greek.db.failed`); `compose.env`, the
@@ -175,10 +178,10 @@ first and on the public site when you publish it.
   setup `tunnel.env` (its token, root's only), or `tunnel.env.off` while
   the tunnel is off ([The tunnel](#the-tunnel)).
 - The web container runs as `greekpublic` with a read-only filesystem
-  (`/tmp` in memory), no Linux capabilities, 512 MB of memory at most, and
-  the published copy mounted read-only. It has no `.env` and no API key, and
-  no port on the Pi: it is on an internal network with no way out (bridge
-  `greek-site`), which only `cloudflared` joins.
+  (`/tmp` in memory) but for `visits/`, no Linux capabilities, 512 MB of
+  memory at most, and the published copy mounted read-only. It has no
+  `.env` and no API key, and no port on the Pi: it is on an internal network
+  with no way out (bridge `greek-site`), which only `cloudflared` joins.
 - `cloudflared` starts once `tunnel.env` holds the tunnel's token
   (`TUNNEL_TOKEN=…`, [tunnel.sh](tunnel.sh)). It is the only container of
   the site with a way out, on its own network (bridge `greek-out`,

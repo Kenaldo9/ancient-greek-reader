@@ -28,6 +28,7 @@ and its licences in [docs/data.md](docs/data.md).
 | `greek/display/` | Rich CLI rendering |
 | `greek/search.py` | Greek normalization, FTS query construction, and match highlighting |
 | `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs; on a read-only database, add the page cache |
+| `greek/web/visits.py`, `static/visit.js` | The public site's visitor counts: daily totals of people's visits, page views, pages, referring sites, countries and tool use, with bots (by User-Agent) and the outside check counted apart; a person is confirmed by `visit.js`'s `/visit` (3 seconds in view, or a click) or by htmx's requests; only requests through Cloudflare (`CF-Ray`) count; a file a day in `GREEK_VISITS_DIR`, which only the public site sets; no address, User-Agent string, cookie or identifier is kept |
 | `greek/web/page_cache.py` | The public site's finished pages in memory, gzipped as sent (64 MB, least recently used out): only on a read-only database, which can't change while the app runs; keyed on the path and query, the Interlinear cookie, the site's scheme and host, and gzip; the private reader caches nothing |
 | `greek/web/routes/` | The Library (`library.py`), About (`about.py`), the reader page, its word fragment, Go to and the contents (`reader.py`), the passage box (`passage.py`) |
 | `greek/web/routes/site.py` | `robots.txt` and `sitemap.xml`: the pages search engines may index, from `page_starts` in `reader_data.py` |
@@ -202,7 +203,12 @@ The study data is keyed by word position (a line's whitespace tokens).
 Shared punctuation stripping lives in `greek/display/analysis.py`.
 
 Every route is a GET that reads saved data; the app has no write routes and
-imports no model client, so it needs no API key (tests check both).
+imports no model client, so it needs no API key (tests check both). The one
+thing it writes is the public site's visitor counts, outside the database:
+a middleware outside the page cache adds each counted request to the day's
+totals in memory, written to the day's file every 5 minutes and when the app
+stops (`visits.py`). `/visit` itself answers 204 and, on the private reader,
+counts nothing.
 
 On the open internet: `robots.txt` lets search engines index the Library,
 About, each text's contents and each page of its books at its first
