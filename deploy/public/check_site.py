@@ -125,7 +125,7 @@ def check_library(fetch, site: str) -> str:
     r = get(fetch, site + "/library")
     if "content-security-policy" not in r.headers:
         raise CheckFailed("/library has no Content-Security-Policy")
-    texts = set(re.findall(r'href="/texts/(\d+)/toc"', r.text))
+    texts = set(re.findall(r'href="/texts/(\d+)/read"', r.text))  # Start reading
     if not texts:
         raise CheckFailed("/library lists no texts")
     return f"{len(texts)} texts"

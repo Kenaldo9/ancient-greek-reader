@@ -8,12 +8,13 @@ serves it at http://127.0.0.1:8000.
 
 Library cards show the first line, what the text has, the books, and **Start
 reading**, which reads **Continue at …** once you have read the text in this
-browser. A label says what the text has: **Complete** (every book has
-translations), **Books 1–3 with translations**, or **Grammar and dictionary ·
-translations coming**. The book chips show the same per book (tinted and
-underlined: translations, glosses and notes; half underlined: some), with a
-key. They are counted from the saved study data, so a book switches as soon
-as its batch is collected. The **About** page (in the header, and in the iPad
+browser. A row says what the text has and lacks: **Complete: grammar,
+dictionary, translations, glosses and notes**, or **Grammar and dictionary**
+beside **Translations, glosses and notes: Books 1–3** (a half dot) or **…: not
+yet** (grey, a ring). The book chips show the study data per book (tinted and
+underlined: translations, glosses and notes; half underlined: some). They are
+counted from the saved study data, so a book switches as soon as its batch is
+collected. The **About** page (in the header, and in the iPad
 drawer) says what each text has, where its data comes from, the licences,
 where to report a mistake, and what a visitor's browser keeps.
 The

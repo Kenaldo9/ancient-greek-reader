@@ -55,7 +55,7 @@ def test_library_card_contents(client, db_text):
     assert "1 book · 5 lines" in resp.text
     assert "Μῆνιν ἄειδε θεά" in resp.text  # first line
     assert f'href="/texts/{text_id}/read?at=1.1"' in resp.text  # book 1 link
-    assert f'href="/texts/{text_id}/toc"' in resp.text
+    assert "/toc" not in resp.text  # the books are on the card
     assert "Recently studied" not in resp.text and "Last studied" not in resp.text
 
 

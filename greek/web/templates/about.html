@@ -28,7 +28,7 @@
               None yet
               {%- endif -%}
             </td>
-            <td>{% if s.state == "translated" %}Every book{% elif s.state == "partly" %}{{ s.label }}{% else %}Not yet{% endif %}</td>
+            <td>{% if s.state == "translated" %}Every book{% elif s.state == "partly" %}{{ s.books_label }}{% else %}Not yet{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>
