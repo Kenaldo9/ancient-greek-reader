@@ -9,10 +9,10 @@ Library, robots.txt and the sitemap, every page the sitemap lists and each
 text's start, with Interlinear off and on, and that plain http:// is sent
 on to https://. Opening every page also builds each one into the site's
 page cache again after a restart (greek/web/page_cache.py), so a reader's
-first visit to a book doesn't wait for it. During the private preview the site
-is behind Cloudflare Access: with CF_ACCESS_CLIENT_ID and
-CF_ACCESS_CLIENT_SECRET set it sends that service token, over https://
-only. Each check is tried three times, 20 seconds apart; the script exits 1
+first visit to a book doesn't wait for it. A site behind Cloudflare Access
+(a private preview) needs its service token: with CF_ACCESS_CLIENT_ID and
+CF_ACCESS_CLIENT_SECRET set the script sends it, over https:// only. Each
+check is tried three times, 20 seconds apart; the script exits 1
 if one still fails. Python's standard library only.
 """
 
