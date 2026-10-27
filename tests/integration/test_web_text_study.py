@@ -294,7 +294,9 @@ def test_about_names_each_source_and_licence(client):
     ]
     assert "The reader marks them <span" in html
     assert 'href="https://github.com/Kenaldo9/ancient-greek-reader"' in html
-    assert 'href="https://github.com/Kenaldo9/ancient-greek-reader/releases"' in html
+    # No data release yet: About promises none
+    assert "/releases" not in html
+    assert "is not offered for download for now" in html
     assert '<a href="/about" aria-current="page">About</a>' in html
 
 

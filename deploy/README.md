@@ -110,15 +110,14 @@ github.com or `gh`, `[TAILSCALE]` the Tailscale admin console.
    Before pinning, compare every host key type with the ones you already
    trust for the Pi (`ssh-keygen -lf`, or `ssh-keyscan` of its LAN
    address).
-4. `[LOCAL]` The seed: the [data release](../docs/data.md#the-data-release)'s
-   database, and an `.env` with the API key if you will run `greek study`
-   on the Pi:
+4. `[LOCAL]` The seed: a copy of your database made by
+   [greek backup](../docs/cli.md#greek-backup) (the reader's own is not
+   offered for download: [docs/data.md](../docs/data.md#getting-it)), and
+   an `.env` with the API key if you will run `greek study` on the Pi:
    ```bash
-   mkdir -p $K/greek-seed && cd $K/greek-seed
-   curl -fLO https://github.com/Kenaldo9/ancient-greek-reader/releases/latest/download/greek.db.xz
-   curl -fLO https://github.com/Kenaldo9/ancient-greek-reader/releases/latest/download/SHA256SUMS
-   sha256sum -c SHA256SUMS && xz -d greek.db.xz && rm SHA256SUMS
-   cd - && (umask 077; echo 'ANTHROPIC_API_KEY=…' > $K/ancient-greek-reader.env)
+   mkdir -p $K/greek-seed
+   python greek.py backup $K/greek-seed/greek.db
+   (umask 077; echo 'ANTHROPIC_API_KEY=…' > $K/ancient-greek-reader.env)
    rsync -a $K/greek-seed PI:/tmp/
    scp deploy/deploy_pi.sh $K/ancient-greek-reader.env PI:/tmp/
    shred -u $K/ancient-greek-reader.env
@@ -169,8 +168,8 @@ first and on the public site when you publish it.
   published copy (read-only, owned by the system user `greekpublic`, which
   can't log in); `greek.db.previous`, the copy the last swap replaced (a
   publish, a `--restore`, or a deploy that migrated the published copy);
-  `releases/data-YYYY-MM-DD/`, the last three exports, the same files as a
-  data release; `incoming/`, where a new copy is checked (one that failed
+  `releases/data-YYYY-MM-DD/`, the last three exports
+  ([greek export-data](../docs/cli.md#greek-export-data)'s files); `incoming/`, where a new copy is checked (one that failed
   its checks is kept there as `greek.db.failed`); `compose.env`, the
   settings compose reads, which the scripts write; and from the tunnel's
   setup `tunnel.env` (its token, root's only), or `tunnel.env.off` while

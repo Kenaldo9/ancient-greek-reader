@@ -1,14 +1,21 @@
 # The data
 
 The reader reads one SQLite database, `greek.db`. This page says what is in
-it, how it was made, and where to get it. Its licences are in
+it, how it was made, and whether you can get it. Its licences are in
 [DATA-LICENSE.md](../DATA-LICENSE.md), by source and by table; that file is
 the one that counts.
 
-## The data release
+## Getting it
 
-The database is published as the assets of a GitHub Release of this
-repository (tag `data-YYYY-MM-DD`), not in git:
+The reader's database is not offered for download for now. It may be
+published later, perhaps once every text has its glosses, notes and
+translations, as the assets of a GitHub Release of this repository; that is
+not decided. The [README](../README.md#running-it-yourself) says how to
+build one of your own from the open sources.
+
+[greek export-data](cli.md#greek-export-data) writes the database as it is
+shared: the public site runs on its copy, and a release would be the same
+files:
 
 | File | |
 |---|---|
@@ -17,10 +24,8 @@ repository (tag `data-YYYY-MM-DD`), not in git:
 | `manifest.json` | Its last migration, the code's commit it was exported with, each text (its treebank and licence, its books with translations), the rows in each table, and the rows emptied |
 | `DATA-LICENSE.md` | The licences |
 
-[greek export-data](cli.md#greek-export-data) makes these files. A release
-is the live database without the study batches' bookkeeping (what each
-request asked for, its usage and its cost). The [README](../README.md#running-it-yourself)
-says how to download it and run the reader on it. A release is at the
+An export is the live database without the study batches' bookkeeping
+(what each request asked for, its usage and its cost). It is at the
 migration it was exported at; newer code migrates it when it starts, after
 copying it beside itself ([Database upgrades](cli.md#database-upgrades)).
 
@@ -42,7 +47,7 @@ Thucydides' *History of the Peloponnesian War*.
 | `word_uses` | How a word works in its sentence ("dative of disadvantage") | Claude Opus 5.5 |
 | `lemma_forms` | A noun's or adjective's dictionary form ("μῆνις, -ιος, ἡ"), or a verb's construction ("+ dat. of the person"), per dialect | Claude Opus 5.5 |
 | `verb_parts` | A verb's principal parts, per dialect | Claude Opus 5.5 |
-| `study_batches`, `study_requests`, `lemma_requests`, `parts_requests` | The batches' bookkeeping | Empty in a release |
+| `study_batches`, `study_requests`, `lemma_requests`, `parts_requests` | The batches' bookkeeping | Empty in an export |
 | `_migrations` | The migrations applied: the database's version | |
 
 Every row of model data names its model (`model_used`). Deleting a text
@@ -60,7 +65,7 @@ has the details.
 | History of the Peloponnesian War (Thucydides) | GLAUx: part by hand (from Vanessa Gorman's treebanks), the rest by GLAUx's parser | Not yet |
 
 The reader's Library labels each text and book from the database itself, so
-a new release with more study data shows it with no code change. `greek
+a database with more study data shows it with no code change. `greek
 study coverage TEXT_ID` reports what each book has.
 
 ## How the study data was made

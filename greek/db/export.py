@@ -1,8 +1,9 @@
 """
 The database's public export (`greek export-data`): a copy without the study
 batches' bookkeeping, vacuumed, checked and compressed with xz, beside its
-SHA-256, a manifest and the data's licences. It is published as a GitHub
-Release's assets for running the reader on another computer.
+SHA-256, a manifest and the data's licences. The public site runs on it
+(deploy/publish.sh); a GitHub Release would hold these files if the database
+is published (docs/data.md).
 
 xz (the standard library's lzma) makes the smallest file of those measured on
 the live database (2026-10-16: 195 MB → xz -6 33 MB, zstd -19 42 MB, gzip -9

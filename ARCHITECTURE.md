@@ -18,7 +18,7 @@ and its licences in [docs/data.md](docs/data.md).
 |---|---|
 | `greek.py`, `greek/cli/` | Load `.env`, run migrations, register and execute Click commands; `--version` |
 | `greek/db/connection.py` | Open SQLite connections and apply numbered SQL migrations, backing up an existing database first |
-| `greek/db/export.py` | The database's public export (`greek export-data`) for a GitHub Release |
+| `greek/db/export.py` | The database's export (`greek export-data`): the public site's copy, and a GitHub Release's assets if the database is published |
 | `greek/version.py` | The code's commit (the Docker image's `build.json`, or `.git`) and the database's last migration |
 | `greek/db/repos/` | SQL data access shared by the CLI and web routes |
 | `greek/models/` | Dataclasses representing stored texts, treebank data, study data, and verbs |
@@ -57,8 +57,9 @@ migration backup (`copy_database`: SQLite's backup API while the app keeps
 running, then `integrity_check`) to a new file or standard output, so a
 backup elsewhere can fetch the live database over ssh.
 
-`greek export-data` writes the database as it is published, for running
-the reader elsewhere: a copy made the same way, without the study batches'
+`greek export-data` writes the database as it is shared (the public site's
+copy, and a GitHub Release's assets if the database is published): a copy
+made the same way, without the study batches'
 bookkeeping (`study_batches`, `study_requests`, `lemma_requests` and
 `parts_requests`: what each request asked for, its usage and its cost). The
 copy is switched out of WAL mode so that it is one file, vacuumed, checked
