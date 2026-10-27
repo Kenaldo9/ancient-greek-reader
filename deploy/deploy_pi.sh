@@ -42,8 +42,9 @@ Options:
   --app-env-file PATH    Install PATH as ${APP_ENV_FILE} (the API key,
                          for greek study only), then delete PATH. Without
                          it, a missing file is asked for interactively.
-  --seed-data DIR        Copy DIR (greek.db made with SQLite's .backup, plus
-                         sources/, texts/, catalog.json) into ${DATA_DIR}.
+  --seed-data DIR        Copy DIR (a greek.db with no -wal file, such as a
+                         data release's or one greek backup made, and
+                         anything beside it, e.g. sources/) into ${DATA_DIR}.
                          Only when it has no greek.db yet: never replaces one.
   --non-interactive      Fail instead of asking for anything missing
   --dry-run              Print the steps without changing the host
@@ -314,7 +315,13 @@ configure_tailscale_serve() {
   dry "publish ${SERVE_TARGET} on the tailnet with tailscale serve (HTTPS, port ${SERVE_PORT})" && return
   serve_is_set && return
   log "Publishing ${SERVE_TARGET} on the tailnet's port ${SERVE_PORT}"
-  tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}"
+  # It prints the address it serves at, which names the tailnet
+  if [[ "${NON_INTERACTIVE}" == "true" ]]; then
+    tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}" >/dev/null 2>&1 \
+      || die "tailscale serve failed: run deploy_pi.sh by hand on the Pi to see why"
+  else
+    tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}"
+  fi
 }
 
 run_health_checks() {

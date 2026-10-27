@@ -1,0 +1,22 @@
+#!/usr/sbin/nft -f
+# What greek-public-firewall.service loads when firewall.nft fails to load
+# and no rules of the site's are loaded (at boot): the site's networks reach
+# nothing at all, the internet included, so cloudflared, which Docker starts
+# anyway, can't connect and the site is offline instead of unwalled. The
+# deploy, a publish and deploy/tunnel.sh on load firewall.nft again, which
+# replaces this table whole.
+
+table inet greek_public
+delete table inet greek_public
+
+table inet greek_public {
+	chain input {
+		type filter hook input priority filter - 10; policy accept;
+		iifname { "greek-out", "greek-site" } drop
+	}
+
+	chain forward {
+		type filter hook forward priority filter - 10; policy accept;
+		iifname { "greek-out", "greek-site" } drop
+	}
+}

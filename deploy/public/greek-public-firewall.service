@@ -1,6 +1,12 @@
 # Installed by deploy/public/common.sh as
 # /etc/systemd/system/greek-public-firewall.service: loads the public
 # tunnel's firewall (firewall.nft) at boot, before Docker starts cloudflared.
+# If it fails to load and no rules of the site's are loaded (at boot), it
+# loads firewall-closed.nft instead, which keeps the site's networks off
+# everything, and fails: Docker still starts (other apps need it), but the
+# site stays offline until its rules load. A failed load leaves loaded rules
+# as they were (nft -f is all or nothing), so on a deploy's restart the
+# walls stay up and the deploy stops.
 [Unit]
 Description=Keep the Greek reader's public tunnel off this Pi, the home network and the tailnet
 Before=docker.service
@@ -8,7 +14,7 @@ Before=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/sbin/nft -f /etc/ancient-greek-reader/public-firewall.nft
+ExecStart=/bin/sh -c '/usr/sbin/nft -f /etc/ancient-greek-reader/public-firewall.nft || { /usr/sbin/nft list table inet greek_public >/dev/null 2>&1 || /usr/sbin/nft -f /etc/ancient-greek-reader/public-firewall-closed.nft; exit 1; }'
 
 [Install]
 WantedBy=multi-user.target docker.service

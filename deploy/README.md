@@ -2,7 +2,7 @@
 
 This is how the reader is deployed to a Raspberry Pi in Docker, reachable
 only over [Tailscale](https://tailscale.com): GitHub Actions deploys every
-commit on `main` over the tailnet once the tests and the secret scan pass.
+push to `main` over the tailnet once the tests and the secret scan pass.
 Beside it the same image can serve a public site on a published copy of the database
 ([The public site](#the-public-site)), reached through Cloudflare Tunnel. Change the names
 (user, folders, ports) to suit your own machine. Replace `PI` below with
@@ -94,7 +94,8 @@ github.com or `gh`, `[TAILSCALE]` the Tailscale admin console.
    ```
    It creates `greekreader`, `/opt/ancient-greek-reader/{app,data}` and
    `/etc/sudoers.d/gha-deploy-ancient-greek-reader`, and adds the key to
-   `gha-deploy`'s `authorized_keys`, locked to the deploy command. A re-run
+   `gha-deploy`'s `authorized_keys`, locked to the deploy command, and
+   deletes the copy in `/tmp`. A re-run (copy the key over again first)
    locks the key again instead of adding a copy.
 3. `[GITHUB]` Set the secrets (`PI_HOST` is the Pi's tailnet address,
    `100.x.y.z`):
@@ -166,9 +167,11 @@ first and on the public site when you publish it.
 
 - `/opt/ancient-greek-reader/public/` (root's) holds it: `site/greek.db`, the
   published copy (read-only, owned by the system user `greekpublic`, which
-  can't log in); `greek.db.previous`, the copy the last publish replaced;
+  can't log in); `greek.db.previous`, the copy the last swap replaced (a
+  publish, a `--restore`, or a deploy that migrated the published copy);
   `releases/data-YYYY-MM-DD/`, the last three exports, the same files as a
-  data release; `incoming/`, where a new copy is checked; `compose.env`, the
+  data release; `incoming/`, where a new copy is checked (one that failed
+  its checks is kept there as `greek.db.failed`); `compose.env`, the
   settings compose reads, which the scripts write; and from the tunnel's
   setup `tunnel.env` (its token, root's only), or `tunnel.env.off` while
   the tunnel is off ([The tunnel](#the-tunnel)).
@@ -214,10 +217,14 @@ minutes on a Pi 4), checks the export's checksum and the database it
 decompresses to against its manifest, then checks that copy
 (`integrity_check`, one file with no WAL, this code's last migration). It
 stops the public web app, keeps the copy it replaces as
-`greek.db.previous`, starts the app on the new one and checks it; if a
-check fails, it puts the previous copy back. A deploy and a publish wait for
-each other (`/run/lock/ancient-greek-reader.lock`). `publish.sh --restore`
-puts the previous copy back.
+`greek.db.previous`, starts the app on the new one and checks it; if the
+site then fails its checks, it puts the previous copy back. If the tunnel's
+walls fail their check ([The tunnel](#the-tunnel)), it stops there, with the
+new copy in place and the site stopped. A deploy, a publish and `tunnel.sh
+on` or `off` wait for each other (`/run/lock/ancient-greek-reader.lock`), up
+to 15 minutes. `publish.sh --restore` puts `greek.db.previous` back and keeps
+the copy it replaces in its place; it refuses one that lacks this code's
+migrations (publish again instead).
 
 ```bash
 sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
@@ -244,16 +251,23 @@ nftables table of their own (`inet greek_public`): Docker, ufw and
 Tailscale keep theirs in iptables' tables and never replace it, and a drop
 in it is final whatever their chains accept. They are copied to `/etc/ancient-greek-reader/` and loaded
 by `greek-public-firewall.service` at every boot, before Docker starts the
-containers. `cloudflared` asks DNS servers on the internet (`1.1.1.1`),
-not the Pi's.
+containers. If they fail to load at boot, the service loads
+[public/firewall-closed.nft](public/firewall-closed.nft) instead, which cuts
+both of the site's networks off from everything, the internet included, and
+fails: Docker still starts (other apps need it), but `cloudflared` can't
+connect, so the site is offline, and the outside check says so, until a
+deploy, a publish or `tunnel.sh on` loads the rules. A deploy that brings
+rules that fail to load leaves the loaded ones in place and stops.
+`cloudflared` asks DNS servers on the internet (`1.1.1.1`), not the Pi's.
 
 Whenever the site starts with a token (a deploy, a publish, `tunnel.sh
 on`), the rules are loaded again and checked before `cloudflared` starts:
 a throwaway container on both of its networks
 ([probe_walls.py](public/probe_walls.py)) tries the Pi's addresses (the
-internal network's gateway among them), the home router, the Pi's DNS
-servers on the home network and the tailnet's, which must not answer, and
-an address on the internet, which must. If one answers, `cloudflared` stays stopped and the
+internal network's gateway among them), the home router (port 80), the
+Pi's DNS servers on the home network (systemd-resolved's, or else those in
+`/etc/resolv.conf`; the log says when it finds none) and the tailnet's,
+which must not answer, and an address on the internet, which must. If one answers, `cloudflared` stays stopped and the
 deploy fails. The log names what answered, never an address.
 
 **Setting it up**, once (`[CLOUDFLARE]` is Cloudflare's dashboard, with
@@ -273,7 +287,8 @@ below may differ):
 3. `[CLOUDFLARE]` For the domain: SSL/TLS, Edge Certificates, Always Use
    HTTPS on; and the setting that blocks AI crawlers (Security, Bots).
    Leave Bot Fight Mode off: it would challenge the outside check.
-4. `[PI]` Save the token and start the tunnel:
+4. `[PI]` After the first publish (`tunnel.sh` refuses before it), save the
+   token and start the tunnel:
    ```bash
    ssh -t PI sudo /opt/ancient-greek-reader/app/deploy/tunnel.sh on
    ```
@@ -290,7 +305,8 @@ below may differ):
    on, and `http://` sent on to `https://`. After a restart this fills the page cache again (a few
    minutes for the Pi); other runs take a minute or two. Each check is tried
    three times, 20 seconds apart. GitHub
-   emails a failed run to whoever last changed its schedule.
+   emails a failed scheduled run to whoever last changed its schedule, and a
+   failed run after a deploy to whoever set the deploy off.
    ```bash
    gh variable set PUBLIC_SITE_URL --body https://reader.example
    gh secret set CF_ACCESS_CLIENT_ID --body <client ID>
@@ -314,17 +330,26 @@ A reverted migration can't be undone that way: the app then refuses the
 newer database. Put back the copy made before it
 (`data/greek-backup-<date>-pre-<migration>.db`): stop the app, replace
 `greek.db` (and remove `greek.db-wal` and `greek.db-shm`), and start it
-again.
+again. The public site's copy was migrated too, and a deploy stops at it
+until it is put back: `publish.sh --restore` returns the copy from before
+that deploy (its `greek.db.previous`), or publish again.
 
 ## Removing it
+
+First copy `data/greek.db` off the Pi (`greek backup -`, above, while the
+app still runs), and turn deploys and the outside check off:
+`gh variable set PI_DEPLOY_ENABLED --body false` and `gh variable delete
+PUBLIC_SITE_URL` (otherwise the check fails, and emails, every hour). Then
+on the Pi (the firewall's three lines only if the tunnel was ever on):
 
 ```bash
 sudo /opt/ancient-greek-reader/app/deploy/tunnel.sh off
 sudo docker compose --env-file /opt/ancient-greek-reader/public/compose.env \
-  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml down
+  -f /opt/ancient-greek-reader/app/deploy/public/docker-compose.yml down --rmi all
 sudo systemctl disable --now greek-public-firewall.service
 sudo rm -rf /etc/systemd/system/greek-public-firewall.service /etc/ancient-greek-reader
 sudo nft delete table inet greek_public
+sudo systemctl daemon-reload
 sudo docker compose -f /opt/ancient-greek-reader/app/docker-compose.yml down --rmi all
 sudo tailscale serve --https=8443 off
 sudo rm -rf /opt/ancient-greek-reader /etc/sudoers.d/gha-deploy-ancient-greek-reader
@@ -332,6 +357,8 @@ sudo userdel -r greekreader
 sudo userdel greekpublic
 ```
 
-and remove the key's line from `/home/gha-deploy/.ssh/authorized_keys`.
-Copy `data/greek.db` off the Pi first (`greek backup -`, above). In
-Cloudflare, delete the tunnel and its Access application.
+and remove the key's line from `/home/gha-deploy/.ssh/authorized_keys` (and
+the `gha-deploy` user, if no other app deploys with it). Delete the
+repository's deploy secrets (step 3, and step 5's), and in Tailscale the
+trust credential and `tag:ci`'s grant. In Cloudflare, delete the tunnel and
+its Access application.

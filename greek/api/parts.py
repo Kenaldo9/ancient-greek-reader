@@ -2,7 +2,7 @@
 Message Batches requests for the principal parts of a treebank text's verbs,
 from Claude Opus 5.5: one request per group of verbs (treebank lemmas), with
 the work's prompt (greek/api/works.py). The results are stored in verb_parts
-under the work's dialect, beside the Verbs page's lookups. This module
+under the work's dialect. This module
 builds the requests and reads their results; `greek study parts` submits them
 and `greek study batch collect` stores them (greek/cli/study_cmd.py).
 """
@@ -30,7 +30,7 @@ VERBS_PER_REQUEST = 20
 # them: about 170 for the JSON of six parts, plus thinking at effort medium.
 DEFAULT_OUTPUT_PER_VERB = 350.0
 
-# The names stored with each part, as the Verbs page labels them
+# The names stored with each part, as the word pane labels them
 PART_NAMES = (
     "Present active",
     "Future active",
