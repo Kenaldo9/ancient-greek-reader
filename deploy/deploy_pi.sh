@@ -315,7 +315,13 @@ configure_tailscale_serve() {
   dry "publish ${SERVE_TARGET} on the tailnet with tailscale serve (HTTPS, port ${SERVE_PORT})" && return
   serve_is_set && return
   log "Publishing ${SERVE_TARGET} on the tailnet's port ${SERVE_PORT}"
-  tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}"
+  # It prints the address it serves at, which names the tailnet
+  if [[ "${NON_INTERACTIVE}" == "true" ]]; then
+    tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}" >/dev/null 2>&1 \
+      || die "tailscale serve failed: run deploy_pi.sh by hand on the Pi to see why"
+  else
+    tailscale serve --bg --yes --https="${SERVE_PORT}" "${SERVE_TARGET}"
+  fi
 }
 
 run_health_checks() {

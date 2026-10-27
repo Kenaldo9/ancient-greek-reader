@@ -251,16 +251,23 @@ nftables table of their own (`inet greek_public`): Docker, ufw and
 Tailscale keep theirs in iptables' tables and never replace it, and a drop
 in it is final whatever their chains accept. They are copied to `/etc/ancient-greek-reader/` and loaded
 by `greek-public-firewall.service` at every boot, before Docker starts the
-containers. `cloudflared` asks DNS servers on the internet (`1.1.1.1`),
-not the Pi's.
+containers. If they fail to load at boot, the service loads
+[public/firewall-closed.nft](public/firewall-closed.nft) instead, which cuts
+both of the site's networks off from everything, the internet included, and
+fails: Docker still starts (other apps need it), but `cloudflared` can't
+connect, so the site is offline, and the outside check says so, until a
+deploy, a publish or `tunnel.sh on` loads the rules. A deploy that brings
+rules that fail to load leaves the loaded ones in place and stops.
+`cloudflared` asks DNS servers on the internet (`1.1.1.1`), not the Pi's.
 
 Whenever the site starts with a token (a deploy, a publish, `tunnel.sh
 on`), the rules are loaded again and checked before `cloudflared` starts:
 a throwaway container on both of its networks
 ([probe_walls.py](public/probe_walls.py)) tries the Pi's addresses (the
-internal network's gateway among them), the home router, the Pi's DNS
-servers on the home network and the tailnet's, which must not answer, and
-an address on the internet, which must. If one answers, `cloudflared` stays stopped and the
+internal network's gateway among them), the home router (port 80), the
+Pi's DNS servers on the home network (systemd-resolved's, or else those in
+`/etc/resolv.conf`; the log says when it finds none) and the tailnet's,
+which must not answer, and an address on the internet, which must. If one answers, `cloudflared` stays stopped and the
 deploy fails. The log names what answered, never an address.
 
 **Setting it up**, once (`[CLOUDFLARE]` is Cloudflare's dashboard, with

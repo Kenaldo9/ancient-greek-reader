@@ -25,6 +25,7 @@ PUBLIC_OUT_NETWORK="greek-public_out"
 PUBLIC_OUT_BRIDGE="greek-out"
 PUBLIC_SITE_NETWORK="greek-public_site"
 PUBLIC_FIREWALL_RULES="/etc/ancient-greek-reader/public-firewall.nft"
+PUBLIC_FIREWALL_CLOSED="/etc/ancient-greek-reader/public-firewall-closed.nft"
 PUBLIC_FIREWALL_UNIT="greek-public-firewall.service"
 MIGRATIONS_DIR="/opt/ancient-greek-reader/app/greek/db/migrations"
 READER_IMAGE="ancient-greek-reader:latest"
@@ -120,9 +121,11 @@ with urllib.request.urlopen("http://127.0.0.1:8999" + sys.argv[1], timeout=30) a
 
 # The firewall that keeps the tunnel's network off the Pi, the home network
 # and the tailnet (firewall.nft): copied out of the checkout, loaded now and
-# at every boot before Docker starts the containers.
+# at every boot before Docker starts the containers, or if it fails to load
+# there, firewall-closed.nft, which keeps the site's networks off everything.
 ensure_public_firewall() {
   install -D -m 644 -o root -g root "${PUBLIC_FILES}/firewall.nft" "${PUBLIC_FIREWALL_RULES}"
+  install -m 644 -o root -g root "${PUBLIC_FILES}/firewall-closed.nft" "${PUBLIC_FIREWALL_CLOSED}"
   install -m 644 -o root -g root "${PUBLIC_FILES}/${PUBLIC_FIREWALL_UNIT}" \
     "/etc/systemd/system/${PUBLIC_FIREWALL_UNIT}"
   systemctl daemon-reload
@@ -137,13 +140,31 @@ device_address() {
   ip -4 -o addr show dev "$1" 2>/dev/null | awk '{ sub("/.*", "", $4); print $4; exit }'
 }
 
+# The nameservers on the home network in the resolv.conf files given, once
+# each: private IPv4 addresses, not loopback (a local stub such as
+# systemd-resolved's 127.0.0.53) and not servers on the internet
+home_dns_servers() {
+  cat "$@" 2>/dev/null | awk '$1 == "nameserver" { print $2 }' | python3 -c '
+import ipaddress, sys
+seen = set()
+for line in sys.stdin:
+    try:
+        a = ipaddress.ip_address(line.strip())
+    except ValueError:
+        continue
+    if a.version == 4 and not a.is_global and not a.is_loopback and a not in seen:
+        seen.add(a)
+        print(a)
+'
+}
+
 # A throwaway container on both of cloudflared's networks tries the Pi's
 # addresses (the site network's gateway too: an internal network still
 # reaches the Pi), the home router, the DNS servers the Pi asks and the
 # tailnet's, which must not answer, and an address on the internet, which
 # must (probe_walls.py). The caller runs it in an `if`, where set -e is off.
 check_tunnel_walls() {
-  local walled=() address device probe
+  local walled=() address device probe dns=0
   address="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')"
   [[ -z "${address}" ]] || walled+=("the Pi's home network address=${address}:22")
   address="$(ip -4 route show default | awk '{ print $3; exit }')"
@@ -160,17 +181,13 @@ check_tunnel_walls() {
     "${PUBLIC_SITE_NETWORK}")"
   [[ -n "${address}" ]] || { log "The site's network ${PUBLIC_SITE_NETWORK} has no gateway"; return 1; }
   walled+=("the Pi on the site's network=${address}:22")
-  # The Pi's own DNS servers on the home network (not ones on the internet)
+  # The Pi's own DNS servers on the home network: systemd-resolved's list,
+  # or without it the system's own
   while read -r address; do
     walled+=("the home network's DNS server=${address}:53")
-  done < <(awk '$1 == "nameserver" { print $2 }' /run/systemd/resolve/resolv.conf 2>/dev/null \
-    | python3 -c '
-import ipaddress, sys
-for line in sys.stdin:
-    a = ipaddress.ip_address(line.strip())
-    if a.version == 4 and not a.is_global:
-        print(a)
-')
+    dns=$((dns + 1))
+  done < <(home_dns_servers /run/systemd/resolve/resolv.conf /etc/resolv.conf)
+  ((dns > 0)) || log "No DNS server on the home network to try: none in /run/systemd/resolve/resolv.conf or /etc/resolv.conf"
   # Where cloudflared is: on the tunnel's network, and joined to the site's
   probe="$(docker create --rm --network "${PUBLIC_OUT_NETWORK}" --user 65534:65534 \
     --read-only --cap-drop ALL --security-opt no-new-privileges:true \
