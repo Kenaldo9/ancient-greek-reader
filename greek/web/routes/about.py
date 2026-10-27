@@ -15,7 +15,7 @@ from greek.web.templates_config import templates
 
 router = APIRouter()
 
-# The public repository: the code, and its releases the database
+# The public repository: the code (the database is not offered for download)
 REPOSITORY = "https://github.com/Kenaldo9/ancient-greek-reader"
 # Reports of mistakes by email, beside the repository's issues
 CONTACT = "greek@kenaldo.dev"

@@ -42,8 +42,8 @@ Options:
   --app-env-file PATH    Install PATH as ${APP_ENV_FILE} (the API key,
                          for greek study only), then delete PATH. Without
                          it, a missing file is asked for interactively.
-  --seed-data DIR        Copy DIR (a greek.db with no -wal file, such as a
-                         data release's or one greek backup made, and
+  --seed-data DIR        Copy DIR (a greek.db with no -wal file, such as
+                         one greek backup made, and
                          anything beside it, e.g. sources/) into ${DATA_DIR}.
                          Only when it has no greek.db yet: never replaces one.
   --non-interactive      Fail instead of asking for anything missing

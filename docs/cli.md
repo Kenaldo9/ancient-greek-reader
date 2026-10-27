@@ -1,9 +1,9 @@
 # The command line
 
 Examples use `greek` as shorthand for `python greek.py` locally or
-`docker compose run --rm greek` in Docker. In the published database the
+`docker compose run --rm greek` in Docker. In the reader's own database the
 texts' IDs are 12 (the Iliad), 13 (the Odyssey), 15 (Thucydides) and 16
-(Herodotus); `greek library` lists them.
+(Herodotus); `greek library` lists yours.
 
 ## Environment variables
 
@@ -16,7 +16,7 @@ texts' IDs are 12 (the Iliad), 13 (the Odyssey), 15 (Thucydides) and 16
 
 ```
 data/
-├── greek.db          # SQLite database (the data release's greek.db.xz, decompressed)
+├── greek.db          # SQLite database
 ├── catalog.json      # Cached Perseus text catalog (greek fetch)
 ├── sources/          # Treebank and LSJ files (greek study import-treebank, import-lsj)
 └── texts/            # Imported text files (tab-separated reference\tcontent)
@@ -352,8 +352,9 @@ ssh HOST docker exec CONTAINER python greek.py backup - > greek.db
 
 ### greek export-data
 
-Write the database as it is published for others (a GitHub Release's
-assets) to a new or empty folder. It is a copy made as `greek backup` makes
+Write the database as it is shared (the public site's copy, and a GitHub
+Release's assets if the database is published: [docs/data.md](data.md#getting-it))
+to a new or empty folder. It is a copy made as `greek backup` makes
 it, without the study batches' bookkeeping (`study_batches` and their
 requests: what each asked for, its usage and its cost; the study data they
 saved stays). The copy is vacuumed, checked again (`integrity_check`,
@@ -379,8 +380,7 @@ ssh HOST docker exec CONTAINER python greek.py export-data /data/export
 Apply the database's pending migrations and say where it stands. Every
 command does this as it starts (see below); this one does nothing else, for
 a database the web app serves read-only (the public site's published copy,
-[deploy/README.md](../deploy/README.md)) or one from a data release made by
-older code.
+[deploy/README.md](../deploy/README.md)) or an export made by older code.
 
 ```bash
 greek migrate

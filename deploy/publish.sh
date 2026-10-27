@@ -5,7 +5,7 @@
 # From your computer:
 #   ssh -t PI sudo /opt/ancient-greek-reader/app/deploy/publish.sh
 # --restore puts the previous copy back. The export's files stay in
-# public/releases/ for a GitHub Release. deploy/README.md, "The public site".
+# public/releases/ (the last three). deploy/README.md, "The public site".
 set -euo pipefail
 
 APP_ROOT="/opt/ancient-greek-reader"
@@ -116,7 +116,7 @@ publish() {
 Published.
 - Database:  $(database_migration "${PUBLIC_DB}"), exported $(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["exported"])' "${release}/manifest.json")
 - Code:      ${commit}
-- Export:    ${release} (for a GitHub Release)
+- Export:    ${release}
 - Previous:  ${PUBLIC_PREVIOUS} (sudo deploy/publish.sh --restore puts it back)
 SUMMARY
 }

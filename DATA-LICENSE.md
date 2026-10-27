@@ -1,6 +1,6 @@
 # Data licences
 
-The Ancient Greek Reader's database, `greek.db` (published as `greek.db.xz`),
+The Ancient Greek Reader's database, `greek.db` (exported as `greek.db.xz`),
 brings together data from several sources, and each part keeps its own
 licence. They are listed below with the tables that hold them. The reader's
 code is under the MIT licence (`LICENSE`); this file covers the data. Each

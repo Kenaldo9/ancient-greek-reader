@@ -49,22 +49,15 @@ book with what it has.
 
 ## Running it yourself
 
-You need Docker, or Python 3.12 or newer, and about 250 MB of disk.
+You need Docker, or Python 3.12 or newer, and about 600 MB of disk for
+the data.
 
-1. The code and the data. The database is published as a
-   [release](https://github.com/Kenaldo9/ancient-greek-reader/releases)
-   ([docs/data.md](docs/data.md)):
+1. The code:
    ```bash
    git clone https://github.com/Kenaldo9/ancient-greek-reader.git
    cd ancient-greek-reader
-   mkdir -p data && cd data
-   curl -fLO https://github.com/Kenaldo9/ancient-greek-reader/releases/latest/download/greek.db.xz
-   curl -fLO https://github.com/Kenaldo9/ancient-greek-reader/releases/latest/download/SHA256SUMS
-   sha256sum -c SHA256SUMS && xz -d greek.db.xz
-   cd ..
    cp .env.example .env
    ```
-   (On macOS, `shasum -a 256 -c SHA256SUMS`, and `xz` from Homebrew.)
 2. Start it, with Docker:
    ```bash
    docker compose up -d          # http://localhost:8999
@@ -81,6 +74,21 @@ You need Docker, or Python 3.12 or newer, and about 250 MB of disk.
    pip install -r requirements.txt
    python greek.py web           # http://127.0.0.1:8000
    ```
+3. The texts. The reader's own database is not offered for download for
+   now; it may be published later, perhaps once every text has its
+   glosses, notes and translations, but that is not decided
+   ([docs/data.md](docs/data.md)). You can build one from the open
+   sources, free (with Docker, `docker compose run --rm greek` in place of
+   `python greek.py`):
+   ```bash
+   python greek.py fetch Homer       # pick the Iliad; note its text ID
+   python greek.py study import-treebank TEXT_ID --work iliad
+   python greek.py study import-lsj  # LSJ's entries for its lemmas
+   ```
+   The Library then shows the Iliad with its parsing and dictionary.
+   Glosses, notes and translations are made with `greek study` batches,
+   which need an Anthropic API key in `.env` and cost money
+   ([docs/cli.md](docs/cli.md#greek-study)).
 
 Newer code upgrades the database when it starts, after copying it beside
 itself ([Database upgrades](docs/cli.md#database-upgrades)). The same
