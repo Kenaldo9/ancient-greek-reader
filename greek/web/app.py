@@ -22,7 +22,8 @@ from greek.web.templates_config import (  # noqa: E402
     static_cache_control,
     templates,  # noqa: F401 — re-exported for convenience
 )
-from greek.web.routes import about, library, passage, reader, site  # noqa: E402
+from greek.web.routes import about, library, passage, reader, site, visit  # noqa: E402
+from greek.web.visits import VisitCounter, visits_from_environment  # noqa: E402
 
 
 def _run_startup_migrations():
@@ -73,6 +74,7 @@ app.include_router(reader.router)
 app.include_router(passage.router)
 app.include_router(about.router)
 app.include_router(site.router)
+app.include_router(visit.router)
 
 
 @app.middleware("http")
@@ -107,6 +109,14 @@ app.add_middleware(TextGZipMiddleware, minimum_size=1000, compresslevel=6)
 # database gets new study data at any time.
 if database_is_read_only():
     app.add_middleware(PageCache)
+
+# The public site counts its visitors in daily totals (visits.py), outside
+# the page cache so that a page it answers counts too; only the public
+# site's compose file names a folder for them (GREEK_VISITS_DIR)
+visits = visits_from_environment()
+if visits is not None:
+    app.add_middleware(VisitCounter, visits=visits)
+    visits.start()
 
 # Every page uses only the app's own scripts, styles, fonts and images: no
 # inline code or style attributes (base.html turns off htmx's injected style).
