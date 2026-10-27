@@ -74,7 +74,8 @@ def update_text_cmd(text_id, file_, yes):
     \b
     Nothing is changed when the file's references differ from the saved
     text's, or when a changed line has saved data tied to its words:
-    study glosses, notes and translations, use labels or a model's parses. A treebank's parses are replaced by running 'greek study
+    study glosses, notes and translations, use labels or a model's parses.
+    A treebank's parses are replaced by running 'greek study
     import-treebank' again afterwards.
 
     \b

@@ -226,7 +226,7 @@ def import_treebank_cmd(text_id, work, file_, refresh, list_missing, nodes_only)
     Example:
       greek study import-treebank 12 --work iliad
       greek study import-treebank 12 --nodes-only
-      greek study import-treebank 14 --work herodotus
+      greek study import-treebank 16 --work herodotus
     """
     conn = get_connection()
     text = get_text(conn, text_id)
@@ -1695,10 +1695,10 @@ def parts_cmd():
     \b
     The verbs are the treebank lemmas tagged as verbs, 20 to a request. The
     parts are saved in the work's dialect (Homeric for the Iliad and the
-    Odyssey, Ionic for Herodotus, Attic for Thucydides), beside the Verbs
-    page's lookups, and the reader's word pane shows them. Only `submit --yes`
-    spends money; run `estimate` (or `submit` without --yes) and approve the
-    estimate first. Follow a batch with `greek study batch status | collect`.
+    Odyssey, Ionic for Herodotus, Attic for Thucydides), and the reader's
+    word pane shows them. Only `submit --yes` spends money; run `estimate`
+    (or `submit` without --yes) and approve the estimate first. Follow a
+    batch with `greek study batch status | collect`.
 
     \b
     Example:

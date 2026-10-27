@@ -248,6 +248,12 @@ underlying `.txt` file. Prompts for confirmation.
 |----------|-------------|
 | `TEXT_ID` | Integer ID of the text to delete |
 
+#### Options
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--yes` | flag | off | Delete without asking |
+
 #### Examples
 
 ```
@@ -284,7 +290,7 @@ which share them; Ionic for Herodotus; Attic for Thucydides). Only `submit
 #### Examples
 
 ```bash
-greek study import-treebank 14 --work herodotus
+greek study import-treebank 16 --work herodotus
 greek study forms estimate 12 --books 2-7
 greek study uses submit 12 --books 2-7 --effort high --yes
 greek study batch status
@@ -430,6 +436,6 @@ database  020_reading_app (/data/greek.db)
 A checkout reads its commit from `.git` (uncommitted changes aren't shown); the
 Docker image records it when it is built, with the build time. The database
 line also says when the next start will apply migrations, or when the database
-is newer than the code. The same appears at the bottom of the Library page and
-the iPad drawer (`Code 1a2b3c4 · built 16 Oct 2026 10:49 · Database 020`), and
-as JSON at `/version`.
+is newer than the code. The same appears at the bottom of the Library and
+About pages and the reader's drawer (`Code 1a2b3c4 · built 16 Oct 2026 10:49 ·
+Database 020`), and as JSON at `/version`.

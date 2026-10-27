@@ -19,10 +19,11 @@ drawer) says what each text has, where its data comes from, the licences,
 where to report a mistake, and what a visitor's browser keeps.
 The
 reading position is saved per text in the browser (`localStorage`), so each
-device keeps its own; nothing is saved on the server. Book links and the TOC
-open the book at its start. The bottom of the Library page (and of the iPad
-drawer) shows which code is running and which database it uses (see
-[Versions](cli.md#versions)).
+device keeps its own; nothing is saved on the server. Book links (the
+Library's chips, the drawer's, and a text's contents page at
+`/texts/{id}/toc`) open the book at its start. The bottom of the Library and
+About pages (and of the reader's drawer) shows which code is running and
+which database it uses (see [Versions](cli.md#versions)).
 
 The reader shows a whole book that you scroll through; a prose book longer than
 40,000 characters is split into parts that start at a chapter. **Continue to
@@ -193,8 +194,9 @@ Every route reads saved data (GET); none writes or calls a model.
 ## On the open internet
 
 - Search engines may index the Library, About, each text's contents and each
-  page of its books, at the URL the Library and the contents open it with
-  (`/texts/12/read?at=2.1`; each part of a long book has its own).
+  page of its books, at its first reference, the URL the Library, the
+  contents and the pager open it with (`/texts/12/read?at=2.1`; each part of
+  a long book has its own).
   `robots.txt` allows exactly those, and keeps crawlers out of the word,
   passage and search fragments, Go to, and reader URLs opened partway or
   with other settings; `sitemap.xml` lists the same pages. A reader page

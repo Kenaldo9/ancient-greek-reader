@@ -5,7 +5,7 @@ Herodotus and Thucydides, with every word's parsing, its role in the
 sentence and its dictionary entry, and, in the books that have them, a
 gloss and a note on every word and translations of every line.
 
-![The Iliad's first lines with glosses under each word, and the passage's fluent translation beside them](docs/screens/reader-laptop.png)
+![The Iliad's first lines with glosses under each word; beside them the word μῆνιν, its parsing, LSJ's entry and a note, and the passage's fluent translation, each tagged with its source](docs/screens/reader-laptop.png)
 
 The reader only reads saved data: it asks no model anything, needs no
 account, and keeps nothing about you on the server (where you stopped
@@ -98,8 +98,9 @@ word, a literal translation of each line, a fluent translation of the
 passage, and a remark wherever the model disagreed with the treebank. Use
 labels, dictionary forms, verb constructions and principal parts were made
 the same way. Answers are checked when they are collected, and missing ones
-asked again. The prompts are in [greek/api/works.py](greek/api/works.py);
-[docs/data.md](docs/data.md) has the details.
+asked again. The prompts are in [greek/api/](greek/api/) (`study.py`, `uses.py`,
+`forms.py` and `parts.py`), made for each work from its profile in
+[works.py](greek/api/works.py); [docs/data.md](docs/data.md) has the details.
 
 ## Sources and credits
 
@@ -137,7 +138,8 @@ asked again. The prompts are in [greek/api/works.py](greek/api/works.py);
 The reader is a hobby project, kept up as time allows. If a gloss, a note
 or a translation is wrong, please
 [open an issue](https://github.com/Kenaldo9/ancient-greek-reader/issues/new/choose)
-with the book and line. There is no promise of a reply or of new features.
+or email [greek@kenaldo.dev](mailto:greek@kenaldo.dev), with the book and
+line. There is no promise of a reply or of new features.
 
 ## Development
 

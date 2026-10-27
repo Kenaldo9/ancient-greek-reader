@@ -22,17 +22,19 @@ and its licences in [docs/data.md](docs/data.md).
 | `greek/version.py` | The code's commit (the Docker image's `build.json`, or `.git`) and the database's last migration |
 | `greek/db/repos/` | SQL data access shared by the CLI and web routes |
 | `greek/models/` | Dataclasses representing stored texts, treebank data, study data, and verbs |
-| `greek/api/` | Study batches: each work's prompts (`works.py`), requests and results (`study.py`, `parts.py`, `forms.py`, `uses.py`), and models' display names |
-| `greek/fetch/` | Perseus catalog, downloads, and TEI parsing for poetry and prose |
+| `greek/api/` | Study batches: each work's profile (`works.py`), the prompts, requests and results (`study.py`, `parts.py`, `forms.py`, `uses.py`, with the gloss rule they share in `prompts.py`), and models' display names (`models.py`) |
+| `greek/fetch/` | Perseus catalog, downloads, and TEI parsing for poetry and prose; treebanks (`treebank.py`: download, parsing, alignment with a text, `WORKS`); LSJ (`lsj.py`, with `betacode.py`) |
+| `greek/postag.py`, `greek/syntax.py` | A treebank's 9-character morphology codes read and written; a word's role phrase and a sentence's outline from its dependency tree |
 | `greek/display/` | Rich CLI rendering |
 | `greek/search.py` | Greek normalization, FTS query construction, and match highlighting |
 | `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs; on a read-only database, add the page cache |
 | `greek/web/page_cache.py` | The public site's finished pages in memory, gzipped as sent (64 MB, least recently used out): only on a read-only database, which can't change while the app runs; keyed on the path and query, the Interlinear cookie, the site's scheme and host, and gzip; the private reader caches nothing |
+| `greek/web/routes/` | The Library (`library.py`), About (`about.py`), the reader page, its word fragment, Go to and the contents (`reader.py`), the passage box (`passage.py`) |
 | `greek/web/routes/site.py` | `robots.txt` and `sitemap.xml`: the pages search engines may index, from `page_starts` in `reader_data.py` |
 | `greek/web/deps.py` | Request-scoped database connections |
 | `greek/web/reader_data.py`, `reading.py`, `formatting.py` | Prepare reader views, paginate books, map saved words to tokens, and format display values |
 | `deploy/`, `.github/workflows/deploy.yml` | Tests and a secret scan (gitleaks) on every push, then on `main`, over the tailnet (an ephemeral `tag:ci` node), a pull, rebuild and checks on a Raspberry Pi, for the private reader and the public site on a published copy of the database (`deploy/public/`, `publish.sh`), reached through Cloudflare Tunnel behind a firewall that lets it reach only the internet (`tunnel.sh`, `public/firewall.nft`); `.github/workflows/site-check.yml` checks the site from outside after every deploy and every hour, opening every page in the sitemap, which fills the page cache again after a restart ([deploy/README.md](deploy/README.md)) |
-| `greek/web/templates/`, `static/` | Jinja pages and fragments, HTMX, vanilla reader JS, one app stylesheet, and self-hosted fonts; templates link static files with `static_url`, which adds a content hash (`?v=`) so browsers fetch changed files |
+| `greek/web/templates/`, `static/`, `templates_config.py` | Jinja pages and fragments, HTMX, vanilla reader JS, one app stylesheet, and self-hosted fonts; `templates_config.py` sets up Jinja and its filters, the static files' cache lifetimes, and the site's scheme and host for whole URLs; templates link static files with `static_url`, which adds a content hash (`?v=`) so browsers fetch changed files |
 
 ## Persistence
 
@@ -44,8 +46,8 @@ copies it to `greek-backup-<date>-pre-<migration>.db` and checks the copy, and
 it refuses a database with migrations the code doesn't have
 (`DatabaseNewerThanCode`): the CLI exits with the reason, the web app shows it
 on every page. The last applied migration is the database's version, and the
-git commit is the code's (`greek --version`, `/version`, the Library page and
-the iPad drawer). A database file the process can't write (the public
+git commit is the code's (`greek --version`, `/version`, the Library and
+About pages and the reader's drawer). A database file the process can't write (the public
 site's published copy, on a read-only mount) is opened read-only and read in
 place, without WAL; if it lacks some of the code's migrations,
 `run_migrations()` leaves it alone (`DatabaseNeedsMigrations`) and the web
@@ -168,21 +170,22 @@ events; the click a swipe ends with is swallowed), or Escape closes it and
 lets go of the word and the selection, so nothing is selected while it is
 closed; a page opened with `lines=` opens with it. There the Greek keeps its
 natural spacing, and a word's or line number's target reaches into the space
-around it (a pseudo-element) instead of the iPad's 44px boxes.
+around it (a pseudo-element) instead of the iPad's finger-sized boxes (a word
+at least 44px wide and 48px high, a line number 48px high).
 
 A page is a whole book; a book longer than 40,000 characters is split into
 parts at chapter starts (`greek/web/reading.py`). Opening a page scrolls the
 opened line to the top and records it as the text's reading position. The
 position then follows the scroll: `reader.js` shows the top line in the
 toolbar and, a second after scrolling stops, puts it in the URL's `at=`
-(`replaceState`) and saves it, and again on `pagehide`. Reading positions
+(`replaceState`) and saves it; `pagehide` saves it once more. Reading positions
 are this browser's: `positions.js` keeps one per text in `localStorage`
 (`greek.position.<text id>`), turns the Library's **Start reading** into
 **Continue at …** and points the drawer's text links there; a reader URL
-without `at=`, `lines=` or `q=` opens at the start, and `reader.js` then
+without `at=`, `lines=`, `q=` or an old `page=` opens at the start, and `reader.js` then
 replaces it with the saved place. Without storage the reader works and
 always starts at the beginning. The reader opts out of htmx's history snapshots
-(`hx-history="false"`): a book is about a million characters, so Back loads
+(`hx-history="false"`): a book page is up to about a million characters, so Back loads
 the page again at the `at=` of the entry it returns to.
 
 Selecting lines fetches `/texts/{id}/passage`; clicking a token fetches
@@ -201,8 +204,9 @@ Every route is a GET that reads saved data; the app has no write routes and
 imports no model client, so it needs no API key (tests check both).
 
 On the open internet: `robots.txt` lets search engines index the Library,
-About, each text's contents and each page of its books at the URL the
-Library and the contents open it with (`?at=` its first reference), and no
+About, each text's contents and each page of its books at its first
+reference (`?at=`, the URL the Library, the contents and the pager open it
+with), and no
 other reader URL, fragment or Go to; `sitemap.xml` lists the same pages, and
 a reader page names its page's start as its canonical URL. Whole URLs take
 the host asked for and the scheme from `X-Forwarded-Proto` (Cloudflare's

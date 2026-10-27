@@ -17,7 +17,8 @@ from dataclasses import dataclass
 from typing import Mapping, Optional
 
 # The dialects that forms and principal parts are keyed by (lemma_forms and
-# verb_parts), with how the reader names them. A Verbs-page lookup has none ("").
+# verb_parts), with how the reader names them. The old Verbs page's lookups had
+# none (""); migration 020 removed them.
 DIALECTS: Mapping[str, str] = {
     "homeric": "Homeric",
     "ionic": "Ionic",

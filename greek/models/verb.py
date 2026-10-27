@@ -6,8 +6,8 @@ from typing import Any, Dict, List
 class VerbParts:
     """
     A verb's six principal parts by one model: from a parts batch, in its
-    work's dialect ("homeric", "ionic", "attic"), or a lookup on the Verbs
-    page, without one ("").
+    work's dialect ("homeric", "ionic", "attic"). The old Verbs page's
+    lookups had none (""); migration 020 removed them.
     """
 
     id: int

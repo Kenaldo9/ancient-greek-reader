@@ -14,7 +14,7 @@ repository (tag `data-YYYY-MM-DD`), not in git:
 |---|---|
 | `greek.db.xz` | The database, compressed with xz (about 33 MB; 195 MB as `greek.db`) |
 | `SHA256SUMS` | Its checksum: `sha256sum -c SHA256SUMS` |
-| `manifest.json` | Its last migration, the code's commit it was exported with, each text (its treebank and licence, its books with translations), and the rows in each table |
+| `manifest.json` | Its last migration, the code's commit it was exported with, each text (its treebank and licence, its books with translations), the rows in each table, and the rows emptied |
 | `DATA-LICENSE.md` | The licences |
 
 [greek export-data](cli.md#greek-export-data) makes these files. A release
@@ -77,8 +77,9 @@ itself asks no model anything.
   It answers with a gloss and a note on every word, a literal
   translation of every line, a fluent translation of the unit, and a remark
   wherever it disagrees with the treebank's parse. Each work has its own
-  prompts, in `greek/api/works.py` (verse for Homer, prose for Herodotus and
-  Thucydides).
+  prompts (verse for Homer, prose for Herodotus and Thucydides), made from
+  its profile in `greek/api/works.py` by `greek/api/study.py`, `uses.py`,
+  `forms.py` and `parts.py`.
 - **Checks.** Answers are checked when a batch is collected: every word,
   line and unit must be answered, and a unit that fails is asked again (with
   `--repeat-words`, each word's answer must repeat its word, so a skipped
