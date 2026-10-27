@@ -424,6 +424,15 @@ def _bottom(page, selector):
     return page.locator(selector).evaluate("el => el.getBoundingClientRect().bottom")
 
 
+def _gap(page, upper, lower):
+    """How far `lower`'s top is below `upper`'s bottom, both measured at once."""
+    return page.evaluate(
+        "([a, b]) => document.querySelector(b).getBoundingClientRect().top"
+        " - document.querySelector(a).getBoundingClientRect().bottom",
+        [upper, lower],
+    )
+
+
 @pytest.mark.parametrize(
     "width, height, touch",
     layouts.VIEWPORTS + [(393, 852, True), (360, 800, True), (852, 393, True)],
@@ -463,8 +472,12 @@ def test_the_switch_stays_at_the_top_as_the_words_scroll(
             _scroll_words(page, 10_000)
             _word(page, 5, 0).click()
             pw.expect(page.locator(".wt-row.is-active")).to_have_count(1)
-            gap = _top(page, ".wt-row.is-active") - _bottom(page, ".wt-head")
-            assert -1 < gap < 2
+            # The word opening in the word pane moves the panel (on a monitor
+            # by 79 px as it loads): measure once it has, in one call
+            pw.expect(
+                page.locator('#word-strip.has-word[data-line="5"][data-i="0"]')
+            ).to_be_attached()
+            assert -1 < _gap(page, ".wt-head", ".wt-row.is-active") < 2
         assert errors == [] and blocked == []
     finally:
         context.close()
