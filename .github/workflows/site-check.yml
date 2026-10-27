@@ -11,9 +11,10 @@ name: Site check
 # `gh workflow run site-check.yml`. GitHub emails a failed scheduled run to
 # whoever last changed the schedule below, and a failed run after a deploy
 # to whoever set the deploy off. It runs once the repository
-# variable PUBLIC_SITE_URL holds the site's address; during the private
-# preview the secrets CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET hold
-# Cloudflare Access's service token. Setup: deploy/README.md, "The tunnel".
+# variable PUBLIC_SITE_URL holds the site's address. Behind Cloudflare
+# Access (a private preview), the secrets CF_ACCESS_CLIENT_ID and
+# CF_ACCESS_CLIENT_SECRET hold its service token; unset, no token is sent.
+# Setup: deploy/README.md, "The tunnel".
 
 on:
   schedule:
