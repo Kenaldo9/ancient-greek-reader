@@ -43,7 +43,7 @@ services:
   # (TUNNEL_TOKEN=…, deploy/tunnel.sh); until then nothing reaches the site.
   cloudflared:
     profiles: [tunnel]
-    image: cloudflare/cloudflared:2026.10.0
+    image: cloudflare/cloudflared:2026.10.4
     command: ["tunnel", "--no-autoupdate", "run"]
     env_file: ${PUBLIC_ROOT:?}/tunnel.env
     # Resolvers on the internet: the firewall keeps it off the home
