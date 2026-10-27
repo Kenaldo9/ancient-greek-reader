@@ -133,19 +133,27 @@ def test_monitor_shows_syntax_under_the_parsing(browser, syntax_reader):
         strip = _click(page, 4, 0, False)
         syntax = strip.locator(".ws-syntax")
         pw.expect(syntax).to_be_visible()
-        pw.expect(syntax.locator(".label")).to_have_text("Syntax")
+        # the headings carry the tags; the tabs' lines for them are hidden
+        pw.expect(syntax.locator(".label")).to_have_text("Syntax source: Perseus")
+        pw.expect(strip.locator(".ws-parse > .label")).to_have_text(
+            "Parsing source: Perseus"
+        )
         pw.expect(syntax).to_contain_text("object of ἔργον (1.40)")
         pw.expect(strip.locator(".ws-ptabs")).to_be_hidden()
-        pw.expect(strip.locator(".ws-ppanel-source")).to_be_hidden()
+        pw.expect(strip.locator(".ws-panel-tag")).to_have_count(2)
+        for tag in strip.locator(".ws-panel-tag").all():
+            pw.expect(tag).to_be_hidden()
         grid = strip.locator(".ws-ppanel .parse-grid").bounding_box()
         assert syntax.bounding_box()["y"] >= grid["y"] + grid["height"]
         # the word's frequency, and its lemma's dictionary form
-        pw.expect(strip.locator(".ws-dict-line")).to_have_text("LSJ λόγος, -ου, ὁ word")
+        pw.expect(strip.locator(".ws-dict-line")).to_have_text(
+            "source: LSJ λόγος, -ου, ὁ word"
+        )
         pw.expect(strip.locator(".ws-freq")).to_have_text(
             "3× in the Iliad · 3× in Book 1"
         )
         pw.expect(strip.locator(".ws-dict-forms")).to_have_text(
-            "gen. -οιο · form: Claude Opus 5.5"
+            "source: AI dictionary form · gen. -οιο"
         )
         # The word the role names is outlined, off screen until its name is clicked
         head = _head(page)
@@ -195,7 +203,11 @@ def test_parsing_and_syntax_are_tabs(browser, syntax_reader, width, height, touc
         pw.expect(strip.locator(".ws-parse > .label")).to_be_hidden()
         pw.expect(strip.locator("#ws-ppanel")).to_be_visible()
         pw.expect(strip.locator("#ws-ppanel")).to_have_attribute("role", "tabpanel")
-        pw.expect(strip.locator(".ws-ppanel-source")).to_have_text("Perseus treebank")
+        # the heading that carries the tag is hidden: the tab's line has it
+        pw.expect(strip.locator("#ws-ppanel .ws-panel-tag")).to_be_visible()
+        pw.expect(strip.locator("#ws-ppanel .ws-panel-tag")).to_have_text(
+            "source: Perseus"
+        )
         pw.expect(strip.locator("#ws-spanel")).to_be_hidden()
         pw.expect(page.locator(".w.is-head")).to_have_count(0)  # Syntax isn't shown
         if touch:
@@ -302,11 +314,15 @@ def test_a_use_label_and_a_construction(
             ["Role", "Subject", "Object", "Use"]
         )
         pw.expect(syntax.locator("dd").last).to_have_text(
-            "gnomic aorist, as with ἔρδω in maxims"
+            "source: AI gnomic aorist, as with ἔρδω in maxims"
         )
-        pw.expect(syntax.locator(".ws-source")).to_have_text(
-            "Role: Perseus treebank · Use: Claude Opus 5.5"
-        )
+        pw.expect(syntax.locator("dd").last.locator(".src")).to_be_visible()
+        # the role's source: the heading's tag, or under the tab
+        if width <= 2100:
+            pw.expect(syntax.locator(".ws-panel-tag")).to_be_visible()
+            pw.expect(syntax.locator(".ws-panel-tag")).to_have_text("source: Perseus")
+        else:
+            pw.expect(syntax.locator(".label")).to_have_text("Syntax source: Perseus")
         # the model's row has its own tint, and its Greek the Greek font
         role_bg, use_bg = syntax.locator("dt").evaluate_all(
             "els => [els[0], els[3]].map(e => getComputedStyle(e).backgroundColor)"
@@ -324,9 +340,8 @@ def test_a_use_label_and_a_construction(
             page.locator("#reader-tab-dictionary").tap()
         constr = strip.locator(".ws-constr")
         pw.expect(constr).to_be_visible()
-        pw.expect(constr.locator(".label")).to_have_text(
-            "Construction · Claude Opus 5.5"
-        )
+        pw.expect(constr.locator(".label")).to_have_text("Construction source: AI")
+        pw.expect(constr.locator(".label .src")).to_be_visible()
         pw.expect(constr.locator("p")).to_contain_text("+ double acc., do something")
         parts = strip.locator(".ws-parts").bounding_box()
         assert constr.bounding_box()["y"] >= parts["y"] + parts["height"]

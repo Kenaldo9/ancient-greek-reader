@@ -51,9 +51,9 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   definition, the word's role in its sentence and how often its lemma
   occurs ("12× in the Iliad · 2× in Book 1"). Herodotus and Thucydides use
   GLAUx, where some sentences were annotated by its parser rather than by
-  hand: their parsing is labelled "GLAUx, automatic" and their roles "may be
-  wrong". With study data (the whole Iliad; the other texts follow), it
-  also shows:
+  hand: their parsing and roles carry the amber **GLAUx auto** tag (see
+  [Source tags](#source-tags)). With study data (the whole Iliad; the other
+  texts follow), it also shows:
   - the lemma's dictionary form ("from μῆνις, -ιος, ἡ");
   - a **Syntax** block: the word's role in its treebank sentence ("object
     of ἄειδε"; hovering the word named highlights it in the text) and its
@@ -86,19 +86,45 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   row opens the word; hovering or focusing it highlights the word and the
   words under it in the text. A row with three rows or more under it folds
   (▾); from the keyboard the outline is a tree (arrow keys, Home/End, Enter).
-  A sentence GLAUx's parser annotated says "roles may be wrong". On iPad
+  Each sentence's heading carries its treebank's tag. On iPad
   portrait, **Show the sentence** unfolds a sentence's text. While the same
   lines stay selected, each view keeps its place: after the Word tab, another
   tab or the LSJ entry, Grammar opens where you left it.
 
 Turning **Interlinear** on shows the study data's gloss under each word;
-lines without study data show the Greek alone. In a book without study data
-Interlinear is off and says "No glosses yet"; changing books brings the
-book's own control. The CLI `read --interlinear` shows the same glosses. The
-Interlinear setting is a browser cookie.
-**Grammar** names its sources: the study data's meaning or LSJ's short
-definition (in grey), and the Perseus or GLAUx treebank's parsing or, for a
-word it lacks, a model's.
+lines without study data show the Greek alone. The switch carries the
+glosses' **AI** tag. In a book without study data Interlinear is off and
+says "No glosses yet"; changing books brings the book's own control. The
+CLI `read --interlinear` shows the same glosses. The Interlinear setting is
+a browser cookie.
+
+### Source tags
+
+Everything in the word pane and the passage box names where it comes from
+with a small boxed tag:
+
+| Tag | Source |
+|---|---|
+| **AI** | Claude Opus 5.5: glosses, notes, both translations, uses, dictionary forms, constructions, principal parts, parse checks, and the parses of words the treebank lacks |
+| **Perseus** | The Perseus treebank: parsing and roles in the Iliad and the Odyssey |
+| **GLAUx** | GLAUx: parsing and roles in Herodotus and Thucydides, a sentence annotated by hand |
+| **GLAUx auto** (amber) | GLAUx, a sentence its parser annotated, which can be wrong |
+| **LSJ** | Liddell–Scott–Jones: short definitions and the full entry |
+
+A heading carries the tag of what it heads (Parsing, Syntax, Note, each
+translation); a line without a heading of its own, or from another source
+than its block, starts with its tag (the gloss, the use, LSJ's definition,
+the dictionary form). Where Parsing and Syntax are tabs (a laptop, an iPad, a
+phone), the tag is under the open tab. **Grammar** has one legend line that
+names only what the selection has ("AI meanings, notes, uses · Perseus
+parsing, roles · LSJ meanings in grey"), and a row carries its own tag only
+when it differs: AI before a parse the treebank lacks, a parse check's AI,
+and GLAUx auto on a word of an automatic sentence when the legend says
+GLAUx. The interlinear glosses under the words are not tagged, but the
+Interlinear switch is.
+
+Hovering a tag gives the source's full name; on a touch screen, About lists
+the tags. A screen reader reads a tag as "source: AI".
 
 ## Search
 

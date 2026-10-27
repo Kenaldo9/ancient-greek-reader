@@ -69,7 +69,7 @@ def test_tablet_study_data(browser, study_data_reader):
         pw.expect(literal.locator("li").first).to_have_text("1.4literal 1.4")
         page.locator("#reader-tab-words").click()
         pw.expect(page.locator('.wt-row[data-line="4"] .wt-check').first).to_have_text(
-            "Parse check by Claude Opus 5.5: accusative, not nominative"
+            "Parse check: source: AI accusative, not nominative"
         )
         assert page.evaluate("document.documentElement.scrollWidth") == 1373
         assert errors == [] and blocked == []
@@ -89,8 +89,9 @@ def test_monitor_shows_the_study_data(browser, study_data_reader):
         # The word strip: the study gloss and note, and the parse check
         page.locator('.line[data-line="2"] .w').nth(1).click()
         strip = page.locator("#word-strip.has-word")
-        pw.expect(strip.locator(".ws-meaning")).to_have_text("a deed")
-        pw.expect(strip).to_contain_text("Gloss and note · Claude Opus 5.5")
+        pw.expect(strip.locator(".ws-meaning")).to_have_text("source: AI a deed")
+        pw.expect(strip.locator(".ws-meaning .src")).to_be_visible()
+        pw.expect(strip.locator(".ws-note > .label")).to_have_text("Note source: AI")
         pw.expect(strip.locator(".ws-check")).to_contain_text(
             "accusative, not nominative"
         )

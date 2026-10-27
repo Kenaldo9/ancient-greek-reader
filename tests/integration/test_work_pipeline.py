@@ -48,6 +48,7 @@ from greek.models import (
 )
 from greek.search import plain
 from tests.integration import test_glaux_import as glaux
+from tests.integration.test_web_study import tag
 from tests.integration import test_study_batch as study_batch
 
 batches = study_batch.batches
@@ -532,11 +533,14 @@ def test_the_word_pane_names_the_dialect_of_forms_made_for_another_work(client, 
     )
     save_parts_result(web_db, MODEL, {"συγγράφω": [{"part": 1, "form": "συγγράφω"}]})
     html = _strip(client, text_id, 1, 4)  # πόλεμον: only the Iliad's form
-    assert "πόλεμος, -οιο, ὁ" in html and "Claude Opus 5.5 · Homeric" in html
+    assert "πόλεμος, -οιο, ὁ" in html
+    assert f"{tag('AI')} dictionary form · Homeric</p>" in html
     html = _strip(client, text_id, 1, 2)  # ξυνέγραψε: Homeric parts and construction
-    assert 'class="ws-parts-source">Claude Opus 5.5 · Homeric<' in html
-    assert 'pp-summary-label">Principal parts · Homeric<' in html  # iPad's line
-    assert "Construction · Claude Opus 5.5 · Homeric" in html
+    assert f"Principal parts&nbsp;{tag('AI')}</h3>" in html
+    assert '<span class="ws-parts-source">Homeric</span>' in html
+    # iPad's line
+    assert f'pp-summary-label">Principal parts&nbsp;{tag("AI")} · Homeric<' in html
+    assert f"Construction&nbsp;{tag('AI')} · Homeric</h3>" in html
     # once Thucydides' own are made, they are shown, unmarked
     save_forms_result(
         web_db,
@@ -548,8 +552,8 @@ def test_the_word_pane_names_the_dialect_of_forms_made_for_another_work(client, 
     html = _strip(client, text_id, 1, 4)
     assert "πόλεμος, -ου, ὁ" in html and "· Homeric" not in html
     html = _strip(client, text_id, 1, 2)
-    assert "ξυγγράφω" in html and 'ws-parts-source">Claude Opus 5.5<' in html
-    assert 'pp-summary-label">Principal parts<' in html
+    assert "ξυγγράφω" in html and "ws-parts-source" not in html
+    assert f'pp-summary-label">Principal parts&nbsp;{tag("AI")}</span>' in html
 
 
 def test_the_iliads_word_pane_shows_no_dialect_mark(client, web_db):

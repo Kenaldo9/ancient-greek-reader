@@ -19,7 +19,15 @@ from greek.db.repos.verbs import save_verb_parts
 from greek.fetch.treebank import align_text, read_treebank
 from greek.models import LemmaForms, LexiconEntry, WordUse
 from greek.search import plain
-from greek.web.reader_data import saved_principal_parts, word_frequency, word_role
+from greek.web.reader_data import (
+    PERSEUS_CREDIT,
+    saved_principal_parts,
+    word_frequency,
+    word_role,
+)
+from tests.integration.test_web_study import tag
+
+PERSEUS = tag("Perseus", PERSEUS_CREDIT.title)
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "iliad_treebank_excerpt.tb.xml"
 APP_LINES = [
@@ -313,7 +321,9 @@ def test_word_strip_shows_the_role_and_the_word_it_names(client, reader):
     assert 'id="ws-ptab-syntax" aria-controls="ws-spanel" aria-selected="false"' in html
     assert '<div class="ws-ppanel" id="ws-ppanel">' in html
     assert '<div class="ws-syntax" id="ws-spanel">' in html
-    assert '<p class="ws-source ws-ppanel-source">Perseus treebank</p>' in html
+    # each tab's source under it, the headings that carry it hidden then
+    assert html.count(f'<p class="ws-panel-tag">{PERSEUS}</p>') == 2
+    assert f'<h3 class="label">Syntax&nbsp;{PERSEUS}</h3>' in html
 
 
 def test_a_verbs_syntax_and_the_principal_part_it_comes_from(client, reader):
@@ -371,23 +381,20 @@ def test_word_strip_shows_the_dictionary_form(client, reader):
         'LSJ</span> <span class="greek" lang="grc">μῆνις, -ιος, ἡ</span> wrath</p>'
         in html
     )
-    assert (
-        '<p class="ws-dict-forms"><span class="by">form: Claude Opus 5.5</span></p>'
-        in html
-    )
+    assert f'<p class="ws-dict-forms">{tag("AI")} dictionary form</p>' in html
     html = _strip(client, text_id, 2, 0)  # οὐλομένην, not in LSJ
     assert (
         '<p class="ws-muted"><span class="greek" lang="grc">οὐλόμενος, -η, -ον</span>'
         " is not in LSJ.</p>" in html
     )
     assert (
-        '<p class="ws-dict-forms">epic for ὀλόμενος · '
-        '<span class="by">form: Claude Opus 5.5</span></p>' in html
+        f'<p class="ws-dict-forms">{tag("AI")} dictionary form · epic for ὀλόμενος'
+        "</p>" in html
     )
     html = _strip(client, text_id, 3, 0)  # πολλὰς, irregular comparison
     assert (
-        '<p class="ws-dict-forms">comparison: πλείων, πλεῖστος · '
-        '<span class="by">form: Claude Opus 5.5</span></p>' in html
+        f'<p class="ws-dict-forms">{tag("AI")} dictionary form · comparison: πλείων, '
+        "πλεῖστος</p>" in html
     )
 
 
@@ -462,25 +469,23 @@ def test_word_strip_shows_the_use_and_the_construction(client, reader):
     )
     html = _strip(client, text_id, 1, 1)  # ἄειδε: a role and a use
     assert '<div class="ws-col ws-parse has-syntax">' in html
+    # the role is the treebank's (the heading's tag), the use the model's
     assert (
-        '<dt class="syn-use">Use</dt><dd>imperative of prayer: invocation of the '
-        "Muse</dd>" in html
+        f'<dt class="syn-use">Use</dt><dd>{tag("AI")} imperative of prayer: '
+        "invocation of the Muse</dd>" in html
     )
     assert html.index("<dt>Role</dt>") < html.index('<dt class="syn-use">')
-    assert (
-        '<p class="ws-source"><span title="Ancient Greek Dependency Treebank 2.1, '
-        'Perseus Digital Library (CC BY-SA 3.0)">Role: Perseus treebank</span> · '
-        "Use: Claude Opus 5.5</p>" in html
-    )
+    assert f'<h3 class="label">Syntax&nbsp;{PERSEUS}</h3>' in html
     html = _strip(client, text_id, 2, 3)  # Ἀχαιοῖς: Greek in the label
-    assert '<dd>dative of disadvantage with <span lang="grc">ἔθηκε</span></dd>' in (
-        html
+    assert (
+        f'<dd>{tag("AI")} dative of disadvantage with <span lang="grc">ἔθηκε</span>'
+        "</dd>" in html
     )
     html = _strip(client, text_id, 2, 5)  # ἔθηκε: its construction, no use
-    assert "syn-use" not in html and "Role: " not in html
+    assert "syn-use" not in html
     assert (
-        '<div class="ws-constr">\n      <h3 class="label">Construction · Claude '
-        'Opus 5.5</h3>\n      <p>+ acc. (<span lang="grc">κῆρ</span>, '
+        f'<div class="ws-constr">\n      <h3 class="label">Construction&nbsp;'
+        f'{tag("AI")}</h3>\n      <p>+ acc. (<span lang="grc">κῆρ</span>, '
         '<span lang="grc">θυμόν</span>), set in one&#39;s heart</p>' in html
     )
     # under the principal parts, before the LSJ entry
@@ -496,10 +501,14 @@ def test_a_use_without_a_role_gets_a_syntax_block(client, reader):
     html = _strip(client, text_id, 5, 0)
     assert '<div class="ws-col ws-parse has-syntax">' in html
     assert 'id="ws-ptab-syntax"' in html  # the tabs, on a laptop or tablet
-    assert '<dt class="syn-use">Use</dt><dd>negative of the clause</dd>' in html
+    assert (
+        f'<dt class="syn-use">Use</dt><dd>{tag("AI")} negative of the clause</dd>'
+        in html
+    )
     assert "<dt>Role</dt>" not in html
-    assert '<p class="ws-source">Use: Claude Opus 5.5</p>' in html
-    assert "Role: " not in html
+    # no role, so no treebank's tag on Syntax or under it
+    assert '<h3 class="label">Syntax</h3>' in html
+    assert html.count('<p class="ws-panel-tag">') == 1  # Parsing's
 
 
 def test_word_strip_of_a_text_without_a_treebank(client, db_text):

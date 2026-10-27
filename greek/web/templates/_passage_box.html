@@ -59,9 +59,6 @@
     <div class="pb-head-row">
       <h2 class="pb-title">Passage <span class="ref">{{ refs }}</span></h2>
       <div class="pb-meta">
-        {% if p.state == "study" %}
-        <span>{{ p.study_model | model_label }} · study data</span>
-        {% endif %}
         {# Laptop and monitor: the passage box fills the study column (reader.js) #}
         <button type="button" class="btn btn-small pb-expand" data-action="expand-passage" aria-expanded="false" aria-controls="passage-box">
           {{ m.icon("chevron") }}
@@ -83,12 +80,13 @@
     <div class="pb-panel pb-prose" role="tabpanel" id="panel-fluent" aria-labelledby="tab-fluent" tabindex="0">
       {% for u in p.fluent_units %}
       <section class="pb-unit" aria-label="Fluent translation of {{ ref_range(u.ref_start, u.ref_end) }}">
-        <h3 class="label pb-unit-label">Fluent translation of <span class="ref">{{ ref_range(u.ref_start, u.ref_end) }}</span></h3>
+        <h3 class="label pb-unit-label">Fluent translation of <span class="ref">{{ ref_range(u.ref_start, u.ref_end) }}</span>&nbsp;{{ m.ai(p.study_model) }}</h3>
         {% for para in u.fluent.split("\n") if para.strip() %}<p>{{ para }}</p>{% endfor %}
       </section>
       {% endfor %}
     </div>
     <div class="pb-panel pb-prose" role="tabpanel" id="panel-literal" aria-labelledby="tab-literal" tabindex="0" hidden>
+      <h3 class="label pb-unit-label">Literal translation of <span class="ref">{{ refs }}</span>&nbsp;{{ m.ai(p.study_model) }}</h3>
       <ol class="literal-lines" aria-label="Literal translation of {{ refs }}">
         {% for ll in p.literal_lines %}
         <li><span class="ref">{{ ll.line.reference or ll.line.line_number }}</span><span class="literal-text">{{ ll.literal }}</span></li>
@@ -114,9 +112,14 @@
         </div>
       </div>
       {% endif %}
-      {% if p.study %}
-      {% set sources = p.study_sources %}
-      <p class="wt-sources">{% if sources.meaning %}<span>Meaning: {{ sources.meaning }}.</span> {% endif %}<span>Parsing: {{ sources.parsing }}.</span>{% if structure %} <span>Role: the treebank.</span>{% endif %}{% if p.use_models %} <span>Use: {% for model in p.use_models %}{{ model | model_label }}{{ ", " if not loop.last }}{% endfor %}.</span>{% endif %}</p>
+      {#- the sources, each with its tag; a row from another source carries
+          its own: a parse the treebank lacks, or GLAUx auto under GLAUx #}
+      {% set legend = p.legend %}
+      {% set treebank = p.study_sources.treebank %}
+      {% if legend %}
+      <p class="wt-sources">
+        {%- for item in legend %}<span class="wt-source">{% if item.model %}{{ m.ai(item.model) }}{% elif item.credit %}{{ m.credit(item.credit) }}{% else %}{{ m.lsj() }}{% endif %} {{ item.gives }}</span>{% endfor -%}
+      </p>
       {% endif %}
       <div class="words-table{% if structure %} has-roles{% endif %}" role="table" aria-label="All words in {{ refs }}" data-view="order">
         <div class="wt-head" role="row">
@@ -140,8 +143,8 @@
               {% if w.lemma and w.lemma != w.form %}<span class="wt-lemma" lang="grc">{{ w.lemma }}</span>{% endif %}
             </span>
             <span class="wt-meaning" role="cell">{% if w.gloss %}{{ w.gloss }}{% elif w.short_defs %}<span class="wt-dict" title="Dictionary meaning (LSJ)">{{ w.short_defs }}</span>{% else %}—{% endif %}</span>
-            <span class="wt-parse" role="cell">{{ w.parse_text }}{% if w.parse_text and w.parse_by %}<span class="wt-by">{{ w.parse_by | model_label }}</span>{% endif %}{% if w.check and w.parsed %}<span class="wt-check"><span class="visually-hidden">Parse check by {{ w.studied | model_label }}: </span>{{ w.check }}</span>{% endif %}</span>
-            {% if structure %}<span class="wt-role" role="cell">{% if w.role %}<span class="wt-role-text">{{ m.phrase(w.role.rows[0].phrase, links=false) }}</span>{% if w.credit.automatic %}<span class="wt-auto" title="{{ w.credit.title }}">automatic, may be wrong</span>{% endif %}{% endif %}{% if w.use %}<span class="wt-use">{{ w.use.use_label | greek_spans }}</span>{% endif %}</span>{% endif %}
+            <span class="wt-parse" role="cell">{% if w.parse_text and w.parse_by %}{{ m.ai(w.parse_by) }} {% endif %}{{ w.parse_text }}{% if w.check and w.parsed %}<span class="wt-check"><span class="visually-hidden">Parse check: </span>{{ m.ai(w.studied) }} {{ w.check }}</span>{% endif %}</span>
+            {% if structure %}<span class="wt-role" role="cell">{% if w.role %}<span class="wt-role-text">{% if w.credit.automatic and treebank and not treebank.automatic %}{{ m.credit(w.credit) }} {% endif %}{{ m.phrase(w.role.rows[0].phrase, links=false) }}</span>{% endif %}{% if w.use %}<span class="wt-use">{{ w.use.use_label | greek_spans }}</span>{% endif %}</span>{% endif %}
             <span class="wt-note" role="cell">{{ w.note }}</span>
           </div>
           {% endfor %}
@@ -157,7 +160,7 @@
         {% for s in structure %}
         {% set srefs = ref_range(s.ref_start, s.ref_end) %}
         <section class="st-sentence" aria-label="Sentence {{ srefs }}">
-          <h3 class="st-head"><span class="ref">{{ srefs }}</span>{% if s.credit.automatic %}<span class="st-auto" title="{{ s.credit.title }}">GLAUx, automatic parse: roles may be wrong</span>{% else %}<span title="{{ s.credit.title }}">{{ s.credit.label }}, by hand</span>{% endif %}<button type="button" class="link-btn st-text-toggle" data-action="toggle-sentence-text" aria-expanded="false" aria-controls="st-text-{{ s.sentence_id }}">Show the sentence</button></h3>
+          <h3 class="st-head"><span class="ref">{{ srefs }}</span>{{ m.credit(s.credit) }}<button type="button" class="link-btn st-text-toggle" data-action="toggle-sentence-text" aria-expanded="false" aria-controls="st-text-{{ s.sentence_id }}">Show the sentence</button></h3>
           <p class="st-text" id="st-text-{{ s.sentence_id }}" lang="grc">{% for token, inside in s.text %}{% if inside %}{{ token }}{% else %}<span class="st-out">{{ token }}</span>{% endif %}{{ " " if not loop.last }}{% endfor %}</p>
           <ul class="st-rows" role="tree" aria-label="Structure of {{ srefs }}">{{ outline_rows(s, s.rows, true) }}</ul>
         </section>

@@ -10,7 +10,7 @@ from greek.db.repos.texts import list_texts
 from greek.fetch.treebank import WORKS, TreebankWork
 from greek.models import TextMeta
 from greek.web.deps import get_db
-from greek.web.reader_data import TextStudy, text_study
+from greek.web.reader_data import GLAUX, PERSEUS_CREDIT, TextStudy, text_study
 from greek.web.templates_config import templates
 
 router = APIRouter()
@@ -53,6 +53,9 @@ def about(request: Request, db=Depends(get_db)):
         {
             "texts": texts,
             "model": STUDY_MODEL,
+            # the treebanks' tags, as the reader draws them
+            "perseus": PERSEUS_CREDIT,
+            "glaux": GLAUX,
             "repository": REPOSITORY,
             "contact": CONTACT,
         },

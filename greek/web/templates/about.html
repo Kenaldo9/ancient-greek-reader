@@ -38,22 +38,25 @@
 
   <section class="about-section" aria-labelledby="about-model">
     <h2 id="about-model">Glosses, notes and translations</h2>
-    <p>The gloss and note on each word, the literal translation of each line and the fluent translation of each passage were written by {{ model_name }}, Anthropic's model, from the Greek text and the treebank's parse of every word. So were the use labels under Syntax, the dictionary forms and constructions, and the principal parts. They were made once, in batches, and saved: the reader itself asks no model anything.</p>
+    <p>The gloss and note on each word, the literal translation of each line and the fluent translation of each passage were written by {{ model_name }}, Anthropic's model, from the Greek text and the treebank's parse of every word. So were the use labels under Syntax, the dictionary forms and constructions, and the principal parts. They were made once, in batches, and saved: the reader itself asks no model anything. The reader marks them {{ m.ai(model) }}.</p>
     <p><strong>They can be wrong.</strong> Check them against the parsing and the dictionary. Where the model disagreed with the treebank's parse, the word shows its remark under Parse check.</p>
   </section>
 
   <section class="about-section" aria-labelledby="about-sources">
     <h2 id="about-sources">Sources and licences</h2>
+    {% set glaux_hand = m.src("GLAUx", glaux) %}
+    {% set glaux_auto = m.src("GLAUx auto", glaux ~ ": a sentence its parser annotated, which can be wrong", true) %}
+    <p>The reader marks where each thing comes from with these tags: {{ m.ai(model) }}&nbsp;{{ model_name }}, {{ m.credit(perseus) }}&nbsp;the Perseus treebank, {{ glaux_hand }}&nbsp;the GLAUx treebank ({{ glaux_auto }}&nbsp;where its parser annotated the sentence) and {{ m.lsj() }}&nbsp;the Liddell–Scott–Jones lexicon.</p>
     <dl class="about-sources">
       <dt>Greek texts</dt>
       <dd>The Perseus Digital Library (Tufts University), <a href="https://github.com/PerseusDL/canonical-greekLit">canonical-greekLit</a>: CC BY-SA 4.0.</dd>
-      <dt>The Iliad and the Odyssey: parsing and roles</dt>
+      <dt>The Iliad and the Odyssey: parsing and roles&nbsp;{{ m.credit(perseus) }}</dt>
       <dd>The <a href="https://github.com/PerseusDL/treebank_data">Ancient Greek Dependency Treebank 2.1</a>, Perseus Digital Library: CC BY-SA 3.0.</dd>
-      <dt>Herodotus and Thucydides: parsing and roles</dt>
-      <dd>The <a href="https://github.com/alekkeersmaekers/glaux">GLAUx corpus</a> (Alek Keersmaekers, KU Leuven): CC BY-SA 4.0. Its sentences annotated by hand come from the <a href="https://github.com/proiel/proiel-treebank">PROIEL treebank</a> (Herodotus: CC BY-NC-SA 3.0) and <a href="https://github.com/vgorman1/Greek-Dependency-Trees">Vanessa Gorman's treebanks</a> (Thucydides: CC BY-NC-SA 4.0), not for commercial use. The reader marks the others, annotated by GLAUx's parser, as automatic.</dd>
-      <dt>Dictionary</dt>
+      <dt>Herodotus and Thucydides: parsing and roles&nbsp;{{ glaux_hand }}</dt>
+      <dd>The <a href="https://github.com/alekkeersmaekers/glaux">GLAUx corpus</a> (Alek Keersmaekers, KU Leuven): CC BY-SA 4.0. Its sentences annotated by hand come from the <a href="https://github.com/proiel/proiel-treebank">PROIEL treebank</a> (Herodotus: CC BY-NC-SA 3.0) and <a href="https://github.com/vgorman1/Greek-Dependency-Trees">Vanessa Gorman's treebanks</a> (Thucydides: CC BY-NC-SA 4.0), not for commercial use. The reader marks the others, annotated by GLAUx's parser, {{ glaux_auto }}.</dd>
+      <dt>Dictionary&nbsp;{{ m.lsj() }}</dt>
       <dd>Liddell, Scott and Jones, <cite>A Greek-English Lexicon</cite>, Perseus Digital Library, <a href="https://github.com/PerseusDL/lexica">lexica</a>: CC BY-SA 4.0.</dd>
-      <dt>Glosses, notes and translations</dt>
+      <dt>Glosses, notes and translations&nbsp;{{ m.ai(model) }}</dt>
       <dd>{{ model_name }}, as above: CC BY-SA 4.0.</dd>
       <dt>Typefaces</dt>
       <dd>Gentium Book Plus (SIL International), IBM Plex Sans and IBM Plex Mono: SIL Open Font License 1.1.</dd>

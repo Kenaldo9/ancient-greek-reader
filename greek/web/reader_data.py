@@ -8,7 +8,6 @@ from urllib.parse import quote
 
 from fastapi import Request
 
-from greek.api.models import model_label
 from greek.api.study import MODEL as STUDY_MODEL
 from greek.db.repos.lexicon import get_lemma_entries
 from greek.db.repos.lines import (
@@ -157,11 +156,6 @@ class GlossSource:
 
     model: str
 
-    @property
-    def label(self) -> str:
-        """'Claude Opus 5.5 study data'."""
-        return f"{model_label(self.model)} study data"
-
 
 # ------------------------------------------------------- treebank words
 
@@ -169,9 +163,9 @@ class GlossSource:
 @dataclass(frozen=True)
 class TreebankCredit:
     """
-    How the reader credits a word's treebank: a short label ("Perseus
-    treebank"), its tooltip, and whether GLAUx's parser rather than a person
-    annotated the word's sentence.
+    How the reader credits a word's treebank: its tag ("Perseus", "GLAUx",
+    "GLAUx auto"), the tag's tooltip, and whether GLAUx's parser rather than
+    a person annotated the word's sentence.
     """
 
     label: str
@@ -180,10 +174,11 @@ class TreebankCredit:
 
 
 PERSEUS_CREDIT = TreebankCredit(
-    "Perseus treebank",
+    "Perseus",
     "Ancient Greek Dependency Treebank 2.1, Perseus Digital Library (CC BY-SA 3.0)",
 )
-_GLAUX = "GLAUx corpus, KU Leuven (CC BY-SA 4.0)"
+# GLAUx's credit, which About names too
+GLAUX = "GLAUx corpus, KU Leuven (CC BY-SA 4.0)"
 
 
 def treebank_credit(
@@ -198,8 +193,8 @@ def treebank_credit(
         return PERSEUS_CREDIT
     if annotation == "auto":
         return TreebankCredit(
-            "GLAUx, automatic",
-            f"{_GLAUX}. This sentence was annotated by GLAUx's parser, which "
+            "GLAUx auto",
+            f"{GLAUX}. This sentence was annotated by GLAUx's parser, which "
             "gets about 97% of lemmas and parses right, but only about 80% of "
             "the syntax.",
             automatic=True,
@@ -207,7 +202,7 @@ def treebank_credit(
     work = WORKS.get(source.work)
     hand = f", from {work.hand} (CC BY-NC-SA)" if work else ""
     return TreebankCredit(
-        "GLAUx treebank", f"{_GLAUX}. This sentence was annotated by hand{hand}."
+        "GLAUx", f"{GLAUX}. This sentence was annotated by hand{hand}."
     )
 
 
@@ -629,55 +624,32 @@ class StudyLine:
 
 @dataclass
 class WordsSources:
-    """Where the meanings and parsings of a Grammar table come from."""
+    """Where the meanings, notes and parsings of a Grammar table come from."""
 
     glosses: List[GlossSource]  # the saved meanings', in order of first use
     lsj: bool  # some meanings are LSJ's short definitions (shown in grey)
     defined_by: List[str]  # models whose definitions stand in for LSJ's
     parsed_by: List[str]  # models that parsed words the treebank lacks
     credits: List[TreebankCredit] = field(default_factory=list)  # the treebank's
+    noted_by: List[str] = field(default_factory=list)  # models of the notes
 
     @property
-    def meaning(self) -> str:
+    def treebank(self) -> Optional[TreebankCredit]:
         """
-        'Claude Opus 5.5 study data; in grey, LSJ', just 'LSJ' when no meaning
-        is saved, or '' when no word has one.
+        The treebank's tag for the legend: its one credit, or for a GLAUx
+        selection with sentences its parser annotated, plain GLAUx (those
+        words then carry GLAUx auto); None when no word has its parse.
         """
-        saved = ", ".join(s.label for s in self.glosses)
-        grey = ", or ".join(
-            (["LSJ"] if self.lsj else [])
-            + [f"{model_label(m)} where LSJ lacks the word" for m in self.defined_by]
-        )
-        if saved and grey:
-            return f"{saved}; in grey, {grey}"
-        return saved or grey
-
-    @property
-    def treebank(self) -> str:
-        """
-        'Perseus treebank', 'GLAUx treebank', or for a GLAUx selection with
-        sentences its parser annotated, 'GLAUx treebank, partly automatic'.
-        """
-        labels = list(dict.fromkeys(c.label for c in self.credits))
-        if not labels:
-            return PERSEUS_CREDIT.label
-        if len(labels) == 1:
-            return labels[0]
-        return "GLAUx treebank, partly automatic"
-
-    @property
-    def parsing(self) -> str:
-        """'Perseus treebank; where it has none, Claude Opus 5.5 (labelled)'."""
-        if not self.parsed_by:
-            return self.treebank
-        models = ", ".join(model_label(m) for m in self.parsed_by)
-        return f"{self.treebank}; where it has none, {models} (labelled)"
+        if not self.credits:
+            return None
+        return next((c for c in self.credits if not c.automatic), self.credits[0])
 
 
 def words_sources(study: Sequence[StudyLine]) -> WordsSources:
     glosses: List[GlossSource] = []
     defined_by: List[str] = []
     parsed_by: List[str] = []
+    noted_by: List[str] = []
     credits: List[TreebankCredit] = []
     lsj = False
     for w in (w for sl in study for w in sl.words):
@@ -692,9 +664,24 @@ def words_sources(study: Sequence[StudyLine]) -> WordsSources:
                     lsj = True
                 elif e and e.model_def and e.model_used not in defined_by:
                     defined_by.append(e.model_used)
+        if w.note and w.studied and w.studied not in noted_by:
+            noted_by.append(w.studied)
         if w.parse_text and w.parse_by and w.parse_by not in parsed_by:
             parsed_by.append(w.parse_by)
-    return WordsSources(glosses, lsj, defined_by, parsed_by, credits)
+    return WordsSources(glosses, lsj, defined_by, parsed_by, credits, noted_by)
+
+
+@dataclass(frozen=True)
+class LegendItem:
+    """
+    One source in Grammar's legend and what it gives the words ("meanings,
+    notes, uses"): a study model's (tagged AI), a treebank's (its credit),
+    or with neither, LSJ's.
+    """
+
+    gives: str
+    model: Optional[str] = None
+    credit: Optional[TreebankCredit] = None
 
 
 def _parts(
@@ -953,6 +940,36 @@ class PassageView:
     def study_sources(self) -> WordsSources:
         """Where the Grammar table's meanings and parsings come from."""
         return words_sources(self.study)
+
+    @property
+    def legend(self) -> List[LegendItem]:
+        """
+        Grammar's sources, only those its words have: "AI meanings, notes,
+        uses · Perseus parsing, roles · LSJ meanings in grey". A parse the
+        treebank lacks carries its own AI tag in its row, as does GLAUx auto
+        on a word its parser annotated when the legend says GLAUx.
+        """
+        sources = self.study_sources
+        made: Dict[str, List[str]] = {}  # model → what it gives
+        for model, gives in (
+            *((s.model, "meanings") for s in sources.glosses),
+            *((m, "meanings LSJ lacks") for m in sources.defined_by),
+            *((m, "notes") for m in sources.noted_by),
+            *((m, "uses") for m in self.use_models),
+        ):
+            given = made.setdefault(model, [])
+            if gives not in given and not (
+                gives.startswith("meanings ") and "meanings" in given
+            ):
+                given.append(gives)
+        items = [LegendItem(", ".join(g), model=m) for m, g in made.items()]
+        if sources.treebank:
+            gives = "parsing, roles" if self.outline else "parsing"
+            items.append(LegendItem(gives, credit=sources.treebank))
+        if sources.lsj:
+            grey = "meanings in grey" if sources.glosses else "meanings"
+            items.append(LegendItem(grey))
+        return items
 
     @property
     def tabbed(self) -> bool:

@@ -212,7 +212,7 @@ def test_the_export_opens_in_the_app_at_the_codes_version(live, tmp_path):
     assert "Iliad" in library.text and "Complete" in library.text
     assert '<span class="w-t">gloss 1.1 0</span>' in page.text
     assert "wrath" in word.text  # LSJ's entry
-    assert "<dd>direct object</dd>" in word.text  # its use label
+    assert "AI</span> direct object</dd>" in word.text  # its use label
 
 
 # --- What lies beside it ---------------------------------------------------------------

@@ -248,6 +248,23 @@ def test_about_names_each_source_and_licence(client):
         assert source in html and licence in html
     assert "written by Claude Opus 5.5, Anthropic's model" in html
     assert "<strong>They can be wrong.</strong>" in html
+    # the tags the reader marks its sources with, each source's heading with its own
+    legend = html[html.index("The reader marks where") :].split("</p>")[0]
+    assert re.findall(r"source: </span>([^<]*)</span>", legend) == [
+        "AI",
+        "Perseus",
+        "GLAUx",
+        "GLAUx auto",
+        "LSJ",
+    ]
+    heads = re.findall(r"<dt>([^<]*)&nbsp;.*?source: </span>([^<]*)</span></dt>", html)
+    assert heads == [
+        ("The Iliad and the Odyssey: parsing and roles", "Perseus"),
+        ("Herodotus and Thucydides: parsing and roles", "GLAUx"),
+        ("Dictionary", "LSJ"),
+        ("Glosses, notes and translations", "AI"),
+    ]
+    assert "The reader marks them <span" in html
     assert 'href="https://github.com/Kenaldo9/ancient-greek-reader"' in html
     assert 'href="https://github.com/Kenaldo9/ancient-greek-reader/releases"' in html
     assert '<a href="/about" aria-current="page">About</a>' in html
