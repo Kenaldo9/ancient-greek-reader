@@ -96,12 +96,12 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   lines stay selected, each view keeps its place: after the Word tab, another
   tab or the LSJ entry, Grammar opens where you left it.
 
-Turning **Interlinear** on shows the study data's gloss under each word;
-lines without study data show the Greek alone. The switch carries the
-glosses' **AI** tag. In a book without study data Interlinear is off and
-says "No glosses yet"; changing books brings the book's own control. The
-CLI `read --interlinear` shows the same glosses. The Interlinear setting is
-a browser cookie.
+**Interlinear** shows the study data's gloss under each word; lines without
+study data show the Greek alone. It is on until you turn it off. The switch
+carries the glosses' **AI** tag. In a book without study data Interlinear is
+off and says "No glosses yet"; changing books brings the book's own control.
+The CLI `read --interlinear` shows the same glosses. The Interlinear setting
+is a browser cookie; a link's `interlinear=true` or `false` wins over it.
 
 ### Source tags
 

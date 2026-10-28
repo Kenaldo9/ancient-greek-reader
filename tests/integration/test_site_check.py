@@ -62,7 +62,7 @@ def test_the_app_passes_every_check(client, db_text):
     assert pauses == []
 
 
-def test_every_page_is_opened_with_interlinear_off_and_on(client, db_text):
+def test_every_page_is_opened_with_interlinear_on_and_off(client, db_text):
     _, text_id = db_text
     site = "http://testserver"
     app = _app_fetch(client, site)
@@ -79,9 +79,10 @@ def test_every_page_is_opened_with_interlinear_off_and_on(client, db_text):
     assert {path for path, _, _ in opened} == {*pages, "/robots.txt", "/sitemap.xml"}
     for path in pages:
         reader = path.startswith(read)
-        assert (path, False, False) in opened
-        # The check's cookie is the reader's own: Interlinear is on
-        assert (path, True, reader) in opened
+        # Without a cookie Interlinear is on; the check's cookie is the
+        # reader's own for off
+        assert (path, False, reader) in opened
+        assert (path, True, False) in opened
 
 
 def test_after_the_check_a_reader_finds_every_book_in_the_cache(client, db_text):
@@ -110,7 +111,7 @@ def test_after_the_check_a_reader_finds_every_book_in_the_cache(client, db_text)
             links |= set(re.findall(r'href="(/texts/\d+/read[^"]*)"', html))
         assert len(links) == 2  # Start reading and book 1
         for url in links:
-            for cookie in ({}, check_site.INTERLINEAR):
+            for cookie in ({}, check_site.INTERLINEAR_OFF):
                 assert c.get(url, headers=browser | cookie).status_code == 200
         assert len(cache.pages) == kept
 

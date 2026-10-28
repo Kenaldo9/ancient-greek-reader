@@ -211,14 +211,21 @@ def test_reader_selection_shows_the_study_data(client, web_db, text_id):
     assert "pb-ask" not in html and "Analyze" not in html
 
 
-def test_reader_interlinear_from_cookie(client, web_db, text_id):
+def test_interlinear_is_on_until_the_cookie_turns_it_off(client, web_db, text_id):
     _study(web_db, text_id, 1, 2)
-    client.cookies.set("interlinear", "1")
-    html = client.get(f"/texts/{text_id}/read").text
+    html = client.get(f"/texts/{text_id}/read").text  # a first visit
     assert 'class="reader interlinear-on"' in html
     assert 'id="interlinear-toggle" checked' in html
+    client.cookies.set("interlinear", "1")
+    assert 'class="reader interlinear-on"' in client.get(f"/texts/{text_id}/read").text
     html = client.get(f"/texts/{text_id}/read?interlinear=false").text
     assert 'class="reader"' in html
+    client.cookies.set("interlinear", "0")  # reader.js, the switch turned off
+    html = client.get(f"/texts/{text_id}/read").text
+    assert 'class="reader"' in html
+    assert 'id="interlinear-toggle">' in html
+    html = client.get(f"/texts/{text_id}/read?interlinear=true").text
+    assert 'class="reader interlinear-on"' in html
 
 
 def test_a_book_without_study_data_turns_interlinear_off(client, web_db, text_id):

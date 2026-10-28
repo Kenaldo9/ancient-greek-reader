@@ -108,7 +108,7 @@ def test_each_part_of_the_key_is_a_page_of_its_own(cached, db_text):
         (read, {}),
         (f"/texts/{text_id}/toc", {}),  # the path
         (read + "?at=1.3", {}),  # the query
-        (read, {"headers": {**gzip, "Cookie": "interlinear=1"}}),  # the cookie
+        (read, {"headers": {**gzip, "Cookie": "interlinear=0"}}),  # the cookie
         (read, {"headers": {**gzip, "Host": "reader.example"}}),  # the host
         (read, {"headers": {**gzip, "X-Forwarded-Proto": "https"}}),  # the scheme
         (read, {"headers": {"Accept-Encoding": "identity"}}),  # gzip or not
@@ -121,14 +121,14 @@ def test_each_part_of_the_key_is_a_page_of_its_own(cached, db_text):
         pages.append(response.text)
     assert counted.calls == len(asks) == len(cache.pages)
 
-    assert "interlinear-on" in pages[3] and "interlinear-on" not in pages[0]
+    assert "interlinear-on" in pages[0] and "interlinear-on" not in pages[3]
     assert f'href="http://reader.example{read}' in pages[4]
     assert f'href="https://testserver{read}' in pages[5]
     assert pages[6] == pages[0]
 
     # Anything else about the request is the same page
     c.get(read, headers={**gzip, "User-Agent": "crawler", "HX-Request": "true"})
-    c.get(read, headers={**gzip, "Cookie": "interlinear=0; other=x"})
+    c.get(read, headers={**gzip, "Cookie": "interlinear=1; other=x"})
     assert counted.calls == len(asks)
 
 
