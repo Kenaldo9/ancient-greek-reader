@@ -6,7 +6,7 @@ deploy and hourly (.github/workflows/site-check.yml), or by hand:
 
 It checks /version (a database the code can use, fully migrated), the
 Library, robots.txt and the sitemap, every page the sitemap lists and each
-text's start, with Interlinear off and on, and that plain http:// is sent
+text's start, with Interlinear on and off, and that plain http:// is sent
 on to https://. Opening every page also builds each one into the site's
 page cache again after a restart (greek/web/page_cache.py), so a reader's
 first visit to a book doesn't wait for it. A site behind Cloudflare Access
@@ -32,9 +32,10 @@ PAUSE = 20
 TIMEOUT = 30
 GREEK = re.compile("[Ͱ-Ͽἀ-῿]")
 SITEMAP = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-# The Interlinear cookie as the reader sets it (interlinear_on in
-# greek/web/reader_data.py): with it, a page is one of its own in the cache
-INTERLINEAR = {"Cookie": "interlinear=1"}
+# Interlinear is on without a cookie; turned off, the reader sets this one
+# (interlinear_on in greek/web/reader_data.py), and a page with it is one of
+# its own in the cache
+INTERLINEAR_OFF = {"Cookie": "interlinear=0"}
 
 
 @dataclass
@@ -147,13 +148,13 @@ def check_pages(fetch, site: str) -> str:
     # Each page as a reader opens it: what the cache keeps is that request's
     for url in pages:
         path = url[len(site) :]
-        for more in ({}, INTERLINEAR):
+        for more in ({}, INTERLINEAR_OFF):
             text = get(fetch, url, more).text
             if "/read" in path and not GREEK.search(text):
                 raise CheckFailed(f"{path} has no Greek")
     return (
         f"the sitemap's {len(urls)} pages and {len(set(starts))} texts' starts, "
-        "with Interlinear off and on; every reader page has its Greek"
+        "with Interlinear on and off; every reader page has its Greek"
     )
 
 

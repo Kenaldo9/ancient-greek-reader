@@ -79,7 +79,8 @@ def selection_too_long(start: int, end: int) -> Optional[str]:
 def interlinear_on(request: Request, explicit: Optional[bool] = None) -> bool:
     if explicit is not None:
         return explicit
-    return request.cookies.get(INTERLINEAR_COOKIE) == "1"
+    # On until this browser turns it off
+    return request.cookies.get(INTERLINEAR_COOKIE) != "0"
 
 
 def ref(line: Line) -> str:
