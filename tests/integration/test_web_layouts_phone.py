@@ -113,6 +113,8 @@ def test_the_text_takes_the_screen_under_one_bar(phone):
     assert box["fits"]
     # no study panel until something is tapped: the text fills the rest
     assert box["sheet"] is None
+    # (a first visit's first word stays closed on a phone)
+    pw.expect(phone.locator("#text-lines .w.is-active")).to_have_count(0)
     assert box["text"] == {
         "top": bar,
         "bottom": box["height"],
