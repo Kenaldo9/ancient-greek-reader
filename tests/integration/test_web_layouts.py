@@ -9,6 +9,7 @@ is in memory; the reader only reads, so every write request is blocked (and
 fails the test).
 """
 
+import contextlib
 import os
 from pathlib import Path
 import socket
@@ -373,3 +374,75 @@ def test_a_slow_word_does_not_hold_up_the_next_click(browser, live_reader, monke
         assert errors == []
     finally:
         context.close()
+
+
+@contextlib.contextmanager
+def first_visit(browser, size):
+    """A browser that has never opened the reader, and each word it asks for:
+    its X-First-Word header, None for a click."""
+    width, height, touch = size
+    context = browser.new_context(
+        viewport={"width": width, "height": height}, has_touch=touch
+    )
+    page = context.new_page()
+    errors, words = [], []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    report_csp_violations(page, errors)
+
+    def only_reads(route):
+        req = route.request
+        if req.method != "GET":
+            errors.append(f"{req.method} {req.url}")
+            return route.abort()
+        if "/word?" in req.url:
+            words.append(req.headers.get("x-first-word"))
+        route.continue_()
+
+    page.route("**/*", only_reads)
+    try:
+        yield page, words
+        assert errors == []
+    finally:
+        context.close()
+
+
+@pytest.mark.parametrize("size", VIEWPORTS)
+def test_a_first_visit_at_the_start_opens_the_first_word(browser, live_reader, size):
+    with first_visit(browser, size) as (page, words):
+        page.goto(live_reader)
+        pw.expect(page.locator("#word-strip .ws-greek")).to_have_text("λόγος")
+        first = page.locator('.line[data-line="1"] .w[data-i="0"]')
+        pw.expect(first).to_have_class("w is-active")
+        if size[2]:  # an iPad: the Word tab
+            pw.expect(page.locator("#reader-tab-word")).to_have_attribute(
+                "aria-selected", "true"
+            )
+        assert words == ["1"]  # the page's own, not a click
+        # The next visit continues where this one was, with nothing opened
+        page.reload()
+        pw.expect(page.locator("#text-lines .line").first).to_be_visible()
+        pw.expect(page.locator("#text-lines .w.is-active")).to_have_count(0)
+        page.locator('.line[data-line="2"] .w').first.click()
+        pw.expect(page.locator("#word-strip .ws-greek")).to_have_text("λόγος")
+        assert words == ["1", None]
+
+
+@pytest.mark.parametrize("opened", ["at=1.5", "lines=1.1-1.3", "read before"])
+def test_no_first_word_away_from_the_start_or_after_reading(
+    browser, live_reader, opened
+):
+    with first_visit(browser, VIEWPORTS[1]) as (page, words):
+        url = live_reader
+        if opened == "read before":  # in this browser: a saved position
+            tid = live_reader.split("/texts/")[1].split("/")[0]
+            page.add_init_script(
+                f"localStorage.setItem('greek.position.{tid}', "
+                "JSON.stringify({line: 1, ref: '1.1'}))"
+            )
+        else:
+            url = live_reader.replace("at=1.1", opened)
+        page.goto(url)
+        page.wait_for_load_state("networkidle")
+        pw.expect(page.locator("#text-lines .w.is-active")).to_have_count(0)
+        pw.expect(page.locator("#word-strip")).to_contain_text("Click a Greek word")
+        assert words == []

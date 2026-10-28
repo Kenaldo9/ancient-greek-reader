@@ -8,10 +8,12 @@ visitor and no count of "unique visitors". A day's file holds totals only.
 People are counted from what a browser does. visit.js asks for /visit once
 a page has been in view for 3 seconds or the reader clicks or taps on it,
 and htmx's requests (a book opened in the text pane, a search, a word, a
-passage) come only from a page's own script. A request whose User-Agent
-names a bot counts as that bot's, and the site check names itself. A page a
-browser loads but never confirms is "unconfirmed": a bot passing as a
-browser, a reader with JavaScript off, or one who left within 3 seconds.
+passage) come only from a page's own script. The first word a text's first
+visit opens by itself (X-First-Word) is no one's choice and isn't counted.
+A request whose User-Agent names a bot counts as that bot's, and the site
+check names itself. A page a browser loads but never confirms is
+"unconfirmed": a bot passing as a browser, a reader with JavaScript off, or
+one who left within 3 seconds.
 
 Only requests that came through Cloudflare count (they carry CF-Ray), so
 the deploy's own checks from inside the container don't. The country is
@@ -268,6 +270,8 @@ class Visits:
             return lambda: self._add_other(sender)
         if request.headers.get("hx-request") == "true":
             if m is None:
+                return None
+            if request.headers.get("x-first-word") == "1":
                 return None
             if m[2] in ("word", "passage"):
                 return lambda: self._add_tool(m[2])

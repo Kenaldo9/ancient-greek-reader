@@ -124,6 +124,15 @@ def test_what_htmx_asks_for_is_a_persons(site):
     assert counts["loads"]["browsers"] == 0
 
 
+def test_the_first_word_a_page_opens_by_itself_is_not_counted(site):
+    word = f"/texts/{site.tid}/word?line=1&i=0"
+    first_word = {**HTMX, "x-first-word": "1"}  # reader.js, a first visit
+    assert site.get(word, headers=first_word).status_code == 200
+    assert site.counts().get("tools", {}).get("word", 0) == 0
+    site.get(word, headers=HTMX)  # then a click on it
+    assert site.counts()["tools"]["word"] == 1
+
+
 def test_a_page_never_confirmed_is_unconfirmed(site):
     site.get("/library")
     site.get(f"/texts/{site.tid}/toc")

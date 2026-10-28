@@ -50,7 +50,9 @@ the search's **Back to …** return to it. A text opened without a line (Go to
 - A selection has at most 1,000 lines, more than the longest page (Iliad 5,
   909 lines).
 - Click a word for its parsing, lemma, and the study data's meaning and
-  note.
+  note. A text you haven't read in this browser, opened at its start with
+  nothing selected, opens its first word (not on a phone, where it would
+  cover the text).
 - For a text with treebank data (the Iliad, the Odyssey, Herodotus and
   Thucydides), the word pane also shows the treebank's parsing, LSJ's
   definition, the word's role in its sentence and how often its lemma
@@ -220,8 +222,9 @@ site's visitor counts are written (below).
 - The public site counts its visitors in daily totals
   ([visits.py](../greek/web/visits.py)): people's visits and page views,
   the pages they read, the sites they came from (the host only), their
-  countries (Cloudflare's `CF-IPCountry`) and how often they open a word, a
-  passage or a search, with bots (by the User-Agent they send) and the
+  countries (Cloudflare's `CF-IPCountry`) and how often they open a word
+  (not a first visit's first word, which opens by itself), a passage or a
+  search, with bots (by the User-Agent they send) and the
   outside check counted apart. A person is a browser that runs the page's
   script: `visit.js` asks for `/visit` once a page has been in view for 3
   seconds or the reader clicks on it, and htmx's requests come only from

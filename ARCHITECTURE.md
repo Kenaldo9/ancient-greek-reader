@@ -28,7 +28,7 @@ and its licences in [docs/data.md](docs/data.md).
 | `greek/display/` | Rich CLI rendering |
 | `greek/search.py` | Greek normalization, FTS query construction, and match highlighting |
 | `greek/web/app.py` | Load `.env`, apply migrations at import (or, for a database newer than the code or read-only and behind it, answer every page with why), mount static files with their cache lifetimes, register routers, gzip pages, fragments, CSS and JS (level 6: a book page of about 690 KB is sent as 50–70 KB), add the security headers (a Content-Security-Policy for the app's own files only), and serve `/version`; no API docs; on a read-only database, add the page cache |
-| `greek/web/visits.py`, `static/visit.js` | The public site's visitor counts: daily totals of people's visits, page views, pages, referring sites, countries and tool use, with bots (by User-Agent) and the outside check counted apart; a person is confirmed by `visit.js`'s `/visit` (3 seconds in view, or a click) or by htmx's requests; only requests through Cloudflare (`CF-Ray`) count; a file a day in `GREEK_VISITS_DIR`, which only the public site sets; no address, User-Agent string, cookie or identifier is kept |
+| `greek/web/visits.py`, `static/visit.js` | The public site's visitor counts: daily totals of people's visits, page views, pages, referring sites, countries and tool use, with bots (by User-Agent) and the outside check counted apart; a person is confirmed by `visit.js`'s `/visit` (3 seconds in view, or a click) or by htmx's requests (not a first visit's first word, `X-First-Word`); only requests through Cloudflare (`CF-Ray`) count; a file a day in `GREEK_VISITS_DIR`, which only the public site sets; no address, User-Agent string, cookie or identifier is kept |
 | `greek/web/page_cache.py` | The public site's finished pages in memory, gzipped as sent (64 MB, least recently used out): only on a read-only database, which can't change while the app runs; keyed on the path and query, the Interlinear cookie, the site's scheme and host, and gzip; the private reader caches nothing |
 | `greek/web/routes/` | The Library (`library.py`), About (`about.py`), the reader page, its word fragment, Go to and the contents (`reader.py`), the passage box (`passage.py`) |
 | `greek/web/routes/site.py` | `robots.txt` and `sitemap.xml`: the pages search engines may index, from `page_starts` in `reader_data.py` |
@@ -186,7 +186,10 @@ are this browser's: `positions.js` keeps one per text in `localStorage`
 **Continue at …** and points the drawer's text links there; a reader URL
 without `at=`, `lines=`, `q=` or an old `page=` opens at the start, and `reader.js` then
 replaces it with the saved place. Without storage the reader works and
-always starts at the beginning. The reader opts out of htmx's history snapshots
+always starts at the beginning. A text with no saved position, opened at
+its first line with nothing selected, shows its first word
+(`openFirstWord`), except in a phone's sheet; that request carries
+`X-First-Word`, and the visitor counts leave it out. The reader opts out of htmx's history snapshots
 (`hx-history="false"`): a book page is up to about a million characters, so Back loads
 the page again at the `at=` of the entry it returns to.
 

@@ -49,6 +49,8 @@
     if (!reader) return;
     state.textId = reader.dataset.textId;
     if (resumeReading()) return;
+    // before resetPosition saves this one
+    var firstVisit = window.greekPositions && !window.greekPositions.get(state.textId);
     state.touchAnchor = null;
     closeNav(false);
     placeHeaderTools();
@@ -70,6 +72,7 @@
     paintWord();
     restoreTab();
     showOpened();
+    if (firstVisit) openFirstWord();
     resetPosition();
     // a Go to the server couldn't follow: show its message
     if (slimBar.matches && $("#goto [aria-invalid='true']")) openGoto();
@@ -190,7 +193,7 @@
   var newest = {}; // pane → its newest request
   var panes = new WeakMap(); // request → pane
 
-  function load(name, url, selector, swap) {
+  function load(name, url, selector, swap, headers) {
     var target = $(selector);
     if (!target) return;
     var source = document.createElement("span");
@@ -203,7 +206,7 @@
     // beforeSwap fires on the target, which may be out of the page by then
     target.addEventListener("htmx:beforeSwap", keepNewest);
     var done = function () { source.remove(); };
-    htmx.ajax("GET", url, { source: source, target: target, swap: swap }).then(done, done);
+    htmx.ajax("GET", url, { source: source, target: target, swap: swap, headers: headers }).then(done, done);
   }
 
   function keepNewest(e) {
@@ -214,14 +217,25 @@
 
   // ---------------------------------------------------------------- words
 
-  function showWord(line, i) {
+  function showWord(line, i, headers) {
     state.word = { line: line, i: i };
     paintWord();
     if (state.studyTab !== "dictionary") state.studyTab = "word"; // a tablet keeps the Dictionary tab
     syncStudyPanel();
     openSheet($('#text-lines .line[data-line="' + line + '"] .w[data-i="' + i + '"]'));
     var params = new URLSearchParams({ line: line, i: i });
-    load("word", "/texts/" + state.textId + "/word?" + params, "#word-strip", "outerHTML");
+    load("word", "/texts/" + state.textId + "/word?" + params, "#word-strip", "outerHTML", headers);
+  }
+
+  // A text's first visit in this browser, opened at its start (line 1) with
+  // nothing chosen, shows its first word, so the word pane isn't empty. Not
+  // in a phone's sheet, which would cover the text. The request says it is
+  // the page's own, not a click, for the visitor counts (visits.py).
+  function openFirstWord() {
+    var lines = $("#text-lines");
+    var word = $("#text-lines .line .w");
+    if (sheet.matches || state.word || state.start !== null || !word || lines.dataset.at !== "1") return;
+    showWord(+word.closest(".line").dataset.line, +word.dataset.i, { "X-First-Word": "1" });
   }
 
   function paintWord() {
