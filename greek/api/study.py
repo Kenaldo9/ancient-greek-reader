@@ -299,10 +299,22 @@ _NOTE_RULE = (
     'A word marked "first in this book" gets its background here; later in the '
     "book, say only what is particular to this place."
 )
+# Prose only, from the Herodotus pilot: its notes cited words by their request
+# numbers, and an article before a name got an empty gloss, which fails a whole
+# unit at collect. The verse prompts stay as they are (test_work_prompts.py).
+_PROSE_NOTE_ADDITION = (
+    " Refer to another word by quoting its Greek, never by its number: the "
+    "reader doesn't see the numbers."
+)
+_PROSE_GLOSS_RULE = (
+    f"{GLOSS_RULE} Give an article that English leaves out, as before a name, "
+    'as "(the)". A gloss is never empty.'
+)
 
 
 def note_rule(work: WorkProfile) -> str:
-    return _NOTE_RULE.format(topics=work.note_topics)
+    rule = _NOTE_RULE.format(topics=work.note_topics)
+    return rule if work.verse else rule + _PROSE_NOTE_ADDITION
 
 
 def first_in_book_rule(work: WorkProfile) -> str:
@@ -393,7 +405,7 @@ def study_system_prompt(work: WorkProfile, repeat_words: bool = False) -> str:
         first=first_in_book_rule(work),
         not_words=_NOT_WORDS[work.verse],
         word=_REPEAT_WORD if repeat_words else "",
-        gloss=GLOSS_RULE,
+        gloss=GLOSS_RULE if work.verse else _PROSE_GLOSS_RULE,
         note=note_rule(work),
         parse=_PARSE_RULE,
     )
