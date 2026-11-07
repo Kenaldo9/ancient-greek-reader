@@ -97,7 +97,7 @@ Use `ruff check` / `ruff format --check` on changed Python files,
 
 A UI change ends with screenshots of the real app. Use a copy of the
 reader's own `greek.db` (`greek backup`) in a scratch directory as the
-preview database (the whole Iliad has study data) and set `GREEK_DATA_DIR` before importing the
+preview database (the whole Iliad and Odyssey have study data) and set `GREEK_DATA_DIR` before importing the
 app. The app makes no model calls and has no write routes; still block
 non-GET requests in the browser. Show the data as it is: never edit a
 text's rows to stage a state.

@@ -65,7 +65,7 @@ Perseus Digital Library, [lexica](https://github.com/PerseusDL/lexica):
 model, wrote them in batches from the Greek text and the treebank's parse of
 each word; `model_used` names the model. **They can be wrong.**
 
-So far they cover the Iliad, made from the CC BY-SA sources above:
+So far they cover the Iliad and the Odyssey, made from the CC BY-SA sources above:
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), Kenaldo9
 (Ancient Greek Reader). Herodotus and Thucydides have none yet; theirs would
 be made from their GLAUx annotation, and their licence will be stated here

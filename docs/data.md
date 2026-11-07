@@ -62,7 +62,7 @@ has the details.
 | Text | Parsing and roles | Glosses, notes and translations |
 |---|---|---|
 | Iliad | The Perseus treebank, by hand | Every book |
-| Odyssey | The Perseus treebank, by hand | Not yet |
+| Odyssey | The Perseus treebank, by hand | Every book |
 | Histories (Herodotus) | GLAUx: part by hand (from the PROIEL treebank), the rest by GLAUx's parser | Not yet |
 | History of the Peloponnesian War (Thucydides) | GLAUx: part by hand (from Vanessa Gorman's treebanks), the rest by GLAUx's parser | Not yet |
 
@@ -97,14 +97,15 @@ itself asks no model anything.
   treebank's tree. **Dictionary forms, constructions and principal parts**
   are asked per lemma, per dialect: Homeric for the Iliad and the Odyssey
   (which share them), Ionic for Herodotus, Attic for Thucydides.
-- **Settings.** The Iliad's glosses, notes and translations were made at
-  effort `high` (Opus 5.5 always thinks before answering), its dictionary
-  forms and principal parts at `medium`.
+- **Settings.** The glosses, notes and translations of the Iliad and the
+  Odyssey were made at effort `high` (Opus 5.5 always thinks before
+  answering), their dictionary forms and principal parts at `medium`.
 
-**They can be wrong.** Samples were reviewed while they were made, but not
-every word: read them as a study aid, and check them against the parsing and
-the dictionary. Where the model disagreed with the treebank, the word pane
-shows its remark under Parse check.
+**They can be wrong.** Samples were reviewed while they were made (five of
+the Odyssey's notes were corrected by hand), but not every word: read them as
+a study aid, and check them against the parsing and the dictionary. Where the
+model disagreed with the treebank, the word pane shows its remark under Parse
+check.
 
 ## Licences
 
