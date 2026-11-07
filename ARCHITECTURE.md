@@ -89,7 +89,7 @@ repository's root, which the Docker image copies in.
   the Verbs page's lookups in `verb_parts` (dialect "").
 
 Study data is made in Message Batches by `greek study` and recorded in
-`study_batches` with its requests, usage and cost (the whole Iliad so far;
+`study_batches` with its requests, usage and cost (the whole Iliad and Odyssey so far;
 the published export leaves this bookkeeping out).
 `greek study coverage` and `greek study remarks` report on the saved data
 without calls: what each book has and lacks, and the model's `parse_check`

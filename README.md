@@ -27,7 +27,7 @@ More screens: [the Library](docs/screens/library-laptop.png),
 | Text | Parsing and roles | Glosses, notes and translations |
 |---|---|---|
 | Homer, *Iliad* | The Perseus treebank, annotated by hand | Every book |
-| Homer, *Odyssey* | The Perseus treebank, annotated by hand | Coming |
+| Homer, *Odyssey* | The Perseus treebank, annotated by hand | Every book |
 | Herodotus, *Histories* | GLAUx: part by hand, the rest by its parser | Coming |
 | Thucydides, *History of the Peloponnesian War* | GLAUx: part by hand, the rest by its parser | Coming |
 

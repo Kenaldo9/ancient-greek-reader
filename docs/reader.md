@@ -59,8 +59,8 @@ the search's **Back to …** return to it. A text opened without a line (Go to
   occurs ("12× in the Iliad · 2× in Book 1"). Herodotus and Thucydides use
   GLAUx, where some sentences were annotated by its parser rather than by
   hand: their parsing and roles carry the amber **GLAUx auto** tag (see
-  [Source tags](#source-tags)). With study data (the whole Iliad; the other
-  texts follow), it also shows:
+  [Source tags](#source-tags)). With study data (the whole Iliad and Odyssey;
+  Herodotus and Thucydides follow), it also shows:
   - the lemma's dictionary form ("from μῆνις, -ιος, ἡ");
   - a **Syntax** block: the word's role in its treebank sentence ("object
     of ἄειδε"; hovering the word named highlights it in the text) and its
