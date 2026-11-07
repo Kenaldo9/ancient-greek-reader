@@ -948,13 +948,20 @@ def read_result(
     return Outcome(entry.custom_id, usage, output=output)
 
 
+# An editor's marks stay on a prose word's form ("ἀπηγήσασθαι)"), and a model
+# repeating the word may rightly leave them out.
+_EDITORS_MARKS = "()[]〈〉†"
+
+
 def same_word(given: str, form: str) -> bool:
     """
     Whether a word the model repeated is the numbered form: equal in NFC, or
-    else without accents, breathings and elision marks (plain()).
+    else without accents, breathings and elision marks (plain()). Punctuation
+    and an editor's marks around either one don't count.
     """
-    given = unicodedata.normalize("NFC", given.strip().strip(_PUNCT_STRIP))
-    form = unicodedata.normalize("NFC", form)
+    around = _PUNCT_STRIP + _EDITORS_MARKS
+    given = unicodedata.normalize("NFC", given.strip().strip(around))
+    form = unicodedata.normalize("NFC", form.strip(around))
     return given == form or plain(given) == plain(form)
 
 

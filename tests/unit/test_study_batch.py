@@ -641,6 +641,13 @@ def test_check_notes_reads_a_note_per_word():
         ("οὐδ", "οὐδʼ"),
         ("θεὰ,", "θεὰ"),  # with punctuation
         ("Μῆνιν", "μῆνιν"),
+        ("ἀπηγήσασθαι", "ἀπηγήσασθαι)"),  # an editor's mark on the form (Hdt. 1.2.1)
+        ("ἀπηγήσασθαι)", "ἀπηγήσασθαι)"),
+        ("ὀφθαλμῶν,", "ὀφθαλμῶν)"),
+        ("ἦν", "(ἦν"),
+        ("καὶ", "[καὶ]"),
+        ("φασι", "†φασι"),
+        ("λόγος", "〈λόγος〉"),
     ],
 )
 def test_same_word_ignores_accents_elision_and_punctuation(given, form):
@@ -659,6 +666,7 @@ def test_check_notes_takes_a_words_lemma_in_its_place():
 def test_same_word_tells_words_apart():
     assert not same_word("θεοί", "θεὰ")
     assert not same_word("ἄειδε", "μῆνιν")
+    assert not same_word("Κύρου", "Κροίσου)")  # brackets don't excuse another word
 
 
 @pytest.mark.parametrize(
